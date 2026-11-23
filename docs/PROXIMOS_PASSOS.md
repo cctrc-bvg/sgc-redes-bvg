@@ -35,6 +35,9 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 | `fd88bb4` | Login, sessões no banco, RBAC do FSD, troca obrigatória de senha, auditoria; seed sem senha fixa |
 | `b62b737` | Cadastro/gestão de usuários pela Coordenação (`/usuarios`) |
 
+**`AGENTS.md`** (raiz): gerado pelo `next dev` com orientações para assistentes de código sobre o Next 16; versionado
+para não reaparecer como alteração pendente. Pode ser editado fora do bloco `nextjs-agent-rules`.
+
 **Telas existentes:** `/login`, `/painel` (cards dos módulos do perfil, todos "Em desenvolvimento"), `/conta/senha`,
 `/usuarios`, `/usuarios/novo`, `/usuarios/[id]`, `/usuarios/[id]/senha`.
 
@@ -55,7 +58,6 @@ usuários: 33). **Nunca verificado:** `docker compose up --build` (Docker não i
 - [ ] **Responder G01–G13** (tabela em `.handoff/github/issue-decisoes-g01-g13.md`; G01–G12 também no FSD, seção 5).
       Para G01 são necessários os **horários reais dos blocos** (início/fim, manhã e tarde) e se há sábados letivos.
       Alternativa: autorizar o uso dos padrões sugeridos no FSD.
-- [ ] **`AGENTS.md`** na raiz é recriado pelo `next dev` a cada execução: decidir entre versionar ou pôr no `.gitignore`.
 
 ---
 
