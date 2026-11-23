@@ -10,7 +10,7 @@
 ```bash
 cd ~/projetos/sgc-redes-bvg
 git status && git log --oneline -9          # branch minha-contribuicao, em dia com origin
-./scripts/dev.sh testar                      # esperado: typecheck ok + 168 testes passando
+./scripts/dev.sh testar                      # esperado: typecheck ok + 191 testes passando
 ls .handoff/                                 # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
@@ -23,7 +23,7 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 **Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (permissão de admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
 (somente leitura; contém **apenas o commit inicial com a licença**). O FSD, o README e o código inicial existem só no fork.
 
-**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 17 commits à frente do upstream (4 do código inicial + 13 novos):
+**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 18 commits à frente do upstream (4 do código inicial + 14 novos):
 
 | Commit | Conteúdo |
 | :--- | :--- |
@@ -39,17 +39,19 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 | `9dc1367` | Consulta ao catálogo (Professor, CTP, Direção); matriz do PPC e blocos de horário (G01) no seed |
 | `5afbbb0` | Núcleo, ano e semestre da disciplina (técnicas semestrais, 50% prática); G01 resolvida (sábados por data) |
 | `888653b` | Matriz do 3º ano corrigida: siglas SEGR, EB, PRD, RSF; Projeto de Redes 80h |
-| *(último)* | Ofertas: distribuição de disciplinas por turma e ano letivo (`/ofertas`) |
+| `ae6face` | Ofertas: distribuição de disciplinas por turma e ano letivo (`/ofertas`) |
+| *(último)* | Grade horária (RF01): grade da turma, minha grade, edição com trava de choque, sábados letivos (G14) |
 
 **`AGENTS.md`** (raiz): gerado pelo `next dev` com orientações para assistentes de código sobre o Next 16; versionado
 para não reaparecer como alteração pendente. Pode ser editado fora do bloco `nextjs-agent-rules`.
 
 **Telas existentes:** `/login`, `/painel` (cards dos módulos do perfil, todos "Em desenvolvimento"), `/conta/senha`,
 `/usuarios`, `/usuarios/novo`, `/usuarios/[id]`, `/usuarios/[id]/senha`, `/disciplinas`, `/disciplinas/nova`, `/disciplinas/[id]`,
-`/ofertas`, `/ofertas/[turmaId]?ano=AAAA`.
+`/ofertas`, `/ofertas/[turmaId]?ano=AAAA`, `/grade`, `/grade/minha`, `/grade/turma/[id]` (+`/editar`), `/grade/sabados`
+(período por `?ano=AAAA&sem=1|2`).
 
-**Verificado:** 168 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login, usuários e
-disciplinas: 33; ofertas: 35 verificações). **Nunca verificado:** `docker compose up --build` (Docker não instalado na máquina de desenvolvimento).
+**Verificado:** 191 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login, usuários e
+disciplinas: 33; ofertas: 35; grade: 44 verificações). **Nunca verificado:** `docker compose up --build` (Docker não instalado na máquina de desenvolvimento).
 
 ---
 
@@ -66,7 +68,6 @@ disciplinas: 33; ofertas: 35 verificações). **Nunca verificado:** `docker comp
       3º ano no PPC tem erro de soma (correto: 1.080h).
 - [ ] A grade 2026 diverge da matriz em aulas/semana de algumas anuais (ex.: Geografia II 2 aulas vs. 40h;
       Servidores no 3º ano): confirmar se há PPC mais novo. Não bloqueia.
-- [ ] **G14 (nova):** num sábado letivo, qual grade vale? (horário de um dia da semana, ou atividade específica?)
 - [ ] **Responder G01–G13** (tabela em `.handoff/github/issue-decisoes-g01-g13.md`; G01–G12 também no FSD, seção 5).
       G01 resolvida: blocos A–D de 60 min; sábados letivos existem e variam com o calendário (cadastro por data).
       Alternativa: autorizar o uso dos padrões sugeridos no FSD.
@@ -85,8 +86,11 @@ disciplinas: 33; ofertas: 35 verificações). **Nunca verificado:** `docker comp
 3. ~~Ofertas~~ — feito. `DisciplinaOferta` agora tem `anoLetivo` + `semestreLetivo` (null = anual; técnica de
    semestre ímpar do curso → .1, par → .2), única por ano/turma/disciplina; `aulasPrevistas` = carga horária (blocos
    de 60 min). Tela por turma com um select de professor por disciplina; oferta já usada na grade não pode ficar sem
-   professor. Falta: **ofertar disciplina de outro ano** (ex.: dependência/reoferta, "Artes II" no 3º ano da grade
-   2026) e permitir ao professor **ver as próprias ofertas** (virá com o semáforo de diários).
+   professor. Ofertar disciplina de outro ano **não é necessário** ("Artes II" no 3º ano da grade 2026 foi um caso
+   único, confirmado pela Coordenação).
+3b. **Importação em lote (CSV/XLSX)** — PEDIDO DO USUÁRIO, próxima tarefa: cadastro de disciplinas e de usuários por
+   upload, com **planilha de exemplo pré-preenchida** para baixar, editar e enviar. Pré-visualizar e validar antes de
+   gravar (mesmas regras dos formulários), tudo ou nada.
 4. **Turmas** — `anoCurso` (1–3) adicionado e preenchido pelo seed; hoje só via seed (`REDES-1..3`); tela para editar `qtdAlunosAtivos` e médias de refeição
    (`qtdMedia*`), usadas nos avisos à Assistência Estudantil.
 5. **Tela de auditoria** (`auditoria:ver`, só Coordenação) — filtrar `AuditLog` por ação, usuário e data.
@@ -101,7 +105,7 @@ disciplinas: 33; ofertas: 35 verificações). **Nunca verificado:** `docker comp
 
 | Módulo (FSD) | Requisito | Decisões |
 | :--- | :--- | :--- |
-| Grade e janelas livres | RF01 | G14 (G01 resolvida) |
+| ~~Grade e janelas livres~~ | RF01 | feito (G01 e G14 resolvidas) |
 | Ausências e substituição | RF02 | G01, G03 |
 | Painel de alimentação (AE) | RF03, RF04 | G02, G04, G05, G06, G13 |
 | Hub de comunicação WhatsApp | RF05 | G07, G08 |
@@ -120,7 +124,11 @@ Ordem sugerida após as decisões: Grade → Ausências → Alimentação → Co
 - **Disciplinas:** técnicas são **semestrais** (CH da coluna "Semestre" do PPC) e têm **metade da carga prática**
   (`exigePratica` verdadeiro); propedêuticas e diversificadas são **anuais**. Validado no formulário
   (`DisciplinaSchema`). Ofertas devem respeitar isso: anual = ano letivo inteiro; técnica = um semestre.
-- **Sábados letivos** existem mas dependem do calendário civil: cadastrar por data, nunca como dia fixo da semana.
+- **Sábados letivos** existem mas dependem do calendário civil: cadastrar por data (`SabadoLetivo`), cada um seguindo a
+  grade de um dia da semana (G14). Use `diaDaGradeNaData()` para saber qual grade vale numa data (ausências!).
+- **Grade:** por ano + semestre letivo; anuais aparecem nos dois semestres, técnicas só no seu. Janelas livres são
+  calculadas (vago em turno com aula), não gravadas. Choque de professor entre turmas é recusado no servidor.
+  Professores (`grade:ver`) veem todas as turmas e a própria grade; só a Coordenação edita (`grade:editar`).
 - **Prisma 6.x**, não 7: o schema usa `url = env(...)` no datasource.
 - **Sessões próprias no banco**, não NextAuth (v5 ainda beta para Next 16). `NEXTAUTH_URL` → `APP_URL`;
   `AUTH_SECRET` removido. Caminho futuro: SSO SUAP via OIDC.

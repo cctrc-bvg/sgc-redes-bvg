@@ -177,7 +177,8 @@ model BlocoHorario {
 
 model GradeHorario {
   id         String           @id @default(cuid())
-  semestre   String           // ex: "2026.1"
+  anoLetivo  Int              // ex: 2026
+  semestreLetivo Int          // 1 ou 2 (anuais aparecem nos dois; técnicas só no seu)
   turmaId    String
   turma      Turma            @relation(fields: [turmaId], references: [id])
   diaSemana  Int              // 1=Segunda ... 5=Sexta (6=Sábado)
@@ -188,7 +189,16 @@ model GradeHorario {
   oferta     DisciplinaOferta? @relation(fields: [ofertaId], references: [id], onDelete: SetNull)
   sala       String?          // ex: "Sala 04", "Lab Redes I"
 
-  @@unique([semestre, turmaId, diaSemana, blocoId])
+  @@unique([anoLetivo, semestreLetivo, turmaId, diaSemana, blocoId])
+}
+
+// Sábado letivo (G01/G14): varia com o calendário civil e segue a grade de um dia da semana.
+model SabadoLetivo {
+  id                 String   @id @default(cuid())
+  data               DateTime @unique @db.Date
+  diaSemanaReferente Int      // 1=Segunda ... 5=Sexta: a grade desse dia vale no sábado
+  observacao         String?
+  createdAt          DateTime @default(now())
 }
 
 enum StatusAusencia {

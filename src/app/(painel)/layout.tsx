@@ -24,6 +24,11 @@ export default async function LayoutPainel({ children }: { children: React.React
               <span className="font-semibold">{usuario.nome}</span>
               <span className="text-slate-600"> · {NOME_PERFIL[usuario.role]}</span>
             </span>
+            {temPermissao(usuario.role, 'grade:ver') && (
+              <Link href="/grade" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
+                Grade
+              </Link>
+            )}
             {temPermissao(usuario.role, 'usuarios:gerenciar') && (
               <Link href="/usuarios" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
                 Usuários

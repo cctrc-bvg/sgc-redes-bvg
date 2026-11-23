@@ -70,11 +70,13 @@ export interface Modulo {
   fase: 1 | 2;
   /** O módulo aparece para quem tiver qualquer uma destas permissões. */
   requer: readonly Permissao[];
+  /** Endereço do módulo, quando já disponível. */
+  href?: string;
 }
 
 /** Módulos das Fases 1 e 2 (FSD, seções 3 e 4), na ordem de exibição. */
 export const MODULOS: readonly Modulo[] = [
-  { id: 'grade', titulo: 'Grade e substituições', descricao: 'Horários das turmas, janelas livres e remanejamentos.', fase: 1, requer: ['grade:ver'] },
+  { id: 'grade', titulo: 'Grade e substituições', descricao: 'Horários das turmas, janelas livres e remanejamentos.', fase: 1, requer: ['grade:ver'], href: '/grade' },
   { id: 'alimentacao', titulo: 'Alimentação', descricao: 'Previsão e alterações de refeições por turma.', fase: 1, requer: ['alimentacao:ver'] },
   { id: 'comunicacao', titulo: 'Comunicação', descricao: 'Mensagens padronizadas para os grupos de WhatsApp.', fase: 1, requer: ['comunicacao:enviar'] },
   { id: 'ppe', titulo: 'PPE / PEI', descricao: 'Progressão Parcial de Estudos e Planos de Estudo Individual.', fase: 2, requer: ['ppe:ver'] },
