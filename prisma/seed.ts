@@ -32,9 +32,9 @@ async function main() {
 
   // 2. Três turmas do Técnico Integrado
   const turmas = [
-    { codigo: 'REDES-1', nome: 'Redes 1º Ano (Integrado)', anoLetivo: 2026 },
-    { codigo: 'REDES-2', nome: 'Redes 2º Ano (Integrado)', anoLetivo: 2026 },
-    { codigo: 'REDES-3', nome: 'Redes 3º Ano (Integrado)', anoLetivo: 2026 },
+    { codigo: 'REDES-1', nome: 'Redes 1º Ano (Integrado)', anoLetivo: 2026, anoCurso: 1 },
+    { codigo: 'REDES-2', nome: 'Redes 2º Ano (Integrado)', anoLetivo: 2026, anoCurso: 2 },
+    { codigo: 'REDES-3', nome: 'Redes 3º Ano (Integrado)', anoLetivo: 2026, anoCurso: 3 },
   ];
   for (const t of turmas) {
     await prisma.turma.upsert({
@@ -42,6 +42,8 @@ async function main() {
       update: {},
       create: t,
     });
+    // Turmas criadas antes do campo anoCurso: preenche só se estiver vazio.
+    await prisma.turma.updateMany({ where: { codigo: t.codigo, anoCurso: null }, data: { anoCurso: t.anoCurso } });
   }
 
   // 3. Canais de WhatsApp padrão

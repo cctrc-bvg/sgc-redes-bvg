@@ -43,11 +43,12 @@ describe('RBAC — matriz de perfis (FSD, seção 2)', () => {
     expect(temPermissao('CTP', 'usuarios:gerenciar')).toBe(false);
   });
 
-  it('somente a Coordenação gerencia usuários e disciplinas e vê auditoria', () => {
+  it('somente a Coordenação gerencia usuários, disciplinas e ofertas e vê auditoria', () => {
     for (const perfil of PERFIS) {
       expect(temPermissao(perfil, 'usuarios:gerenciar'), perfil).toBe(perfil === 'COORDENADOR');
       expect(temPermissao(perfil, 'auditoria:ver'), perfil).toBe(perfil === 'COORDENADOR');
       expect(temPermissao(perfil, 'disciplinas:gerenciar'), perfil).toBe(perfil === 'COORDENADOR');
+      expect(temPermissao(perfil, 'ofertas:gerenciar'), perfil).toBe(perfil === 'COORDENADOR');
     }
   });
 

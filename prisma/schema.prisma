@@ -108,6 +108,7 @@ model Turma {
   qtdMediaAlmoco      Int      @default(30)
   qtdMediaLancheTarde Int      @default(30)
   ativa               Boolean  @default(true)
+  anoCurso            Int?     // 1, 2 ou 3: liga a turma às disciplinas da matriz daquele ano
 
   gradeHoraria        GradeHorario[]
   ofertas             DisciplinaOferta[]
@@ -135,7 +136,8 @@ model Disciplina {
 
 model DisciplinaOferta {
   id            String   @id @default(cuid())
-  semestre      String   // ex: "2026.1"
+  anoLetivo     Int      // ex: 2026
+  semestreLetivo Int?    // 1 ou 2 para técnicas (semestrais); null = anual (vale o ano letivo inteiro)
   turmaId       String
   turma         Turma    @relation(fields: [turmaId], references: [id])
   disciplinaId  String
@@ -152,6 +154,9 @@ model DisciplinaOferta {
 
   horarios      GradeHorario[]
   ausencias     AusenciaDocente[]
+
+  // Uma disciplina é ofertada uma vez por ano letivo em cada turma.
+  @@unique([anoLetivo, turmaId, disciplinaId])
 }
 
 // ==========================================

@@ -29,6 +29,7 @@ export const PERMISSOES = [
   'usuarios:gerenciar',
   'disciplinas:ver', // consulta ao catálogo (carga horária, prática, programa)
   'disciplinas:gerenciar', // Art. 22, III e IX — estrutura curricular, programas e ementas
+  'ofertas:gerenciar', // Art. 22, XXIV — distribuição de disciplinas aos docentes
   'auditoria:ver',
 ] as const;
 

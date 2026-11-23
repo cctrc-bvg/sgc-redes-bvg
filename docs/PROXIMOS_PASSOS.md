@@ -10,7 +10,7 @@
 ```bash
 cd ~/projetos/sgc-redes-bvg
 git status && git log --oneline -9          # branch minha-contribuicao, em dia com origin
-./scripts/dev.sh testar                      # esperado: typecheck ok + 145 testes passando
+./scripts/dev.sh testar                      # esperado: typecheck ok + 168 testes passando
 ls .handoff/                                 # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
@@ -23,7 +23,7 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 **Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (permissão de admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
 (somente leitura; contém **apenas o commit inicial com a licença**). O FSD, o README e o código inicial existem só no fork.
 
-**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 15 commits à frente do upstream (4 do código inicial + 11 novos):
+**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 17 commits à frente do upstream (4 do código inicial + 13 novos):
 
 | Commit | Conteúdo |
 | :--- | :--- |
@@ -37,16 +37,19 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 | `d3cb489` | Correção: motor de alimentação valida a data (formato e calendário) |
 | `126dc21` | Catálogo de Disciplinas (`/disciplinas`), permissão `disciplinas:gerenciar`, campo `Disciplina.ativa` |
 | `9dc1367` | Consulta ao catálogo (Professor, CTP, Direção); matriz do PPC e blocos de horário (G01) no seed |
-| *(último)* | Núcleo, ano e semestre da disciplina (técnicas semestrais, 50% prática); G01 resolvida (sábados por data) |
+| `5afbbb0` | Núcleo, ano e semestre da disciplina (técnicas semestrais, 50% prática); G01 resolvida (sábados por data) |
+| `888653b` | Matriz do 3º ano corrigida: siglas SEGR, EB, PRD, RSF; Projeto de Redes 80h |
+| *(último)* | Ofertas: distribuição de disciplinas por turma e ano letivo (`/ofertas`) |
 
 **`AGENTS.md`** (raiz): gerado pelo `next dev` com orientações para assistentes de código sobre o Next 16; versionado
 para não reaparecer como alteração pendente. Pode ser editado fora do bloco `nextjs-agent-rules`.
 
 **Telas existentes:** `/login`, `/painel` (cards dos módulos do perfil, todos "Em desenvolvimento"), `/conta/senha`,
-`/usuarios`, `/usuarios/novo`, `/usuarios/[id]`, `/usuarios/[id]/senha`, `/disciplinas`, `/disciplinas/nova`, `/disciplinas/[id]`.
+`/usuarios`, `/usuarios/novo`, `/usuarios/[id]`, `/usuarios/[id]/senha`, `/disciplinas`, `/disciplinas/nova`, `/disciplinas/[id]`,
+`/ofertas`, `/ofertas/[turmaId]?ano=AAAA`.
 
-**Verificado:** 145 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login, usuários e
-disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --build` (Docker não instalado na máquina de desenvolvimento).
+**Verificado:** 168 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login, usuários e
+disciplinas: 33; ofertas: 35 verificações). **Nunca verificado:** `docker compose up --build` (Docker não instalado na máquina de desenvolvimento).
 
 ---
 
@@ -79,9 +82,12 @@ disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --buil
    cadastro por engano. Falta: **importar a matriz do curso** (lista real de disciplinas e CH — pedir ao usuário
    ou ao PPC) e decidir se Professor/CTP devem **consultar** o catálogo (hoje só a Coordenação vê).
    → Ambos feitos: matriz importada pelo seed (47 disciplinas) e consulta liberada a Professor, CTP e Direção.
-3. **Ofertas por semestre** (`DisciplinaOferta`: turma × disciplina × professor) — pré-requisito da grade e do
-   semáforo de diários. Depende do catálogo e do cadastro de usuários (professores).
-4. **Turmas** — hoje só via seed (`REDES-1..3`); tela para editar `qtdAlunosAtivos` e médias de refeição
+3. ~~Ofertas~~ — feito. `DisciplinaOferta` agora tem `anoLetivo` + `semestreLetivo` (null = anual; técnica de
+   semestre ímpar do curso → .1, par → .2), única por ano/turma/disciplina; `aulasPrevistas` = carga horária (blocos
+   de 60 min). Tela por turma com um select de professor por disciplina; oferta já usada na grade não pode ficar sem
+   professor. Falta: **ofertar disciplina de outro ano** (ex.: dependência/reoferta, "Artes II" no 3º ano da grade
+   2026) e permitir ao professor **ver as próprias ofertas** (virá com o semáforo de diários).
+4. **Turmas** — `anoCurso` (1–3) adicionado e preenchido pelo seed; hoje só via seed (`REDES-1..3`); tela para editar `qtdAlunosAtivos` e médias de refeição
    (`qtdMedia*`), usadas nos avisos à Assistência Estudantil.
 5. **Tela de auditoria** (`auditoria:ver`, só Coordenação) — filtrar `AuditLog` por ação, usuário e data.
 6. **Limpeza de sessões expiradas** — linhas de `Sessao` vencidas só são apagadas quando o cookie é reapresentado.
