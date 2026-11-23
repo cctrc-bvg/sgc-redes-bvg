@@ -15,7 +15,8 @@ export function calcularHorasAtividadePpi(params: {
 }
 
 export function avaliarProgressoPpi(totalValidado: number, meta = 40) {
-  const percentual = Math.min(100, Math.round((totalValidado / meta) * 100));
+  // floor: a barra só chega a 100% quando a meta foi de fato atingida (39,9h → 99%, não 100%).
+  const percentual = Math.min(100, Math.floor((totalValidado / meta) * 100));
   const restante = Math.max(0, meta - totalValidado);
   return {
     meta,
