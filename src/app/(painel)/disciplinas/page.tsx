@@ -3,12 +3,14 @@ import Link from 'next/link';
 import { Alerta } from '@/components/campo';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
+import { temPermissao } from '@/lib/auth/rbac';
 import { calcularTetoPei } from '@/lib/ppi-ppe-engines';
 
 export const metadata: Metadata = { title: 'Disciplinas — SGC-Redes' };
 
 export default async function PaginaDisciplinas({ searchParams }: { searchParams: Promise<{ aviso?: string }> }) {
-  await exigirPermissao('disciplinas:gerenciar');
+  const { usuario } = await exigirPermissao('disciplinas:ver');
+  const podeGerenciar = temPermissao(usuario.role, 'disciplinas:gerenciar');
   const { aviso } = await searchParams;
   const disciplinas = await prisma.disciplina.findMany({
     orderBy: [{ ativa: 'desc' }, { nome: 'asc' }],
@@ -27,9 +29,11 @@ export default async function PaginaDisciplinas({ searchParams }: { searchParams
               `${ativas} ativa(s)${disciplinas.length > ativas ? ` · ${disciplinas.length - ativas} desativada(s)` : ''}.`}
           </p>
         </div>
-        <Link href="/disciplinas/nova" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
-          Cadastrar disciplina
-        </Link>
+        {podeGerenciar && (
+          <Link href="/disciplinas/nova" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
+            Cadastrar disciplina
+          </Link>
+        )}
       </div>
 
       {aviso === 'excluida' && (
@@ -40,7 +44,11 @@ export default async function PaginaDisciplinas({ searchParams }: { searchParams
 
       {disciplinas.length === 0 ? (
         <div className="mt-6">
-          <Alerta tipo="info">Nenhuma disciplina cadastrada ainda. Comece pelas disciplinas da matriz vigente do curso.</Alerta>
+          <Alerta tipo="info">
+            {podeGerenciar
+              ? 'Nenhuma disciplina cadastrada ainda. Comece pelas disciplinas da matriz vigente do curso.'
+              : 'Nenhuma disciplina cadastrada ainda.'}
+          </Alerta>
         </div>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">

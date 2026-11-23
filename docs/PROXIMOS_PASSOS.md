@@ -10,7 +10,7 @@
 ```bash
 cd ~/projetos/sgc-redes-bvg
 git status && git log --oneline -9          # branch minha-contribuicao, em dia com origin
-./scripts/dev.sh testar                      # esperado: typecheck ok + 129 testes passando
+./scripts/dev.sh testar                      # esperado: typecheck ok + 138 testes passando
 ls .handoff/                                 # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
@@ -23,7 +23,7 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 **Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (permissão de admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
 (somente leitura; contém **apenas o commit inicial com a licença**). O FSD, o README e o código inicial existem só no fork.
 
-**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 13 commits à frente do upstream (4 do código inicial + 9 novos):
+**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 14 commits à frente do upstream (4 do código inicial + 10 novos):
 
 | Commit | Conteúdo |
 | :--- | :--- |
@@ -35,7 +35,8 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 | `fd88bb4` | Login, sessões no banco, RBAC do FSD, troca obrigatória de senha, auditoria; seed sem senha fixa |
 | `b62b737` | Cadastro/gestão de usuários pela Coordenação (`/usuarios`) |
 | `d3cb489` | Correção: motor de alimentação valida a data (formato e calendário) |
-| *(último)* | Catálogo de Disciplinas (`/disciplinas`), permissão `disciplinas:gerenciar`, campo `Disciplina.ativa` |
+| `126dc21` | Catálogo de Disciplinas (`/disciplinas`), permissão `disciplinas:gerenciar`, campo `Disciplina.ativa` |
+| *(último)* | Consulta ao catálogo (Professor, CTP, Direção); matriz do PPC e blocos de horário (G01) no seed |
 
 **`AGENTS.md`** (raiz): gerado pelo `next dev` com orientações para assistentes de código sobre o Next 16; versionado
 para não reaparecer como alteração pendente. Pode ser editado fora do bloco `nextjs-agent-rules`.
@@ -43,7 +44,7 @@ para não reaparecer como alteração pendente. Pode ser editado fora do bloco `
 **Telas existentes:** `/login`, `/painel` (cards dos módulos do perfil, todos "Em desenvolvimento"), `/conta/senha`,
 `/usuarios`, `/usuarios/novo`, `/usuarios/[id]`, `/usuarios/[id]/senha`, `/disciplinas`, `/disciplinas/nova`, `/disciplinas/[id]`.
 
-**Verificado:** 129 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login, usuários e
+**Verificado:** 138 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login, usuários e
 disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --build` (Docker não instalado na máquina de desenvolvimento).
 
 ---
@@ -57,8 +58,13 @@ disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --buil
       Pontos de risco: Prisma no Alpine (openssl/musl) e o motor do Prisma no `standalone`.
 - [ ] **Decidir a publicação no `cctrc-bvg`:** abrir issue + PR com os 11 commits, ou primeiro um PR dentro do próprio fork.
       Textos prontos em `.handoff/github/` (o PR tem um item "Docker" a marcar após o teste e um `#<número>` da issue).
+- [ ] **Conferir a transcrição da matriz** (`src/lib/disciplinas/matriz-curricular.ts`, campo `pendencia`): no PPC, as
+      técnicas do 3º ano repetem os códigos do 2º (ficaram sem código) e a CH de Eletricidade Básica, Projeto de Redes e
+      Redes sem Fio é ambígua (o total de 960h não fecha). Também marcar no sistema quais disciplinas **exigem prática**
+      (Art. 121) — todas foram importadas como "não exige". A grade 2026 diverge da matriz em várias aulas/semana
+      (ex.: Geografia II 2 aulas vs. 40h; Servidores no 3º ano): confirmar se há PPC mais novo.
 - [ ] **Responder G01–G13** (tabela em `.handoff/github/issue-decisoes-g01-g13.md`; G01–G12 também no FSD, seção 5).
-      Para G01 são necessários os **horários reais dos blocos** (início/fim, manhã e tarde) e se há sábados letivos.
+      G01: blocos já cadastrados a partir da grade 2026 (4 × 60 min por turno); **falta só: há sábados letivos?**
       Alternativa: autorizar o uso dos padrões sugeridos no FSD.
 
 ---
@@ -71,6 +77,7 @@ disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --buil
 2. ~~Catálogo de Disciplinas~~ — feito. Desativar em vez de excluir quando já há ofertas/PPEs; exclusão só para
    cadastro por engano. Falta: **importar a matriz do curso** (lista real de disciplinas e CH — pedir ao usuário
    ou ao PPC) e decidir se Professor/CTP devem **consultar** o catálogo (hoje só a Coordenação vê).
+   → Ambos feitos: matriz importada pelo seed (47 disciplinas) e consulta liberada a Professor, CTP e Direção.
 3. **Ofertas por semestre** (`DisciplinaOferta`: turma × disciplina × professor) — pré-requisito da grade e do
    semáforo de diários. Depende do catálogo e do cadastro de usuários (professores).
 4. **Turmas** — hoje só via seed (`REDES-1..3`); tela para editar `qtdAlunosAtivos` e médias de refeição
@@ -87,7 +94,7 @@ disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --buil
 
 | Módulo (FSD) | Requisito | Decisões |
 | :--- | :--- | :--- |
-| Grade e janelas livres | RF01 | G01 |
+| Grade e janelas livres | RF01 | G01 (blocos ok; falta sábado) |
 | Ausências e substituição | RF02 | G01, G03 |
 | Painel de alimentação (AE) | RF03, RF04 | G02, G04, G05, G06, G13 |
 | Hub de comunicação WhatsApp | RF05 | G07, G08 |
@@ -114,6 +121,9 @@ Ordem sugerida após as decisões: Grade → Ausências → Alimentação → Co
 - Interface, mensagens, commits e documentação **em português**.
 
 ---
+
+- **Grade de exemplo (PDF aSc 2026)** traz professores por disciplina/turma: útil para testar as Ofertas (P1-3), mas os
+  **nomes de professores não vão para o repositório** (dados pessoais em repositório público). Cadastrar pela tela.
 
 ## 6. Convenções do código
 

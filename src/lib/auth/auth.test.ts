@@ -51,6 +51,13 @@ describe('RBAC — matriz de perfis (FSD, seção 2)', () => {
     }
   });
 
+  it('Professor, CTP e Direção consultam o catálogo de disciplinas; Assistência Estudantil não', () => {
+    for (const perfil of ['COORDENADOR', 'PROFESSOR', 'CTP', 'DIRECAO'] as const) {
+      expect(temPermissao(perfil, 'disciplinas:ver'), perfil).toBe(true);
+    }
+    expect(temPermissao('ASSISTENCIA_ESTUDANTIL', 'disciplinas:ver')).toBe(false);
+  });
+
   it('todo perfil enxerga pelo menos um módulo', () => {
     for (const perfil of PERFIS) expect(modulosDoPerfil(perfil).length, perfil).toBeGreaterThan(0);
   });

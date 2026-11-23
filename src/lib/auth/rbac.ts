@@ -27,6 +27,7 @@ export const PERMISSOES = [
   'kanban:ver-sigiloso', // Art. 22, VIII — exclusivo da Coordenação
   'relatorios:ver',
   'usuarios:gerenciar',
+  'disciplinas:ver', // consulta ao catálogo (carga horária, prática, programa)
   'disciplinas:gerenciar', // Art. 22, III e IX — estrutura curricular, programas e ementas
   'auditoria:ver',
 ] as const;
@@ -35,9 +36,9 @@ export type Permissao = (typeof PERMISSOES)[number];
 
 const PERMISSOES_POR_PERFIL: Record<Role, readonly Permissao[]> = {
   COORDENADOR: PERMISSOES,
-  PROFESSOR: ['grade:ver', 'substituicao:responder', 'ppe:ver', 'ppe:definir', 'diarios:ver-proprios'],
-  CTP: ['ppe:ver', 'kanban:ver', 'relatorios:ver'],
-  DIRECAO: ['relatorios:ver'],
+  PROFESSOR: ['grade:ver', 'substituicao:responder', 'ppe:ver', 'ppe:definir', 'diarios:ver-proprios', 'disciplinas:ver'],
+  CTP: ['ppe:ver', 'kanban:ver', 'relatorios:ver', 'disciplinas:ver'],
+  DIRECAO: ['relatorios:ver', 'disciplinas:ver'],
   // Minimização de dados (LGPD): apenas refeições, sem notas, PPI, PPE, processos ou motivos.
   ASSISTENCIA_ESTUDANTIL: ['alimentacao:ver', 'alimentacao:confirmar'],
 };

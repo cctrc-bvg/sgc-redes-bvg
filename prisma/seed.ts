@@ -2,6 +2,8 @@ import { PrismaClient, Role, CanalWhatsapp } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import { REGRAS_PPI_2022 } from '../src/lib/ppi-regras-2022';
+import { MATRIZ_REDES } from '../src/lib/disciplinas/matriz-curricular';
+import { BLOCOS_HORARIO } from '../src/lib/grade/blocos-horario';
 
 const prisma = new PrismaClient();
 
@@ -63,6 +65,30 @@ async function main() {
   if (countPpi === 0) {
     await prisma.ppiRegraCategoria.createMany({ data: REGRAS_PPI_2022 });
   }
+
+  // 5. Blocos de aula (G01). Atualiza os horários se mudarem; a grade referencia o bloco pelo id.
+  for (const b of BLOCOS_HORARIO) {
+    await prisma.blocoHorario.upsert({
+      where: { turno_ordem: { turno: b.turno, ordem: b.ordem } },
+      update: { horaInicio: b.horaInicio, horaFim: b.horaFim },
+      create: { turno: b.turno, ordem: b.ordem, horaInicio: b.horaInicio, horaFim: b.horaFim },
+    });
+  }
+
+  // 6. Catálogo de disciplinas (matriz do PPC). Só cria as que faltam, procurando por código ou
+  //    nome: nunca sobrescreve o que a Coordenação já ajustou no sistema.
+  let novas = 0;
+  for (const d of MATRIZ_REDES) {
+    const existe = await prisma.disciplina.findFirst({
+      where: { OR: [...(d.codigo ? [{ codigo: d.codigo }] : []), { nome: { equals: d.nome, mode: 'insensitive' as const } }] },
+      select: { id: true },
+    });
+    if (!existe) {
+      await prisma.disciplina.create({ data: { codigo: d.codigo, nome: d.nome, cargaHoraria: d.cargaHoraria } });
+      novas++;
+    }
+  }
+  if (novas > 0) console.log(`Disciplinas da matriz cadastradas: ${novas}`);
 
   console.log('Seed concluído com sucesso!');
 }
