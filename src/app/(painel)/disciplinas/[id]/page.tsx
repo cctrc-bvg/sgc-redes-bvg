@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { temPermissao } from '@/lib/auth/rbac';
 import { calcularTetoPei } from '@/lib/ppi-ppe-engines';
+import { NOME_NUCLEO, descreverPeriodo, divisaoTeoricaPratica } from '@/lib/disciplinas/regras';
 import { FormularioDisciplina } from '../formulario-disciplina';
 import { FormularioExclusao } from '../formulario-exclusao';
 
@@ -20,6 +21,7 @@ export default async function PaginaDisciplina({ params }: { params: Promise<{ i
   });
   if (!d) notFound();
   const usada = d._count.ofertas > 0 || d._count.ppes > 0;
+  const divisao = divisaoTeoricaPratica(d.nucleo, d.cargaHoraria);
 
   return (
     <div className="max-w-2xl">
@@ -48,6 +50,9 @@ export default async function PaginaDisciplina({ params }: { params: Promise<{ i
               exigePratica: d.exigePratica,
               ementaUrl: d.ementaUrl ?? '',
               programaTexto: d.programaTexto ?? '',
+              nucleo: d.nucleo ?? '',
+              anoCurso: d.anoCurso ? String(d.anoCurso) : '',
+              semestreCurso: d.semestreCurso ? String(d.semestreCurso) : '',
               ativa: d.ativa,
             }}
           />
@@ -66,8 +71,17 @@ export default async function PaginaDisciplina({ params }: { params: Promise<{ i
               <dd className="text-slate-900">{d.codigo ?? '—'}</dd>
             </div>
             <div>
+              <dt className="text-sm font-semibold text-slate-700">Núcleo e período</dt>
+              <dd className="text-slate-900">
+                {d.nucleo ? `${NOME_NUCLEO[d.nucleo]} · ` : ''}
+                {descreverPeriodo(d)}
+              </dd>
+            </div>
+            <div>
               <dt className="text-sm font-semibold text-slate-700">Carga horária total</dt>
-              <dd className="text-slate-900">{d.cargaHoraria}h</dd>
+              <dd className="text-slate-900">
+                {d.cargaHoraria}h{divisao && ` (${divisao.teorica}h teóricas + ${divisao.pratica}h práticas)`}
+              </dd>
             </div>
             <div>
               <dt className="text-sm font-semibold text-slate-700">Teto do PEI (Art. 117 §1º)</dt>

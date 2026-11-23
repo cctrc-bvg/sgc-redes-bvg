@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { temPermissao } from '@/lib/auth/rbac';
 import { calcularTetoPei } from '@/lib/ppi-ppe-engines';
+import { NOME_NUCLEO, descreverPeriodo } from '@/lib/disciplinas/regras';
 
 export const metadata: Metadata = { title: 'Disciplinas — SGC-Redes' };
 
@@ -13,8 +14,25 @@ export default async function PaginaDisciplinas({ searchParams }: { searchParams
   const podeGerenciar = temPermissao(usuario.role, 'disciplinas:gerenciar');
   const { aviso } = await searchParams;
   const disciplinas = await prisma.disciplina.findMany({
-    orderBy: [{ ativa: 'desc' }, { nome: 'asc' }],
-    select: { id: true, codigo: true, nome: true, cargaHoraria: true, exigePratica: true, ativa: true },
+    // Ordem da matriz: ano, anuais antes das semestrais, semestre, núcleo, nome. Desativadas no fim.
+    orderBy: [
+      { ativa: 'desc' },
+      { anoCurso: { sort: 'asc', nulls: 'last' } },
+      { semestreCurso: { sort: 'asc', nulls: 'first' } },
+      { nucleo: { sort: 'asc', nulls: 'last' } },
+      { nome: 'asc' },
+    ],
+    select: {
+      id: true,
+      codigo: true,
+      nome: true,
+      cargaHoraria: true,
+      exigePratica: true,
+      ativa: true,
+      nucleo: true,
+      anoCurso: true,
+      semestreCurso: true,
+    },
   });
   const ativas = disciplinas.filter((d) => d.ativa).length;
 
@@ -52,11 +70,12 @@ export default async function PaginaDisciplinas({ searchParams }: { searchParams
         </div>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[40rem] text-left text-sm">
-            <caption className="sr-only">Disciplinas do curso, com carga horária, teto do PEI, prática e situação</caption>
+          <table className="w-full min-w-[48rem] text-left text-sm">
+            <caption className="sr-only">Disciplinas do curso, com período, carga horária, teto do PEI, prática e situação</caption>
             <thead className="border-b border-slate-200 bg-slate-50 text-slate-700">
               <tr>
                 <th scope="col" className="px-4 py-3 font-semibold">Disciplina</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Período</th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">Carga horária</th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
                   Teto do PEI <span className="font-normal">(30%)</span>
@@ -72,8 +91,11 @@ export default async function PaginaDisciplinas({ searchParams }: { searchParams
                     <Link href={`/disciplinas/${d.id}`} className="font-semibold text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
                       {d.nome}
                     </Link>
-                    {d.codigo && <span className="block text-slate-600">{d.codigo}</span>}
+                    <span className="block text-slate-600">
+                      {[d.codigo, d.nucleo && NOME_NUCLEO[d.nucleo]].filter(Boolean).join(' · ')}
+                    </span>
                   </th>
+                  <td className="px-4 py-3">{descreverPeriodo(d)}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{d.cargaHoraria}h</td>
                   <td className="px-4 py-3 text-right tabular-nums">{calcularTetoPei(d.cargaHoraria)}h</td>
                   <td className="px-4 py-3">{d.exigePratica ? 'Exige prática' : '—'}</td>

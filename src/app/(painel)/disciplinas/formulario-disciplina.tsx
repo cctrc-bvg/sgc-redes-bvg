@@ -2,9 +2,19 @@
 
 import Link from 'next/link';
 import { useActionState } from 'react';
-import { Alerta, AreaTexto, BotaoPrimario, Campo } from '@/components/campo';
-import { CARGA_HORARIA_MAXIMA } from '@/lib/disciplinas/regras';
+import { Alerta, AreaTexto, BotaoPrimario, Campo, Selecao } from '@/components/campo';
+import { CARGA_HORARIA_MAXIMA, NOME_NUCLEO, NUCLEOS } from '@/lib/disciplinas/regras';
 import { atualizarDisciplina, criarDisciplina, type EstadoDisciplina } from './actions';
+
+const OPCOES_NUCLEO = [
+  { valor: '', rotulo: 'Selecione…' },
+  ...NUCLEOS.map((n) => ({ valor: n, rotulo: `${NOME_NUCLEO[n]}${n === 'TECNICO' ? ' (semestral)' : ' (anual)'}` })),
+];
+const OPCOES_ANO = [{ valor: '', rotulo: 'Selecione…' }, ...[1, 2, 3].map((a) => ({ valor: String(a), rotulo: `${a}º ano` }))];
+const OPCOES_SEMESTRE = [
+  { valor: '', rotulo: 'Anual' },
+  ...[1, 2, 3, 4, 5, 6].map((s) => ({ valor: String(s), rotulo: `${s}º semestre (${Math.ceil(s / 2)}º ano)` })),
+];
 
 export type ValoresDisciplina = {
   codigo: string;
@@ -13,6 +23,9 @@ export type ValoresDisciplina = {
   exigePratica: boolean;
   ementaUrl: string;
   programaTexto: string;
+  nucleo: string;
+  anoCurso: string;
+  semestreCurso: string;
   ativa: boolean;
 };
 
@@ -105,10 +118,22 @@ export function FormularioDisciplina({ modo, disciplinaId, iniciais }: Props) {
           dica={`Base do teto do PEI: 30% (Art. 117 §1º). Até ${CARGA_HORARIA_MAXIMA}h.`}
         />
       </div>
+      <div className="grid gap-5 sm:grid-cols-3">
+        <Selecao id="nucleo" rotulo="Núcleo" opcoes={OPCOES_NUCLEO} defaultValue={texto('nucleo')} erros={estado?.erros?.nucleo} />
+        <Selecao id="anoCurso" rotulo="Ano do curso" opcoes={OPCOES_ANO} defaultValue={texto('anoCurso')} erros={estado?.erros?.anoCurso} />
+        <Selecao
+          id="semestreCurso"
+          rotulo="Período"
+          opcoes={OPCOES_SEMESTRE}
+          defaultValue={texto('semestreCurso')}
+          erros={estado?.erros?.semestreCurso}
+        />
+      </div>
+      <p className="-mt-3 text-sm text-slate-600">Técnicas são semestrais; propedêuticas e diversificadas são anuais.</p>
       <CaixaMarcacao
         id="exigePratica"
         rotulo="Exige conteúdo prático"
-        dica="Obriga o PEI a reservar horas para aulas práticas (Art. 121 do ROD)."
+        dica="Obriga o PEI a reservar horas para aulas práticas (Art. 121 do ROD). Técnicas: metade da carga é prática."
         marcada={marcado('exigePratica', false)}
       />
       <Campo

@@ -11,7 +11,7 @@ import { DisciplinaSchema, verificarExclusao } from '@/lib/disciplinas/regras';
 
 // O id da disciplina chega por campo oculto, nunca por `acao.bind(null, id)` (ver usuarios/actions.ts).
 
-const CAMPOS = ['codigo', 'nome', 'cargaHoraria', 'exigePratica', 'ementaUrl', 'programaTexto'] as const;
+const CAMPOS = ['codigo', 'nome', 'cargaHoraria', 'exigePratica', 'ementaUrl', 'programaTexto', 'nucleo', 'anoCurso', 'semestreCurso'] as const;
 type ErrosCampos = Partial<Record<(typeof CAMPOS)[number], string[]>>;
 
 export type EstadoDisciplina = {
@@ -42,6 +42,9 @@ function paraBanco(d: z.infer<typeof DisciplinaSchema>) {
     exigePratica: d.exigePratica,
     ementaUrl: d.ementaUrl ?? null,
     programaTexto: d.programaTexto ?? null,
+    nucleo: d.nucleo,
+    anoCurso: d.anoCurso,
+    semestreCurso: d.semestreCurso ?? null,
   };
 }
 

@@ -10,7 +10,7 @@
 ```bash
 cd ~/projetos/sgc-redes-bvg
 git status && git log --oneline -9          # branch minha-contribuicao, em dia com origin
-./scripts/dev.sh testar                      # esperado: typecheck ok + 138 testes passando
+./scripts/dev.sh testar                      # esperado: typecheck ok + 145 testes passando
 ls .handoff/                                 # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
@@ -23,7 +23,7 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 **Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (permissão de admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
 (somente leitura; contém **apenas o commit inicial com a licença**). O FSD, o README e o código inicial existem só no fork.
 
-**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 14 commits à frente do upstream (4 do código inicial + 10 novos):
+**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 15 commits à frente do upstream (4 do código inicial + 11 novos):
 
 | Commit | Conteúdo |
 | :--- | :--- |
@@ -36,7 +36,8 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 | `b62b737` | Cadastro/gestão de usuários pela Coordenação (`/usuarios`) |
 | `d3cb489` | Correção: motor de alimentação valida a data (formato e calendário) |
 | `126dc21` | Catálogo de Disciplinas (`/disciplinas`), permissão `disciplinas:gerenciar`, campo `Disciplina.ativa` |
-| *(último)* | Consulta ao catálogo (Professor, CTP, Direção); matriz do PPC e blocos de horário (G01) no seed |
+| `9dc1367` | Consulta ao catálogo (Professor, CTP, Direção); matriz do PPC e blocos de horário (G01) no seed |
+| *(último)* | Núcleo, ano e semestre da disciplina (técnicas semestrais, 50% prática); G01 resolvida (sábados por data) |
 
 **`AGENTS.md`** (raiz): gerado pelo `next dev` com orientações para assistentes de código sobre o Next 16; versionado
 para não reaparecer como alteração pendente. Pode ser editado fora do bloco `nextjs-agent-rules`.
@@ -44,7 +45,7 @@ para não reaparecer como alteração pendente. Pode ser editado fora do bloco `
 **Telas existentes:** `/login`, `/painel` (cards dos módulos do perfil, todos "Em desenvolvimento"), `/conta/senha`,
 `/usuarios`, `/usuarios/novo`, `/usuarios/[id]`, `/usuarios/[id]/senha`, `/disciplinas`, `/disciplinas/nova`, `/disciplinas/[id]`.
 
-**Verificado:** 138 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login, usuários e
+**Verificado:** 145 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login, usuários e
 disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --build` (Docker não instalado na máquina de desenvolvimento).
 
 ---
@@ -59,12 +60,13 @@ disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --buil
 - [ ] **Decidir a publicação no `cctrc-bvg`:** abrir issue + PR com os 11 commits, ou primeiro um PR dentro do próprio fork.
       Textos prontos em `.handoff/github/` (o PR tem um item "Docker" a marcar após o teste e um `#<número>` da issue).
 - [ ] **Conferir a transcrição da matriz** (`src/lib/disciplinas/matriz-curricular.ts`, campo `pendencia`): no PPC, as
-      técnicas do 3º ano repetem os códigos do 2º (ficaram sem código) e a CH de Eletricidade Básica, Projeto de Redes e
-      Redes sem Fio é ambígua (o total de 960h não fecha). Também marcar no sistema quais disciplinas **exigem prática**
-      (Art. 121) — todas foram importadas como "não exige". A grade 2026 diverge da matriz em várias aulas/semana
-      (ex.: Geografia II 2 aulas vs. 40h; Servidores no 3º ano): confirmar se há PPC mais novo.
+      técnicas do 3º ano repetem os códigos do 2º (ficaram sem código). Técnicas usam a coluna "Semestre"; com isso o
+      3º ano soma 1.040h, e não as 960h do PPC (Projeto de Redes 40h, mas a grade 2026 tem 4 aulas/semana). A grade
+      também diverge da matriz em aulas/semana de algumas anuais (ex.: Geografia II 2 aulas vs. 40h; Servidores no 3º
+      ano): confirmar se há PPC mais novo.
+- [ ] **G14 (nova):** num sábado letivo, qual grade vale? (horário de um dia da semana, ou atividade específica?)
 - [ ] **Responder G01–G13** (tabela em `.handoff/github/issue-decisoes-g01-g13.md`; G01–G12 também no FSD, seção 5).
-      G01: blocos já cadastrados a partir da grade 2026 (4 × 60 min por turno); **falta só: há sábados letivos?**
+      G01 resolvida: blocos A–D de 60 min; sábados letivos existem e variam com o calendário (cadastro por data).
       Alternativa: autorizar o uso dos padrões sugeridos no FSD.
 
 ---
@@ -94,7 +96,7 @@ disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --buil
 
 | Módulo (FSD) | Requisito | Decisões |
 | :--- | :--- | :--- |
-| Grade e janelas livres | RF01 | G01 (blocos ok; falta sábado) |
+| Grade e janelas livres | RF01 | G14 (G01 resolvida) |
 | Ausências e substituição | RF02 | G01, G03 |
 | Painel de alimentação (AE) | RF03, RF04 | G02, G04, G05, G06, G13 |
 | Hub de comunicação WhatsApp | RF05 | G07, G08 |
@@ -110,6 +112,10 @@ Ordem sugerida após as decisões: Grade → Ausências → Alimentação → Co
 
 ## 5. Decisões já tomadas (não rediscutir sem motivo novo)
 
+- **Disciplinas:** técnicas são **semestrais** (CH da coluna "Semestre" do PPC) e têm **metade da carga prática**
+  (`exigePratica` verdadeiro); propedêuticas e diversificadas são **anuais**. Validado no formulário
+  (`DisciplinaSchema`). Ofertas devem respeitar isso: anual = ano letivo inteiro; técnica = um semestre.
+- **Sábados letivos** existem mas dependem do calendário civil: cadastrar por data, nunca como dia fixo da semana.
 - **Prisma 6.x**, não 7: o schema usa `url = env(...)` no datasource.
 - **Sessões próprias no banco**, não NextAuth (v5 ainda beta para Next 16). `NEXTAUTH_URL` → `APP_URL`;
   `AUTH_SECRET` removido. Caminho futuro: SSO SUAP via OIDC.

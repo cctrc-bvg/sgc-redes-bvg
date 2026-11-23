@@ -123,7 +123,7 @@ O **SGC-Redes** atua como um painel operacional complementar aos sistemas instit
 
 | ID | Questão de Borda / Regra Operacional | Opção Padrão Sugerida | Decisão Final |
 | :-: | :--- | :--- | :--- |
-| **G01** | Horários exatos dos blocos de aula (Manhã/Tarde) e existência de sábados letivos | 5 blocos Manhã + 5 blocos Tarde (50 min) | **Parcial:** 4 blocos de 60 min por turno (A–D), seg–sex, conforme grade 2026 (aSc). Manhã 07:30–11:45, intervalo 09:30–09:45; tarde 13:00–17:20, intervalo 15:00–15:20. Sábados letivos `[A DEFINIR]` |
+| **G01** | Horários exatos dos blocos de aula (Manhã/Tarde) e existência de sábados letivos | 5 blocos Manhã + 5 blocos Tarde (50 min) | **Parcial:** 4 blocos de 60 min por turno (A–D), seg–sex, conforme grade 2026 (aSc). Manhã 07:30–11:45, intervalo 09:30–09:45; tarde 13:00–17:20, intervalo 15:00–15:20. **Há sábados letivos**, definidos pelo calendário acadêmico conforme o calendário civil (não são fixos): o sistema deve cadastrá-los por data. |
 | **G02** | Falta apenas na última aula antes do intervalo/saída: mantém lanche das 09:30 / 15:00? | Sim, se houver aula no turno antes do lanche | `[A DEFINIR]` |
 | **G03** | Substituição: apenas professores da mesma turma ou qualquer docente de Redes disponível? | Priorizar mesma turma; listar demais como opção | `[A DEFINIR]` |
 | **G04** | Queda do turno da tarde e transporte escolar: cancelamento total do almoço (12:00) ou permite ajuste parcial de alunos que ficam esperando ônibus? | Cancelamento total por padrão, com campo editável de quantidade | `[A DEFINIR]` |

@@ -76,19 +76,31 @@ async function main() {
   }
 
   // 6. Catálogo de disciplinas (matriz do PPC). Só cria as que faltam, procurando por código ou
-  //    nome: nunca sobrescreve o que a Coordenação já ajustou no sistema.
+  //    nome: nunca sobrescreve o que a Coordenação já ajustou no sistema. Técnicas exigem prática
+  //    (metade da carga é prática). Cadastros anteriores sem núcleo recebem só a classificação.
   let novas = 0;
+  let classificadas = 0;
   for (const d of MATRIZ_REDES) {
     const existe = await prisma.disciplina.findFirst({
       where: { OR: [...(d.codigo ? [{ codigo: d.codigo }] : []), { nome: { equals: d.nome, mode: 'insensitive' as const } }] },
-      select: { id: true },
+      select: { id: true, nucleo: true },
     });
+    const posicao = { nucleo: d.nucleo, anoCurso: d.anoCurso, semestreCurso: d.semestreCurso };
     if (!existe) {
-      await prisma.disciplina.create({ data: { codigo: d.codigo, nome: d.nome, cargaHoraria: d.cargaHoraria } });
+      await prisma.disciplina.create({
+        data: { codigo: d.codigo, nome: d.nome, cargaHoraria: d.cargaHoraria, exigePratica: d.nucleo === 'TECNICO', ...posicao },
+      });
       novas++;
+    } else if (existe.nucleo === null) {
+      await prisma.disciplina.update({
+        where: { id: existe.id },
+        data: { ...posicao, ...(d.nucleo === 'TECNICO' ? { exigePratica: true } : {}) },
+      });
+      classificadas++;
     }
   }
   if (novas > 0) console.log(`Disciplinas da matriz cadastradas: ${novas}`);
+  if (classificadas > 0) console.log(`Disciplinas existentes classificadas (núcleo/ano/semestre): ${classificadas}`);
 
   console.log('Seed concluído com sucesso!');
 }

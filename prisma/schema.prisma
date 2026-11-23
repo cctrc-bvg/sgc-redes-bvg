@@ -84,6 +84,13 @@ enum Turno {
   TARDE
 }
 
+// Núcleos da matriz: técnicas são semestrais; propedêuticas e diversificadas são anuais.
+enum NucleoDisciplina {
+  PROPEDEUTICO
+  DIVERSIFICADO
+  TECNICO
+}
+
 enum TipoRefeicao {
   LANCHE_MANHA
   ALMOCO
@@ -117,6 +124,10 @@ model Disciplina {
   ementaUrl      String?
   programaTexto  String?
   ativa          Boolean  @default(true) // Desativada: fora da matriz vigente, mantida no histórico
+  // Posição na matriz. Opcionais só por compatibilidade com cadastros anteriores; o formulário exige.
+  nucleo         NucleoDisciplina?
+  anoCurso       Int?     // 1, 2 ou 3
+  semestreCurso  Int?     // 1 a 6, só para técnicas (semestrais); null = anual
 
   ofertas        DisciplinaOferta[]
   ppes           RegistroPPE[]

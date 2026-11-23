@@ -1,19 +1,37 @@
 import { describe, expect, it } from 'vitest';
 import { calcularTetoPei } from '@/lib/ppi-ppe-engines';
-import { DisciplinaSchema, verificarExclusao } from './regras';
+import { DisciplinaSchema, descreverPeriodo, divisaoTeoricaPratica, verificarExclusao } from './regras';
 
 const mensagem = (dados: Record<string, string>, campo: string) =>
   DisciplinaSchema.safeParse(dados).error?.issues.find((i) => i.path[0] === campo)?.message;
 
 describe('DisciplinaSchema', () => {
-  const base = { nome: '  Redes de Computadores I ', cargaHoraria: '80' };
+  const base = { nome: '  Biologia I ', cargaHoraria: '80', nucleo: 'PROPEDEUTICO', anoCurso: '1', semestreCurso: '' };
+  const tecnica = { nome: 'Redes de Computadores', cargaHoraria: '80', nucleo: 'TECNICO', anoCurso: '2', semestreCurso: '3' };
 
-  it('aceita dados mínimos, converte a carga horária e marca prática como falsa', () => {
+  it('aceita dados mínimos, converte números e marca prática como falsa', () => {
     expect(DisciplinaSchema.parse(base)).toEqual({
-      nome: 'Redes de Computadores I',
+      nome: 'Biologia I',
       cargaHoraria: 80,
       exigePratica: false,
+      nucleo: 'PROPEDEUTICO',
+      anoCurso: 1,
     });
+  });
+
+  it('exige núcleo e ano do curso', () => {
+    expect(mensagem({ ...base, nucleo: '' }, 'nucleo')).toMatch(/núcleo/);
+    expect(mensagem({ ...base, anoCurso: '4' }, 'anoCurso')).toMatch(/ano do curso/);
+  });
+
+  it('técnica é semestral: exige semestre dentro do ano', () => {
+    expect(DisciplinaSchema.parse(tecnica).semestreCurso).toBe(3);
+    expect(mensagem({ ...tecnica, semestreCurso: '' }, 'semestreCurso')).toMatch(/semestrais/);
+    expect(mensagem({ ...tecnica, semestreCurso: '5' }, 'semestreCurso')).toMatch(/2º ano corresponde ao 3º e ao 4º/);
+  });
+
+  it.each(['PROPEDEUTICO', 'DIVERSIFICADO'])('%s é anual: recusa semestre', (nucleo) => {
+    expect(mensagem({ ...base, nucleo, semestreCurso: '1' }, 'semestreCurso')).toMatch(/anuais/);
   });
 
   it('checkbox "on" marca a disciplina como prática (Art. 121)', () => {
@@ -67,6 +85,21 @@ describe('calcularTetoPei (Art. 117 §1º)', () => {
     [33, 9],
   ])('disciplina de %ih → PEI de até %ih', (ch, teto) => {
     expect(calcularTetoPei(ch)).toBe(teto);
+  });
+});
+
+describe('descreverPeriodo e divisaoTeoricaPratica', () => {
+  it('descreve anual, semestral e cadastro antigo', () => {
+    expect(descreverPeriodo({ anoCurso: 1, semestreCurso: null })).toBe('1º ano · anual');
+    expect(descreverPeriodo({ anoCurso: 2, semestreCurso: 4 })).toBe('2º ano · 4º semestre');
+    expect(descreverPeriodo({ anoCurso: null, semestreCurso: null })).toBe('—');
+  });
+
+  it('técnica: metade teórica e metade prática (hora ímpar fica na teórica)', () => {
+    expect(divisaoTeoricaPratica('TECNICO', 80)).toEqual({ teorica: 40, pratica: 40 });
+    expect(divisaoTeoricaPratica('TECNICO', 45)).toEqual({ teorica: 23, pratica: 22 });
+    expect(divisaoTeoricaPratica('PROPEDEUTICO', 80)).toBeNull();
+    expect(divisaoTeoricaPratica(null, 80)).toBeNull();
   });
 });
 
