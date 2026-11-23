@@ -36,6 +36,7 @@ Sistema web gratuito, de código aberto e auto-hospedado para apoiar a rotina op
 
 - [Especificação Funcional (FSD) e Checklist `/grill-me`](docs/FSD.md)
 - [Arquitetura, Segurança e Conformidade LGPD](docs/ARQUITETURA_LGPD.md)
+- [Identidade Visual, Usabilidade (Nielsen) e Acessibilidade (WCAG/eMAG)](docs/IDENTIDADE_VISUAL_UX.md)
 
 ---
 
