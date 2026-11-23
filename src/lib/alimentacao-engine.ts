@@ -42,11 +42,31 @@ export function calcularRefeicoesPrevistas(presenca: PresencaTurnos): TipoRefeic
   return refeicoes;
 }
 
+const FORMATO_DATA_ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * Garante que a data está no formato `AAAA-MM-DD` e existe no calendário.
+ *
+ * Sem esta checagem, um formato errado vira `NaN` e é classificado como "Emergência" sem aviso,
+ * e uma data inexistente (ex.: 30/02) é deslocada pelo `Date` para o mês seguinte.
+ */
+export function validarDataISO(dataISO: string): void {
+  const partes = FORMATO_DATA_ISO.exec(dataISO);
+  if (!partes) {
+    throw new RangeError(`Data inválida: "${dataISO}". Use o formato AAAA-MM-DD.`);
+  }
+  const [ano, mes, dia] = [Number(partes[1]), Number(partes[2]), Number(partes[3])];
+  const data = new Date(Date.UTC(ano, mes - 1, dia));
+  if (data.getUTCFullYear() !== ano || data.getUTCMonth() !== mes - 1 || data.getUTCDate() !== dia) {
+    throw new RangeError(`Data inexistente no calendário: "${dataISO}".`);
+  }
+}
+
 /**
  * Cria Date exato no fuso horário do Ceará (UTC-03:00) independente do fuso do servidor Docker.
+ * A data deve ter passado por `validarDataISO`.
  */
 function criarDataHoraCeara(dataISO: string, horaHHMM: string): Date {
-  // dataISO esperada: "YYYY-MM-DD"
   return new Date(`${dataISO}T${horaHHMM}:00-03:00`);
 }
 
@@ -72,7 +92,11 @@ export function calcularImpactoAlimentacao(params: {
   depois: PresencaTurnos;
   agora?: Date;
 }): ImpactoRefeicao[] {
+  validarDataISO(params.dataAulaISO);
   const agora = params.agora ?? new Date();
+  if (Number.isNaN(agora.getTime())) {
+    throw new RangeError('Instante de referência ("agora") inválido.');
+  }
   const refeicoesAntes = calcularRefeicoesPrevistas(params.antes);
   const refeicoesDepois = calcularRefeicoesPrevistas(params.depois);
 

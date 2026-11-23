@@ -4,6 +4,7 @@ import {
   calcularRefeicoesPrevistas,
   classificarSla,
   gerarMensagemAssistenciaEstudantil,
+  validarDataISO,
 } from './alimentacao-engine';
 
 const SO_MANHA = { temAulaManha: true, temAulaTarde: false };
@@ -144,6 +145,46 @@ describe('calcularImpactoAlimentacao (RF03 + RF04)', () => {
     const almoco = impactos.find((i) => i.tipoRefeicao === 'ALMOCO');
     expect(almoco?.antecedenciaMinutos).toBe(24 * 60);
     expect(almoco?.nivelSla).toBe('VERDE_24H_MAIS');
+  });
+});
+
+describe('validarDataISO', () => {
+  it('aceita datas válidas, inclusive 29/02 em ano bissexto', () => {
+    expect(() => validarDataISO('2026-11-25')).not.toThrow();
+    expect(() => validarDataISO('2028-02-29')).not.toThrow();
+    expect(() => validarDataISO('2026-12-31')).not.toThrow();
+  });
+
+  it.each(['25/11/2026', '2026-11-5', '2026/11/25', '2026-11-25T12:00', '', ' 2026-11-25'])(
+    'rejeita formato fora de AAAA-MM-DD: "%s"',
+    (data) => {
+      expect(() => validarDataISO(data)).toThrow(/formato AAAA-MM-DD/);
+    },
+  );
+
+  it.each(['2026-02-29', '2026-02-30', '2026-04-31', '2026-13-01', '2026-00-10', '2026-11-00'])(
+    'rejeita data inexistente no calendário: %s',
+    (data) => {
+      expect(() => validarDataISO(data)).toThrow(/inexistente/);
+    },
+  );
+});
+
+describe('calcularImpactoAlimentacao — entradas inválidas', () => {
+  const base = { antes: INTEGRAL, depois: SO_MANHA, agora: fortaleza('2026-11-24T08:00') };
+
+  it('lança erro em vez de classificar data malformada como emergência', () => {
+    expect(() => calcularImpactoAlimentacao({ ...base, dataAulaISO: '25/11/2026' })).toThrow(RangeError);
+  });
+
+  it('não desloca data inexistente para o mês seguinte', () => {
+    expect(() => calcularImpactoAlimentacao({ ...base, dataAulaISO: '2026-02-30' })).toThrow(RangeError);
+  });
+
+  it('lança erro quando o instante de referência é inválido', () => {
+    expect(() =>
+      calcularImpactoAlimentacao({ ...base, dataAulaISO: '2026-11-25', agora: new Date('inválida') }),
+    ).toThrow(/agora/);
   });
 });
 
