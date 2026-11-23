@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sgc_redes_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sgc_redes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trocar_esta_senha_em_producao}
+      POSTGRES_DB: ${POSTGRES_DB:-sgc_redes_ifce}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sgc_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sgc_redes} -d ${POSTGRES_DB:-sgc_redes_ifce}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sgc_redes_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sgc_redes}:${POSTGRES_PASSWORD:-trocar_esta_senha_em_producao}@db:5432/${POSTGRES_DB:-sgc_redes_ifce}?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:-gerar_chave_aleatoria_32_bytes}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      # Opcional: Webhook para Evolution API / n8n (WhatsApp automático no campus)
+      WHATSAPP_WEBHOOK_URL: ${WHATSAPP_WEBHOOK_URL:-}
+      WHATSAPP_WEBHOOK_TOKEN: ${WHATSAPP_WEBHOOK_TOKEN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sgc_internal
+
+volumes:
+  postgres_data:
+
+networks:
+  sgc_internal:
+    driver: bridge
