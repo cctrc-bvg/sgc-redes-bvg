@@ -27,6 +27,11 @@ export function avaliarProgressoPpi(totalValidado: number, meta = 40) {
   };
 }
 
+/** Art. 117 §1º ROD: o PEI tem no máximo 30% da carga horária total da disciplina (horas inteiras). */
+export function calcularTetoPei(cargaHorariaDisciplina: number): number {
+  return Math.floor(cargaHorariaDisciplina * 0.3);
+}
+
 /**
  * Regras do ROD - Seção VI (PPE):
  * - Art. 115: até 2 componentes em PPE; 3 ou mais => retenção.
@@ -40,7 +45,7 @@ export function validarLimitePei(params: {
   horasPraticas: number;
   exigePratica: boolean;
 }): { valido: boolean; teto30Porcento: number; erros: string[] } {
-  const teto30Porcento = Math.floor(params.cargaHorariaDisciplina * 0.3);
+  const teto30Porcento = calcularTetoPei(params.cargaHorariaDisciplina);
   const erros: string[] = [];
 
   if (params.cargaHorariaPeiInformada <= 0) {

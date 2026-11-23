@@ -116,6 +116,7 @@ model Disciplina {
   exigePratica   Boolean  @default(false) // Art. 121 do ROD (PPE)
   ementaUrl      String?
   programaTexto  String?
+  ativa          Boolean  @default(true) // Desativada: fora da matriz vigente, mantida no histórico
 
   ofertas        DisciplinaOferta[]
   ppes           RegistroPPE[]

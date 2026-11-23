@@ -29,6 +29,11 @@ export default async function LayoutPainel({ children }: { children: React.React
                 Usuários
               </Link>
             )}
+            {temPermissao(usuario.role, 'disciplinas:gerenciar') && (
+              <Link href="/disciplinas" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
+                Disciplinas
+              </Link>
+            )}
             <Link href="/conta/senha" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
               Alterar senha
             </Link>

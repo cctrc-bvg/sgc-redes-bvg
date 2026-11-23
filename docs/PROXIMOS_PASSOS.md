@@ -1,6 +1,6 @@
 # Próximos Passos — Retomada do Desenvolvimento
 
-> Atualizado em **23/11/2026**. Leia este arquivo inteiro antes de continuar. Ele resume o estado do projeto, o que está
+> Atualizado em **23/11/2026** (2ª sessão). Leia este arquivo inteiro antes de continuar. Ele resume o estado do projeto, o que está
 > bloqueado, o que fazer em seguida e as armadilhas já encontradas (para não redescobri-las).
 
 ---
@@ -10,7 +10,7 @@
 ```bash
 cd ~/projetos/sgc-redes-bvg
 git status && git log --oneline -9          # branch minha-contribuicao, em dia com origin
-./scripts/dev.sh testar                      # esperado: typecheck ok + 90 testes passando
+./scripts/dev.sh testar                      # esperado: typecheck ok + 129 testes passando
 ls .handoff/                                 # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
@@ -23,7 +23,7 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 **Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (permissão de admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
 (somente leitura; contém **apenas o commit inicial com a licença**). O FSD, o README e o código inicial existem só no fork.
 
-**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 11 commits à frente do upstream (4 do código inicial + 7 novos):
+**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 13 commits à frente do upstream (4 do código inicial + 9 novos):
 
 | Commit | Conteúdo |
 | :--- | :--- |
@@ -34,15 +34,17 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 | `605ec1c` | `scripts/dev.sh` (setup, testar, banco nativo/docker, dev, studio, docker, tudo) |
 | `fd88bb4` | Login, sessões no banco, RBAC do FSD, troca obrigatória de senha, auditoria; seed sem senha fixa |
 | `b62b737` | Cadastro/gestão de usuários pela Coordenação (`/usuarios`) |
+| `d3cb489` | Correção: motor de alimentação valida a data (formato e calendário) |
+| *(último)* | Catálogo de Disciplinas (`/disciplinas`), permissão `disciplinas:gerenciar`, campo `Disciplina.ativa` |
 
 **`AGENTS.md`** (raiz): gerado pelo `next dev` com orientações para assistentes de código sobre o Next 16; versionado
 para não reaparecer como alteração pendente. Pode ser editado fora do bloco `nextjs-agent-rules`.
 
 **Telas existentes:** `/login`, `/painel` (cards dos módulos do perfil, todos "Em desenvolvimento"), `/conta/senha`,
-`/usuarios`, `/usuarios/novo`, `/usuarios/[id]`, `/usuarios/[id]/senha`.
+`/usuarios`, `/usuarios/novo`, `/usuarios/[id]`, `/usuarios/[id]/senha`, `/disciplinas`, `/disciplinas/nova`, `/disciplinas/[id]`.
 
-**Verificado:** 90 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login: 23 verificações;
-usuários: 33). **Nunca verificado:** `docker compose up --build` (Docker não instalado na máquina de desenvolvimento).
+**Verificado:** 129 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login, usuários e
+disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --build` (Docker não instalado na máquina de desenvolvimento).
 
 ---
 
@@ -65,10 +67,10 @@ usuários: 33). **Nunca verificado:** `docker compose up --build` (Docker não i
 
 ### P1 — não depende de G01–G13 (pode começar já)
 
-1. **Validar a data no motor de alimentação** — `dataAulaISO` fora do formato `AAAA-MM-DD` gera `NaN` e vira
-   "🔴 Emergência" silenciosamente (`src/lib/alimentacao-engine.ts`). Lançar erro + testes. Commit separado.
-2. **Catálogo de Disciplinas** (FSD 1.1, Art. 22 III/IX) — CRUD com `cargaHoraria` e `exigePratica` (usados pelo
-   teto de 30% do PEI e pelo Art. 121). Permissão sugerida: nova `disciplinas:gerenciar` (Coordenação).
+1. ~~Validar a data no motor de alimentação~~ — feito (`d3cb489`).
+2. ~~Catálogo de Disciplinas~~ — feito. Desativar em vez de excluir quando já há ofertas/PPEs; exclusão só para
+   cadastro por engano. Falta: **importar a matriz do curso** (lista real de disciplinas e CH — pedir ao usuário
+   ou ao PPC) e decidir se Professor/CTP devem **consultar** o catálogo (hoje só a Coordenação vê).
 3. **Ofertas por semestre** (`DisciplinaOferta`: turma × disciplina × professor) — pré-requisito da grade e do
    semáforo de diários. Depende do catálogo e do cadastro de usuários (professores).
 4. **Turmas** — hoje só via seed (`REDES-1..3`); tela para editar `qtdAlunosAtivos` e médias de refeição
@@ -165,7 +167,8 @@ Ordem sugerida após as decisões: Grade → Ausências → Alimentação → Co
 NEXT_TELEMETRY_DISABLED=1 nice -n 15 npx next build       # build de produção
 # Se mexeu em telas/ações: E2E sem JavaScript contra Postgres temporário
 .handoff/e2e/e2e_ambiente.sh                              # recria banco, migra, seed, sobe servidor na 3123
-python3 -I .handoff/e2e/e2e_login.py && python3 -I .handoff/e2e/e2e_usuarios.py
+python3 -I .handoff/e2e/e2e_usuarios.py && python3 -I .handoff/e2e/e2e_disciplinas.py
+# e2e_login.py troca a senha da coordenação para outra: rode-o num banco recriado
 ```
 
 Após o E2E, desligue o servidor (porta 3123) e o banco (`npx prisma dev stop sgc-teste && npx prisma dev rm sgc-teste`).

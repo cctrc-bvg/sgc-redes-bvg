@@ -135,3 +135,45 @@ export function BotaoSecundario({ children, ...props }: React.ButtonHTMLAttribut
     </button>
   );
 }
+
+type AreaTextoProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  id: string;
+  rotulo: string;
+  dica?: string;
+  erros?: string[];
+};
+
+/** Texto longo (várias linhas) com o mesmo padrão acessível do Campo. */
+export function AreaTexto({ id, rotulo, dica, erros, className, ...props }: AreaTextoProps) {
+  const temErro = Boolean(erros?.length);
+  const descritores = [dica && `${id}-dica`, temErro && `${id}-erro`].filter(Boolean).join(' ') || undefined;
+  return (
+    <div className={className}>
+      <label htmlFor={id} className="block text-sm font-semibold text-slate-800">
+        {rotulo}
+      </label>
+      {dica && (
+        <p id={`${id}-dica`} className="mt-0.5 text-sm text-slate-600">
+          {dica}
+        </p>
+      )}
+      <textarea
+        id={id}
+        name={id}
+        aria-invalid={temErro || undefined}
+        aria-describedby={descritores}
+        className={`mt-1 block w-full rounded-md border bg-white px-3 py-2.5 text-base text-slate-900 shadow-sm focus:border-if-verde-700 focus:outline-none focus:ring-2 focus:ring-if-verde-700 ${
+          temErro ? 'border-if-vermelho-700' : 'border-slate-400'
+        }`}
+        {...props}
+      />
+      {temErro && (
+        <ul id={`${id}-erro`} className="mt-1 space-y-0.5 text-sm text-if-vermelho-700">
+          {erros!.map((e) => (
+            <li key={e}>{e}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

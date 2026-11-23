@@ -27,6 +27,7 @@ export const PERMISSOES = [
   'kanban:ver-sigiloso', // Art. 22, VIII — exclusivo da Coordenação
   'relatorios:ver',
   'usuarios:gerenciar',
+  'disciplinas:gerenciar', // Art. 22, III e IX — estrutura curricular, programas e ementas
   'auditoria:ver',
 ] as const;
 
