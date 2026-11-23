@@ -83,7 +83,7 @@ async function main() {
   for (const d of MATRIZ_REDES) {
     const existe = await prisma.disciplina.findFirst({
       where: { OR: [...(d.codigo ? [{ codigo: d.codigo }] : []), { nome: { equals: d.nome, mode: 'insensitive' as const } }] },
-      select: { id: true, nucleo: true },
+      select: { id: true, nucleo: true, codigo: true },
     });
     const posicao = { nucleo: d.nucleo, anoCurso: d.anoCurso, semestreCurso: d.semestreCurso };
     if (!existe) {
@@ -97,6 +97,11 @@ async function main() {
         data: { ...posicao, ...(d.nucleo === 'TECNICO' ? { exigePratica: true } : {}) },
       });
       classificadas++;
+    }
+    // Completa a sigla de cadastros que ficaram sem código (nunca troca uma sigla existente).
+    if (existe && existe.codigo === null && d.codigo) {
+      const emUso = await prisma.disciplina.findUnique({ where: { codigo: d.codigo }, select: { id: true } });
+      if (!emUso) await prisma.disciplina.update({ where: { id: existe.id }, data: { codigo: d.codigo } });
     }
   }
   if (novas > 0) console.log(`Disciplinas da matriz cadastradas: ${novas}`);

@@ -15,7 +15,9 @@ import type { NucleoDisciplina } from '@prisma/client';
  *   usa o mesmo código nos três anos e o catálogo exige código único.
  * - Sem código no PPC: Ética, Empreendedorismo, Sociologia do 2º ano (seguiu o padrão SOC.<ano>)
  *   e Língua Espanhola.
- * - Técnicas do 3º ano ficam SEM código: no PPC repetem os códigos do 2º ano (R.C, C.E, S.O, SO.R).
+ * - Técnicas do 3º ano: o PPC repete os códigos do 2º ano (R.C, C.E, S.O, SO.R) por erro; as siglas corretas
+ *   (SEGR, EB, PRD, RSF) foram informadas pela Coordenação.
+ * - O total de 960h do 3º ano no PPC está errado (confirmado pela Coordenação); a soma correta é 1.080h.
  */
 
 export interface DisciplinaMatriz {
@@ -102,7 +104,7 @@ export const MATRIZ_REDES: readonly DisciplinaMatriz[] = [
   tec(4, 'A.V.S', 'Automação via Script', 40),
   tec(4, 'SEV', 'Servidores', 80),
 
-  // ── 3º ano (CH total no PPC: 960h — a soma das linhas dá 1.040h, ver pendências) ──
+  // ── 3º ano (o PPC informa 960h por erro de soma; o correto é 1.080h) ──
   prop(3, 'BIO.3', 'Biologia III', 80),
   prop(3, 'FIS.3', 'Física III', 80),
   prop(3, 'MAT.3', 'Matemática III', 80),
@@ -113,8 +115,8 @@ export const MATRIZ_REDES: readonly DisciplinaMatriz[] = [
   prop(3, 'HIS.3', 'História III', 80),
   prop(3, 'GEO.3', 'Geografia III', 40),
   div(3, 'Língua Espanhola', 80),
-  tec(5, null, 'Segurança de Redes', 80, 'No PPC aparece com o código R.C, o mesmo de Redes de Computadores (2º ano).'),
-  tec(5, null, 'Eletricidade Básica', 80, 'Coluna "Anual" do PPC diz 40h; usada a "Semestre" (80h). Código C.E repetido.'),
-  tec(6, null, 'Projeto de Redes', 40, 'Coluna "Anual" do PPC diz 80h e a grade 2026 tem 4 aulas/semana; usada a "Semestre" (40h). Código S.O repetido.'),
-  tec(6, null, 'Redes sem Fio', 80, 'Coluna "Anual" em branco no PPC (fica fora do total de 960h). Código SO.R repetido.'),
+  tec(5, 'SEGR', 'Segurança de Redes', 80),
+  tec(5, 'EB', 'Eletricidade Básica', 80),
+  tec(6, 'PRD', 'Projeto de Redes', 80),
+  tec(6, 'RSF', 'Redes sem Fio', 80),
 ];

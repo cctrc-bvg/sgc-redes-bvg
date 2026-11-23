@@ -31,9 +31,17 @@ describe('MATRIZ_REDES (PPC, seção 13)', () => {
     expect(total(2)).toBe(1360);
   });
 
-  it('a divergência do 3º ano com o PPC (soma 1.040h × total 960h) está registrada como pendência', () => {
-    expect(total(3)).toBe(1040);
-    expect(MATRIZ_REDES.filter((d) => d.anoCurso === 3 && d.pendencia)).toHaveLength(4);
+  it('3º ano soma 1.080h (o total de 960h impresso no PPC tem erro de soma)', () => {
+    expect(total(3)).toBe(1080);
+  });
+
+  it('não há pendências de transcrição em aberto', () => {
+    expect(MATRIZ_REDES.filter((d) => d.pendencia)).toEqual([]);
+  });
+
+  it('técnicas do 3º ano têm as siglas próprias, não as do 2º ano', () => {
+    const terceiro = MATRIZ_REDES.filter((d) => d.anoCurso === 3 && d.nucleo === 'TECNICO').map((d) => d.codigo);
+    expect(terceiro).toEqual(['SEGR', 'EB', 'PRD', 'RSF']);
   });
 
   it('técnicas são semestrais; propedêuticas e diversificadas, anuais', () => {

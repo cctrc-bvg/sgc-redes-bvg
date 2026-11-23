@@ -59,11 +59,10 @@ disciplinas: 30 verificações). **Nunca verificado:** `docker compose up --buil
       Pontos de risco: Prisma no Alpine (openssl/musl) e o motor do Prisma no `standalone`.
 - [ ] **Decidir a publicação no `cctrc-bvg`:** abrir issue + PR com os 11 commits, ou primeiro um PR dentro do próprio fork.
       Textos prontos em `.handoff/github/` (o PR tem um item "Docker" a marcar após o teste e um `#<número>` da issue).
-- [ ] **Conferir a transcrição da matriz** (`src/lib/disciplinas/matriz-curricular.ts`, campo `pendencia`): no PPC, as
-      técnicas do 3º ano repetem os códigos do 2º (ficaram sem código). Técnicas usam a coluna "Semestre"; com isso o
-      3º ano soma 1.040h, e não as 960h do PPC (Projeto de Redes 40h, mas a grade 2026 tem 4 aulas/semana). A grade
-      também diverge da matriz em aulas/semana de algumas anuais (ex.: Geografia II 2 aulas vs. 40h; Servidores no 3º
-      ano): confirmar se há PPC mais novo.
+- [x] ~~Transcrição da matriz~~ — conferida: siglas SEGR, EB, PRD, RSF; Projeto de Redes 80h; o total de 960h do
+      3º ano no PPC tem erro de soma (correto: 1.080h).
+- [ ] A grade 2026 diverge da matriz em aulas/semana de algumas anuais (ex.: Geografia II 2 aulas vs. 40h;
+      Servidores no 3º ano): confirmar se há PPC mais novo. Não bloqueia.
 - [ ] **G14 (nova):** num sábado letivo, qual grade vale? (horário de um dia da semana, ou atividade específica?)
 - [ ] **Responder G01–G13** (tabela em `.handoff/github/issue-decisoes-g01-g13.md`; G01–G12 também no FSD, seção 5).
       G01 resolvida: blocos A–D de 60 min; sábados letivos existem e variam com o calendário (cadastro por data).
