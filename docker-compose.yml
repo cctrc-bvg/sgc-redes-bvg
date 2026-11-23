@@ -17,10 +17,27 @@ services:
       timeout: 5s
       retries: 5
 
+  # Aplica as migrações do Prisma e o seed inicial; encerra ao terminar.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    container_name: sgc_redes_migrate
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sgc_redes}:${POSTGRES_PASSWORD:-trocar_esta_senha_em_producao}@db:5432/${POSTGRES_DB:-sgc_redes_ifce}?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sgc_internal
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
     container_name: sgc_redes_app
     restart: unless-stopped
     ports:
@@ -35,6 +52,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - sgc_internal
 

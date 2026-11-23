@@ -47,6 +47,31 @@ cp .env.example .env
 docker compose up -d
 ```
 
+Na primeira subida, o serviço `migrate` aplica as migrações do Prisma e o seed inicial e depois
+encerra; em seguida o `app` sobe em `http://localhost:3000`.
+
+---
+
+## Desenvolvimento Local
+
+Requisitos: Node.js 20.9+ (recomendado 22) e um PostgreSQL 16 acessível.
+
+```bash
+cp .env.example .env      # ajuste DATABASE_URL para o seu PostgreSQL
+npm install               # também gera o Prisma Client
+npm run db:deploy         # aplica as migrações
+npm run db:seed           # cria turmas, canais, regras de PPI e o usuário coordenador
+npm run dev               # http://localhost:3000
+```
+
+| Script | Descrição |
+| :--- | :--- |
+| `npm run typecheck` | Verificação de tipos (TypeScript) |
+| `npm test` | Testes unitários (Vitest) |
+| `npm run build` | Build de produção (Next.js standalone) |
+| `npm run db:migrate` | Cria uma nova migração após alterar `prisma/schema.prisma` |
+| `npm run db:studio` | Interface do Prisma para inspecionar o banco |
+
 ---
 
 ## Mantenedores
