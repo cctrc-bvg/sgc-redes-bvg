@@ -91,6 +91,9 @@ npm run dev               # http://localhost:3000
    seed (no Docker: `docker compose logs migrate`).
 2. Entre em `/login`; o sistema exige a **troca da senha provisória** antes de liberar o painel.
 3. Cada perfil vê apenas os módulos permitidos pela matriz do FSD (seção 2), definida em `src/lib/auth/rbac.ts`.
+4. Em **Usuários** (`/usuarios`), a Coordenação cadastra professores, CTP, Direção e Assistência Estudantil.
+   O sistema gera uma senha provisória exibida uma única vez, para entrega em mensagem privada; a pessoa
+   define a própria senha no primeiro acesso. Desativar um usuário encerra as sessões dele na hora.
 
 Detalhes de segurança: sessões no banco (o cookie `HttpOnly`/`SameSite=Lax` guarda um token aleatório; o
 banco guarda só o hash SHA-256), expiração após 8h sem uso, cookie encerrado ao fechar o navegador,

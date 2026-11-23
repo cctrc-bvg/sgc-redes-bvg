@@ -49,6 +49,9 @@ export function temPermissao(perfil: Role, permissao: Permissao): boolean {
   return PERMISSOES_POR_PERFIL[perfil].includes(permissao);
 }
 
+/** Perfis na ordem de exibição. */
+export const PERFIS: readonly Role[] = ['COORDENADOR', 'PROFESSOR', 'CTP', 'DIRECAO', 'ASSISTENCIA_ESTUDANTIL'];
+
 export const NOME_PERFIL: Record<Role, string> = {
   COORDENADOR: 'Coordenação',
   PROFESSOR: 'Professor(a)',

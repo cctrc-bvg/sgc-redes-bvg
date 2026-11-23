@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { exigirUsuario } from '@/lib/auth/dal';
-import { NOME_PERFIL } from '@/lib/auth/rbac';
+import { NOME_PERFIL, temPermissao } from '@/lib/auth/rbac';
 import { sair } from './actions';
 
 /**
@@ -24,6 +24,11 @@ export default async function LayoutPainel({ children }: { children: React.React
               <span className="font-semibold">{usuario.nome}</span>
               <span className="text-slate-600"> · {NOME_PERFIL[usuario.role]}</span>
             </span>
+            {temPermissao(usuario.role, 'usuarios:gerenciar') && (
+              <Link href="/usuarios" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
+                Usuários
+              </Link>
+            )}
             <Link href="/conta/senha" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
               Alterar senha
             </Link>
