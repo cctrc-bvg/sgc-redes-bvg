@@ -55,7 +55,16 @@ encerra; em seguida o `app` sobe em `http://localhost:3000`.
 
 ## Desenvolvimento Local
 
-Requisitos: Node.js 20.9+ (recomendado 22) e um PostgreSQL 16 acessível.
+O jeito mais rápido é usar o script de apoio, que roda os passos com baixa prioridade de CPU/disco:
+
+```bash
+./scripts/dev.sh tudo     # instala, cria .env com senhas aleatórias, testa e prepara o banco
+./scripts/dev.sh dev      # http://localhost:3000  (use --rede para acessar de outro computador)
+./scripts/dev.sh studio   # http://localhost:5555 — dados do seed (turmas, canais, regras PPI)
+./scripts/dev.sh ajuda    # todos os comandos (setup, testar, banco, docker...)
+```
+
+Para fazer manualmente — requisitos: Node.js 20.9+ (recomendado 22) e um PostgreSQL 16 acessível.
 
 ```bash
 cp .env.example .env      # ajuste DATABASE_URL para o seu PostgreSQL
