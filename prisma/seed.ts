@@ -1,22 +1,32 @@
 import { PrismaClient, Role, CanalWhatsapp } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
 import { REGRAS_PPI_2022 } from '../src/lib/ppi-regras-2022';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // 1. Coordenador inicial (trocar senha no primeiro acesso!)
-  const hash = await bcrypt.hash('Ifce@Redes2026', 12);
-  await prisma.user.upsert({
-    where: { email: 'cctrc.boaviagem@ifce.edu.br' },
-    update: {},
-    create: {
-      nome: 'Coordenação Redes de Computadores',
-      email: 'cctrc.boaviagem@ifce.edu.br',
-      passwordHash: hash,
-      role: Role.COORDENADOR,
-    },
-  });
+  // 1. Coordenador inicial — senha provisória, troca obrigatória no primeiro acesso.
+  //    Vem de SEED_COORDENADOR_SENHA (.env) ou é gerada aleatoriamente e exibida uma única vez.
+  const emailCoordenador = (process.env.SEED_COORDENADOR_EMAIL || 'cctrc.boaviagem@ifce.edu.br').trim().toLowerCase();
+  const existente = await prisma.user.findUnique({ where: { email: emailCoordenador } });
+  if (!existente) {
+    const senhaInformada = process.env.SEED_COORDENADOR_SENHA;
+    const senha = senhaInformada || randomBytes(9).toString('base64url');
+    await prisma.user.create({
+      data: {
+        nome: 'Coordenação Redes de Computadores',
+        email: emailCoordenador,
+        passwordHash: await bcrypt.hash(senha, 12),
+        role: Role.COORDENADOR,
+        deveTrocarSenha: true,
+      },
+    });
+    console.log(`Usuário coordenador criado: ${emailCoordenador}`);
+    if (!senhaInformada) {
+      console.log(`Senha provisória (anote agora, não será exibida novamente): ${senha}`);
+    }
+  }
 
   // 2. Três turmas do Técnico Integrado
   const turmas = [

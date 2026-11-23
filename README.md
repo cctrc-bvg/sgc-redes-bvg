@@ -84,6 +84,25 @@ npm run dev               # http://localhost:3000
 
 ---
 
+## Primeiro Acesso e Autenticação
+
+1. O seed cria o usuário da Coordenação (`SEED_COORDENADOR_EMAIL`, padrão `cctrc.boaviagem@ifce.edu.br`).
+   A senha vem de `SEED_COORDENADOR_SENHA` ou, se vazia, é **gerada e exibida uma única vez** na saída do
+   seed (no Docker: `docker compose logs migrate`).
+2. Entre em `/login`; o sistema exige a **troca da senha provisória** antes de liberar o painel.
+3. Cada perfil vê apenas os módulos permitidos pela matriz do FSD (seção 2), definida em `src/lib/auth/rbac.ts`.
+
+Detalhes de segurança: sessões no banco (o cookie `HttpOnly`/`SameSite=Lax` guarda um token aleatório; o
+banco guarda só o hash SHA-256), expiração após 8h sem uso, cookie encerrado ao fechar o navegador,
+senhas com bcrypt (custo 12), limite de 5 tentativas de login por e-mail a cada 15 min e registro em
+`AuditLog` de login, falhas, logout e troca de senha. Em produção, defina `APP_URL` com `https://` para o
+cookie ser marcado como `Secure`.
+
+Toda página ou Server Action protegida deve começar com `exigirUsuario()` ou `exigirPermissao(...)`
+(`src/lib/auth/dal.ts`); o `src/proxy.ts` faz apenas uma checagem otimista do cookie.
+
+---
+
 ## Mantenedores
 
 - Coordenação do Curso Técnico Integrado em Redes de Computadores — IFCE Campus Boa Viagem (`cctrc-bvg`).

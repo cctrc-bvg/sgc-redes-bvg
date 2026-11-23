@@ -28,10 +28,14 @@ model User {
   passwordHash  String
   role          Role     @default(PROFESSOR)
   ativo         Boolean  @default(true)
+  // Senha provisória (seed ou cadastro pela coordenação) deve ser trocada no primeiro acesso.
+  deveTrocarSenha Boolean @default(true)
+  ultimoLoginEm DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   // Relações
+  sessoes                Sessao[]
   disciplinasMinistradas DisciplinaOferta[]
   ausenciasRegistradas   AusenciaDocente[]  @relation("ProfessorAusente")
   substituicoesFeitas    AusenciaDocente[]  @relation("ProfessorSubstituto")
@@ -39,6 +43,21 @@ model User {
   ppisOrientadas         PpiAtividade[]
   logsAuditoria          AuditLog[]
   ocorrenciasCriadas     ProcessoKanban[]
+}
+
+// Sessão de login. O cookie guarda um token aleatório; o banco guarda apenas o hash SHA-256
+// dele (id), de modo que um vazamento da tabela não permite sequestrar sessões.
+model Sessao {
+  id         String   @id // sha256(token) em hexadecimal
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiraEm   DateTime // renovada com o uso (expiração por inatividade)
+  criadaEm   DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+
+  @@index([userId])
+  @@index([expiraEm])
 }
 
 model AuditLog {

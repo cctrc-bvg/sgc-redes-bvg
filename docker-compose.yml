@@ -27,6 +27,8 @@ services:
     restart: "no"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-sgc_redes}:${POSTGRES_PASSWORD:-trocar_esta_senha_em_producao}@db:5432/${POSTGRES_DB:-sgc_redes_ifce}?schema=public
+      SEED_COORDENADOR_EMAIL: ${SEED_COORDENADOR_EMAIL:-}
+      SEED_COORDENADOR_SENHA: ${SEED_COORDENADOR_SENHA:-}
     depends_on:
       db:
         condition: service_healthy
@@ -44,8 +46,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-sgc_redes}:${POSTGRES_PASSWORD:-trocar_esta_senha_em_producao}@db:5432/${POSTGRES_DB:-sgc_redes_ifce}?schema=public
-      AUTH_SECRET: ${AUTH_SECRET:-gerar_chave_aleatoria_32_bytes}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      APP_URL: ${APP_URL:-http://localhost:3000}
       # Opcional: Webhook para Evolution API / n8n (WhatsApp automático no campus)
       WHATSAPP_WEBHOOK_URL: ${WHATSAPP_WEBHOOK_URL:-}
       WHATSAPP_WEBHOOK_TOKEN: ${WHATSAPP_WEBHOOK_TOKEN:-}

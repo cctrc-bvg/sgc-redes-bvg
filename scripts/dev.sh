@@ -103,14 +103,11 @@ cmd_setup() {
   if [[ -f .env ]]; then
     ok ".env já existe (mantido como está)"
   else
-    local senha auth
+    local senha
     senha="$(segredo 16)"
-    auth="$(segredo 32)"
-    sed -e "s/trocar_esta_senha_em_producao/${senha}/g" \
-        -e "s/^AUTH_SECRET=.*/AUTH_SECRET=${auth}/" \
-        .env.example > .env
+    sed -e "s/trocar_esta_senha_em_producao/${senha}/g" .env.example > .env
     chmod 600 .env
-    ok ".env criado com senha do banco e AUTH_SECRET aleatórios"
+    ok ".env criado com senha do banco aleatória"
   fi
 }
 
