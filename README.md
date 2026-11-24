@@ -41,6 +41,7 @@ Sistema web gratuito, de código aberto e auto-hospedado para apoiar a rotina op
 | Regras de negócio | [Especificação Funcional (FSD)](docs/FSD.md) |
 | Segurança e LGPD | [Arquitetura, Segurança e Conformidade LGPD](docs/ARQUITETURA_LGPD.md) |
 | Interface | [Identidade Visual, Usabilidade (Nielsen) e Acessibilidade (WCAG/eMAG)](docs/IDENTIDADE_VISUAL_UX.md) |
+| Implantação | [Produção: VM, Docker Compose, HTTPS e backup](docs/IMPLANTACAO.md) |
 | Andamento | [Próximos passos e backlog](docs/PROXIMOS_PASSOS.md) |
 
 ---
@@ -89,6 +90,7 @@ npm run dev               # http://localhost:3000
 | `npm run db:studio` | Interface do Prisma para inspecionar o banco |
 | `npm run db:demo -- --confirmo` | Dados fictícios de demonstração (nunca em produção) |
 | `npm run manual` | Gera `docs/MANUAL_DO_USUARIO.md` a partir do conteúdo da Ajuda |
+| `npm run e2e` | Testes de ponta a ponta (Playwright) sobre os dados de demonstração |
 | `npm run capturas` | Gera as capturas de tela da Ajuda (Playwright; servidor com dados de demonstração) |
 
 ---
