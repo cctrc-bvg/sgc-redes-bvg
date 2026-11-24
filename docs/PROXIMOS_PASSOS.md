@@ -99,7 +99,7 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
       Obs.: o usuário já está no grupo `docker`; uma sessão de terminal antiga precisa de `sg docker -c "..."`.
 - [ ] **Testar a stack Docker completa:** `./scripts/dev.sh docker` (senha inicial em `docker compose logs migrate`).
       Riscos: Prisma no Alpine (openssl/musl), motor do Prisma e **ExcelJS** no `standalone`. É pesado para 4 GB de RAM.
-- [ ] **Enviar os commits da madrugada ao fork** (`git push origin minha-contribuicao`) depois de revisar.
+- [x] ~~Enviar os commits da madrugada ao fork~~ — enviados em 24/11/2026; primeira execução do CI no GitHub passou.
 - [ ] **Testar no navegador com JavaScript** os módulos novos (os E2E são sem JS). Em especial a página da ausência
       (vários formulários) e a Alimentação vista pela AE.
 - [ ] **Configurar a Evolution API** se quiserem envio automático (G07): `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`,
@@ -118,7 +118,7 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
 ### P1 — próximos passos
 
 1. **Testes E2E versionados** — migrar `.handoff/e2e/` (Python, sem JS) para Playwright no projeto, + roteiros com JS.
-2. ~~CI~~ feito. Conferir a primeira execução no GitHub depois do `git push` (nunca rodou lá).
+2. ~~CI~~ feito e verde no GitHub (actions na v5, sem o aviso de Node 20).
 3. **`prisma.config.ts`** — o Prisma avisa que `package.json#prisma` (seed) será removido no Prisma 7. **Cuidado:** com o
    arquivo de configuração o Prisma 6 deixa de carregar o `.env` sozinho (precisa de `import 'dotenv/config'`), o que afeta
    `scripts/dev.sh` e o Dockerfile (`npx prisma db seed`). Fazer junto com o teste da stack Docker.
