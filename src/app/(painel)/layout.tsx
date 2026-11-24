@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { exigirUsuario } from '@/lib/auth/dal';
-import { NOME_PERFIL, temPermissao } from '@/lib/auth/rbac';
+import { NOME_PERFIL, temPermissao, type Permissao } from '@/lib/auth/rbac';
 import { sair } from './actions';
 
 /**
@@ -10,6 +10,24 @@ import { sair } from './actions';
  */
 export default async function LayoutPainel({ children }: { children: React.ReactNode }) {
   const { usuario } = await exigirUsuario({ permitirSenhaProvisoria: true });
+  // Links do cabeçalho por permissão. Com muitos (Coordenação), agrupa em menus <details>, que funcionam sem JavaScript.
+  const LINKS: { href: string; rotulo: string; permissao: Permissao; grupo: 'Operação' | 'Cadastros' }[] = [
+    { href: '/grade', rotulo: 'Grade', permissao: 'grade:ver', grupo: 'Operação' },
+    { href: '/ausencias', rotulo: 'Ausências', permissao: 'ausencias:registrar', grupo: 'Operação' },
+    { href: '/alimentacao', rotulo: 'Alimentação', permissao: 'alimentacao:ver', grupo: 'Operação' },
+    { href: '/comunicacao', rotulo: 'Comunicação', permissao: 'comunicacao:enviar', grupo: 'Operação' },
+    { href: '/usuarios', rotulo: 'Usuários', permissao: 'usuarios:gerenciar', grupo: 'Cadastros' },
+    { href: '/turmas', rotulo: 'Turmas', permissao: 'turmas:gerenciar', grupo: 'Cadastros' },
+    { href: '/disciplinas', rotulo: 'Disciplinas', permissao: 'disciplinas:ver', grupo: 'Cadastros' },
+    { href: '/ofertas', rotulo: 'Ofertas', permissao: 'ofertas:gerenciar', grupo: 'Cadastros' },
+    { href: '/auditoria', rotulo: 'Auditoria', permissao: 'auditoria:ver', grupo: 'Cadastros' },
+  ];
+  const links = LINKS.filter((l) => temPermissao(usuario.role, l.permissao));
+  const grupos =
+    links.length > 4
+      ? (['Operação', 'Cadastros'] as const).map((titulo) => ({ titulo, links: links.filter((l) => l.grupo === titulo) })).filter((g) => g.links.length > 0)
+      : [];
+  const classeLink = 'inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800';
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
@@ -24,50 +42,29 @@ export default async function LayoutPainel({ children }: { children: React.React
               <span className="font-semibold">{usuario.nome}</span>
               <span className="text-slate-600"> · {NOME_PERFIL[usuario.role]}</span>
             </span>
-            {temPermissao(usuario.role, 'grade:ver') && (
-              <Link href="/grade" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
-                Grade
-              </Link>
-            )}
-            {temPermissao(usuario.role, 'alimentacao:ver') && (
-              <Link href="/alimentacao" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
-                Alimentação
-              </Link>
-            )}
-            {temPermissao(usuario.role, 'ausencias:registrar') && (
-              <Link href="/ausencias" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
-                Ausências
-              </Link>
-            )}
-            {temPermissao(usuario.role, 'comunicacao:enviar') && (
-              <Link href="/comunicacao" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
-                Comunicação
-              </Link>
-            )}
-            {temPermissao(usuario.role, 'usuarios:gerenciar') && (
-              <Link href="/usuarios" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
-                Usuários
-              </Link>
-            )}
-            {temPermissao(usuario.role, 'disciplinas:ver') && (
-              <Link href="/disciplinas" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
-                Disciplinas
-              </Link>
-            )}
-            {temPermissao(usuario.role, 'turmas:gerenciar') && (
-              <Link href="/turmas" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
-                Turmas
-              </Link>
-            )}
-            {temPermissao(usuario.role, 'ofertas:gerenciar') && (
-              <Link href="/ofertas" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
-                Ofertas
-              </Link>
-            )}
-            {temPermissao(usuario.role, 'auditoria:ver') && (
-              <Link href="/auditoria" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
-                Auditoria
-              </Link>
+            {grupos.length > 1 ? (
+              grupos.map((g) => (
+                <details key={g.titulo} className="relative">
+                  <summary className={`${classeLink} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>
+                    {g.titulo} <span aria-hidden="true">▾</span>
+                  </summary>
+                  <ul className="absolute right-0 z-10 mt-1 min-w-48 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
+                    {g.links.map((l) => (
+                      <li key={l.href}>
+                        <Link href={l.href} className={`${classeLink} w-full px-2`}>
+                          {l.rotulo}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ))
+            ) : (
+              links.map((l) => (
+                <Link key={l.href} href={l.href} className={classeLink}>
+                  {l.rotulo}
+                </Link>
+              ))
             )}
             <Link href="/conta/senha" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
               Alterar senha
