@@ -113,6 +113,12 @@ export const NOME_ACAO: Record<string, string> = {
   APROVOU_ATIVIDADE_PPI: 'Aprovou atividade de PPI',
   GLOSOU_ATIVIDADE_PPI: 'Glosou atividade de PPI',
   DECIDIU_PPI: 'Decidiu solicitação de PPI',
+  REGISTROU_PPE: 'Registrou PPE',
+  DEFINIU_MODALIDADE_PPE: 'Definiu modalidade de PPE',
+  SALVOU_PEI: 'Salvou PEI',
+  CLONOU_CRONOGRAMA_PEI: 'Copiou cronograma de PEI',
+  MUDOU_SITUACAO_PPE: 'Mudou situação de PPE',
+  EXCLUIU_PPE: 'Excluiu PPE',
 };
 
 export function descreverAcao(acao: string): string {

@@ -80,7 +80,7 @@ export const MODULOS: readonly Modulo[] = [
   { id: 'grade', titulo: 'Grade e substituições', descricao: 'Horários das turmas, janelas livres e remanejamentos.', fase: 1, requer: ['grade:ver'], href: '/grade' },
   { id: 'alimentacao', titulo: 'Alimentação', descricao: 'Previsão e alterações de refeições por turma.', fase: 1, requer: ['alimentacao:ver'], href: '/alimentacao' },
   { id: 'comunicacao', titulo: 'Comunicação', descricao: 'Mensagens padronizadas para os grupos de WhatsApp.', fase: 1, requer: ['comunicacao:enviar'], href: '/comunicacao' },
-  { id: 'ppe', titulo: 'PPE / PEI', descricao: 'Progressão Parcial de Estudos e Planos de Estudo Individual.', fase: 2, requer: ['ppe:ver'] },
+  { id: 'ppe', titulo: 'PPE / PEI', descricao: 'Progressão Parcial de Estudos e Planos de Estudo Individual.', fase: 2, requer: ['ppe:ver'], href: '/ppe' },
   { id: 'ppi', titulo: 'PPI (40h)', descricao: 'Cálculo e auditoria da Prática Profissional Integrada.', fase: 2, requer: ['ppi:ver'], href: '/ppi' },
   { id: 'diarios', titulo: 'Diários', descricao: 'Semáforo de carga horária e preenchimento de diários.', fase: 2, requer: ['diarios:ver-proprios', 'diarios:ver-todos'], href: '/diarios' },
   { id: 'processos', titulo: 'Processos SEI', descricao: 'Kanban de processos e atendimentos.', fase: 2, requer: ['kanban:ver'], href: '/processos' },
