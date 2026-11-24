@@ -195,6 +195,17 @@ model GradeHorario {
   @@unique([anoLetivo, semestreLetivo, turmaId, diaSemana, blocoId])
 }
 
+// Início e fim de cada semestre letivo (calendário acadêmico): base das aulas esperadas no semáforo de diários (RF08).
+model PeriodoLetivo {
+  id             String   @id @default(cuid())
+  anoLetivo      Int
+  semestreLetivo Int      // 1 ou 2
+  inicio         DateTime @db.Date
+  fim            DateTime @db.Date
+
+  @@unique([anoLetivo, semestreLetivo])
+}
+
 // Sábado letivo (G01/G14): varia com o calendário civil e segue a grade de um dia da semana.
 model SabadoLetivo {
   id                 String   @id @default(cuid())

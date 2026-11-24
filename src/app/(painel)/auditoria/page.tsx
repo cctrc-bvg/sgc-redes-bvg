@@ -17,6 +17,7 @@ const LINK_ENTIDADE: Record<string, (id: string) => string> = {
   Turma: (id) => `/turmas/${id}`,
   AusenciaDocente: (id) => `/ausencias/${id}`,
   ProcessoKanban: (id) => `/processos/${id}`,
+  DisciplinaOferta: (id) => `/diarios/${id}`,
 };
 
 export default async function PaginaAuditoria({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {

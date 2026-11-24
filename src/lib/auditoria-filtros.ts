@@ -104,6 +104,9 @@ export const NOME_ACAO: Record<string, string> = {
   EDITOU_PROCESSO: 'Editou processo/atendimento',
   MOVEU_PROCESSO: 'Moveu processo de etapa',
   EXCLUIU_PROCESSO: 'Excluiu processo/atendimento',
+  ATUALIZOU_DIARIO: 'Atualizou situação de diário',
+  COBROU_DIARIO: 'Enviou lembrete de diário',
+  DEFINIU_PERIODO_LETIVO: 'Definiu calendário do semestre',
 };
 
 export function descreverAcao(acao: string): string {
