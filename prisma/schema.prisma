@@ -1,0 +1,602 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// 1. SEGURANÇA, USUÁRIOS (RBAC) E AUDITORIA (LGPD)
+// ==========================================
+
+enum Role {
+  COORDENADOR
+  PROFESSOR
+  CTP
+  DIRECAO
+  ASSISTENCIA_ESTUDANTIL
+}
+
+model User {
+  id            String   @id @default(cuid())
+  nome          String
+  email         String   @unique
+  siape         String?  @unique
+  whatsapp      String?
+  // Falso: a pessoa não quer o WhatsApp pessoal no sistema (sem links para o número dela nem botões de WhatsApp).
+  usaWhatsapp   Boolean  @default(true)
+  passwordHash  String
+  role          Role     @default(PROFESSOR)
+  ativo         Boolean  @default(true)
+  // Senha provisória (seed ou cadastro pela coordenação) deve ser trocada no primeiro acesso.
+  deveTrocarSenha Boolean @default(true)
+  ultimoLoginEm DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relações
+  sessoes                Sessao[]
+  disciplinasMinistradas DisciplinaOferta[]
+  ausenciasRegistradas   AusenciaDocente[]  @relation("ProfessorAusente")
+  substituicoesFeitas    AusenciaDocente[]  @relation("ProfessorSubstituto")
+  coberturasFeitas       CoberturaBloco[]
+  convitesSubstituicao   ConviteSubstituicao[]
+  peisOrientados         PlanoEstudoIndividual[]
+  ppisOrientadas         PpiAtividade[]
+  logsAuditoria          AuditLog[]
+  ocorrenciasCriadas     ProcessoKanban[]
+}
+
+// Sessão de login. O cookie guarda um token aleatório; o banco guarda apenas o hash SHA-256
+// dele (id), de modo que um vazamento da tabela não permite sequestrar sessões.
+model Sessao {
+  id         String   @id // sha256(token) em hexadecimal
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiraEm   DateTime // renovada com o uso (expiração por inatividade)
+  criadaEm   DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+
+  @@index([userId])
+  @@index([expiraEm])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  acao       String   // ex: "CRIOU_AUSENCIA", "NOTIFICOU_ALIMENTACAO_EMERGENCIA", "APROVOU_PPI"
+  entidade   String   // ex: "AusenciaDocente", "PpiSolicitacao"
+  entidadeId String
+  detalhes   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entidade, entidadeId])
+  @@index([createdAt])
+}
+
+// ==========================================
+// 2. ESTRUTURA DO CURSO TÉCNICO INTEGRADO (3 TURMAS)
+// ==========================================
+
+enum Turno {
+  MANHA
+  TARDE
+}
+
+// Núcleos da matriz: técnicas são semestrais; propedêuticas e diversificadas são anuais.
+enum NucleoDisciplina {
+  PROPEDEUTICO
+  DIVERSIFICADO
+  TECNICO
+}
+
+enum TipoRefeicao {
+  LANCHE_MANHA
+  ALMOCO
+  LANCHE_TARDE
+}
+
+model Turma {
+  id                  String   @id @default(cuid())
+  nome                String   // ex: "Redes 1º Ano", "Redes 2º Ano", "Redes 3º Ano"
+  codigo              String   @unique // ex: "REDES-1", "REDES-2", "REDES-3"
+  anoLetivo           Int
+  qtdAlunosAtivos     Int      @default(30)
+  // Estimativa padrão para a Assistência Estudantil
+  qtdMediaLancheManha Int      @default(30)
+  qtdMediaAlmoco      Int      @default(30)
+  qtdMediaLancheTarde Int      @default(30)
+  ativa               Boolean  @default(true)
+  anoCurso            Int?     // 1, 2 ou 3: liga a turma às disciplinas da matriz daquele ano
+
+  gradeHoraria        GradeHorario[]
+  ofertas             DisciplinaOferta[]
+  ausencias           AusenciaDocente[]
+  alertasRefeicao     AlertaAlimentacao[]
+}
+
+model Disciplina {
+  id             String   @id @default(cuid())
+  codigo         String?  @unique
+  nome           String
+  cargaHoraria   Int      // Carga horária total (usada para o teto de 30% do PEI!)
+  exigePratica   Boolean  @default(false) // Art. 121 do ROD (PPE)
+  ementaUrl      String?
+  programaTexto  String?
+  ativa          Boolean  @default(true) // Desativada: fora da matriz vigente, mantida no histórico
+  // Posição na matriz. Opcionais só por compatibilidade com cadastros anteriores; o formulário exige.
+  nucleo         NucleoDisciplina?
+  anoCurso       Int?     // 1, 2 ou 3
+  semestreCurso  Int?     // 1 a 6, só para técnicas (semestrais); null = anual
+
+  ofertas        DisciplinaOferta[]
+  ppes           RegistroPPE[]
+}
+
+model DisciplinaOferta {
+  id            String   @id @default(cuid())
+  anoLetivo     Int      // ex: 2026
+  semestreLetivo Int?    // 1 ou 2 para técnicas (semestrais); null = anual (vale o ano letivo inteiro)
+  turmaId       String
+  turma         Turma    @relation(fields: [turmaId], references: [id])
+  disciplinaId  String
+  disciplina    Disciplina @relation(fields: [disciplinaId], references: [id])
+  professorId   String
+  professor     User     @relation(fields: [professorId], references: [id])
+
+  // Controle de Diários e Carga Horária (Art. 22, VI e VII)
+  aulasPrevistas  Int      @default(0)
+  aulasMinistradas Int     @default(0)
+  diarioEmDia     Boolean  @default(true)
+  ultimaCobranca  DateTime?
+  observacaoDiario String?
+
+  horarios      GradeHorario[]
+  ausencias     AusenciaDocente[]
+
+  // Uma disciplina é ofertada uma vez por ano letivo em cada turma.
+  @@unique([anoLetivo, turmaId, disciplinaId])
+}
+
+// ==========================================
+// 3. GRADE HORÁRIA, JANELAS LIVRES E SUBSTITUIÇÕES
+// ==========================================
+
+model BlocoHorario {
+  id         String @id @default(cuid())
+  turno      Turno
+  ordem      Int    // 1, 2, 3, 4, 5
+  horaInicio String // ex: "07:30"
+  horaFim    String // ex: "08:20"
+
+  grades     GradeHorario[]
+  coberturas CoberturaBloco[] @relation("BlocoCoberto")
+  adiantamentosOrigem CoberturaBloco[] @relation("BlocoOrigemAdiantamento")
+  convites   ConviteSubstituicao[]
+
+  @@unique([turno, ordem])
+}
+
+model GradeHorario {
+  id         String           @id @default(cuid())
+  anoLetivo  Int              // ex: 2026
+  semestreLetivo Int          // 1 ou 2 (anuais aparecem nos dois; técnicas só no seu)
+  turmaId    String
+  turma      Turma            @relation(fields: [turmaId], references: [id])
+  diaSemana  Int              // 1=Segunda ... 5=Sexta (6=Sábado)
+  blocoId    String
+  bloco      BlocoHorario     @relation(fields: [blocoId], references: [id])
+  // Se ofertaId for NULL, representa uma JANELA LIVRE na grade da turma!
+  ofertaId   String?
+  oferta     DisciplinaOferta? @relation(fields: [ofertaId], references: [id], onDelete: SetNull)
+  sala       String?          // ex: "Sala 04", "Lab Redes I"
+
+  @@unique([anoLetivo, semestreLetivo, turmaId, diaSemana, blocoId])
+}
+
+// Início e fim de cada semestre letivo (calendário acadêmico): base das aulas esperadas no semáforo de diários (RF08).
+model PeriodoLetivo {
+  id             String   @id @default(cuid())
+  anoLetivo      Int
+  semestreLetivo Int      // 1 ou 2
+  inicio         DateTime @db.Date
+  fim            DateTime @db.Date
+
+  @@unique([anoLetivo, semestreLetivo])
+}
+
+// Calendário acadêmico: eventos do ano letivo. suspendeAulas tira os dias da contagem de dias letivos
+// e da grade do dia (ausências, alimentação). imprevisto: alteração fora do calendário aprovado (dias a repor).
+enum TipoEventoCalendario {
+  FERIAS_DOCENTES
+  MATRICULA
+  ENCONTRO_PEDAGOGICO
+  AVALIACOES_FINAIS
+  FERIADO
+  PONTO_FACULTATIVO
+  ACOLHIDA
+  PITS_RITS
+  REUNIAO
+  SUSPENSAO_AULAS
+  OUTRO
+}
+
+model EventoCalendario {
+  id            String               @id @default(cuid())
+  tipo          TipoEventoCalendario
+  inicio        DateTime             @db.Date
+  fim           DateTime             @db.Date
+  descricao     String?
+  suspendeAulas Boolean              @default(false)
+  imprevisto    Boolean              @default(false)
+  motivo        String?              // suspensão: motivo de uma lista fechada (sem dados pessoais)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([inicio, fim])
+}
+
+// Etapas do ano letivo (N1 a N4; meta de 50 dias letivos cada).
+model EtapaLetiva {
+  id        String   @id @default(cuid())
+  anoLetivo Int
+  numero    Int      // 1 a 4
+  inicio    DateTime @db.Date
+  fim       DateTime @db.Date
+
+  @@unique([anoLetivo, numero])
+}
+
+// Sábado letivo (G01/G14): varia com o calendário civil e segue a grade de um dia da semana.
+model SabadoLetivo {
+  id                 String   @id @default(cuid())
+  data               DateTime @unique @db.Date
+  diaSemanaReferente Int      // 1=Segunda ... 5=Sexta: a grade desse dia vale no sábado
+  observacao         String?
+  createdAt          DateTime @default(now())
+}
+
+enum StatusAusencia {
+  PENDENTE_DECISAO
+  COBERTA_POR_SUBSTITUICAO
+  AULA_ADIANTADA
+  TURMA_DISPENSADA
+  REPOSICAO_AGENDADA
+}
+
+model AusenciaDocente {
+  id                  String          @id @default(cuid())
+  dataAula            DateTime        @db.Date // Data da aula afetada
+  turmaId             String
+  turma               Turma           @relation(fields: [turmaId], references: [id])
+  ofertaId            String
+  oferta              DisciplinaOferta @relation(fields: [ofertaId], references: [id])
+  professorAusenteId  String
+  professorAusente    User            @relation("ProfessorAusente", fields: [professorAusenteId], references: [id])
+  professorSubstitutoId String?
+  professorSubstituto User?           @relation("ProfessorSubstituto", fields: [professorSubstitutoId], references: [id])
+  blocosAfetados      String          // ex: "M1,M2" ou "T3,T4"
+  motivoOperacional   String          // Texto curto e não sensível (LGPD)
+  status              StatusAusencia  @default(PENDENTE_DECISAO)
+  // Registro obrigatório quando a dispensa gera aviso de emergência à AE (RF04, < 4h)
+  justificativa       String?
+  decididaEm          DateTime?
+  createdAt           DateTime        @default(now())
+
+  alertasAlimentacao  AlertaAlimentacao[]
+  coberturas          CoberturaBloco[]
+  convites            ConviteSubstituicao[]
+
+  @@unique([dataAula, ofertaId])
+  @@index([dataAula])
+}
+
+enum TipoCobertura {
+  SUBSTITUICAO // outro docente assume a aula no mesmo bloco
+  ADIANTAMENTO // uma aula posterior da turma, no mesmo dia, passa para este bloco; a origem fica vaga
+  DISPENSA     // a turma fica sem aula neste bloco
+}
+
+// Decisão da Coordenação para cada bloco perdido de uma ausência (RF02).
+model CoberturaBloco {
+  id            String          @id @default(cuid())
+  ausenciaId    String
+  ausencia      AusenciaDocente @relation(fields: [ausenciaId], references: [id], onDelete: Cascade)
+  blocoId       String
+  bloco         BlocoHorario    @relation("BlocoCoberto", fields: [blocoId], references: [id])
+  tipo          TipoCobertura
+  substitutoId  String?
+  substituto    User?           @relation(fields: [substitutoId], references: [id])
+  blocoOrigemId String?
+  blocoOrigem   BlocoHorario?   @relation("BlocoOrigemAdiantamento", fields: [blocoOrigemId], references: [id])
+
+  @@unique([ausenciaId, blocoId])
+}
+
+enum StatusConvite {
+  PENDENTE
+  ACEITO
+  RECUSADO
+  ENCERRADO // o horário foi decidido de outro jeito (ou por outro docente) antes da resposta
+}
+
+// Convite da Coordenação a um docente para cobrir um horário de uma ausência (substituicao:responder).
+model ConviteSubstituicao {
+  id           String          @id @default(cuid())
+  ausenciaId   String
+  ausencia     AusenciaDocente @relation(fields: [ausenciaId], references: [id], onDelete: Cascade)
+  blocoId      String
+  bloco        BlocoHorario    @relation(fields: [blocoId], references: [id])
+  professorId  String
+  professor    User            @relation(fields: [professorId], references: [id])
+  status       StatusConvite   @default(PENDENTE)
+  criadoEm     DateTime        @default(now())
+  respondidoEm DateTime?
+
+  @@unique([ausenciaId, blocoId, professorId])
+  @@index([professorId, status])
+}
+
+// ==========================================
+// 4. ALIMENTAÇÃO (SLA 24H FLEXÍVEL) E COMUNICAÇÃO WHATSAPP
+// ==========================================
+
+enum NivelUrgenciaSla {
+  VERDE_24H_MAIS    // >= 24h (Planejado)
+  AMARELO_4H_A_24H  // entre 4h e 24h (Imprevisto Moderado)
+  VERMELHO_MENOS_4H // < 4h (Emergência)
+}
+
+enum AcaoAlimentacao {
+  CANCELAR_REFEICAO
+  ADICIONAR_REFEICAO // ex: encontro extra de PEI/reposição no contraturno
+}
+
+model AlertaAlimentacao {
+  id              String            @id @default(cuid())
+  ausenciaId      String?
+  ausencia        AusenciaDocente?  @relation(fields: [ausenciaId], references: [id], onDelete: SetNull)
+  turmaId         String
+  turma           Turma             @relation(fields: [turmaId], references: [id])
+  dataRefeicao    DateTime
+  tipoRefeicao    TipoRefeicao
+  acao            AcaoAlimentacao   @default(CANCELAR_REFEICAO)
+  qtdImpactada    Int
+  antecedenciaMin Int               // Minutos de antecedência no momento do registro
+  nivelSla        NivelUrgenciaSla
+  justificativa   String?
+  enviadoEm       DateTime?
+  confirmadoAE    Boolean           @default(false) // Assistência Estudantil deu ciente
+  confirmadoEm    DateTime?
+  // Aviso que deixou de valer (ex.: ausência cancelada ou nova cobertura): a AE vê que a refeição volta ao normal
+  canceladoEm     DateTime?
+  // Lançado à mão pela Coordenação (ex.: encontro de PEI no contraturno, G05); o recálculo das ausências não mexe nele
+  manual          Boolean           @default(false)
+  descricao       String?
+  createdAt       DateTime          @default(now())
+
+  @@index([dataRefeicao])
+}
+
+enum CanalWhatsapp {
+  GRUPO_PROFESSORES
+  GRUPO_GESTAO_DIR_COORD // Coordenadores + Direção de Ensino + Direção Geral
+  ASSISTENCIA_ESTUDANTIL
+  CTP
+  LIDERES_TURMA
+  NUTRICIONISTA // nutricionista do campus: avisada das alterações de refeição
+}
+
+model ConfiguracaoCanal {
+  id          String        @id @default(cuid())
+  canal       CanalWhatsapp @unique
+  nomeExibicao String
+  destinoId   String?       // JID do grupo ou telefone na Evolution API (opcional)
+  email       String?       // e-mail institucional do grupo ou setor (envio semiautomático por e-mail)
+  saudacao    String?       // como chamar os destinatários ("equipe da CAE"); vazio vira campo a preencher
+  ativo       Boolean       @default(true)
+}
+
+// Textos-padrão das mensagens (editáveis em Comunicação › Textos-padrão). Variáveis entre {{ }}.
+model ModeloMensagem {
+  id            String          @id @default(cuid())
+  tipo          String          // tipo de interação (src/lib/comunicacao/modelos.ts, TIPOS_INTERACAO)
+  rotulo        String
+  assunto       String
+  texto         String
+  destinos      CanalWhatsapp[] // destinatários sugeridos na mensagem avulsa
+  ordem         Int             @default(0)
+  ativo         Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([tipo, ordem])
+}
+
+model LogComunicacao {
+  id          String        @id @default(cuid())
+  canal       CanalWhatsapp? // null: mensagem individual (docente) ou avulsa
+  destino     String?       // descrição do destinatário sem nome (ex.: "Docente substituto(a)")
+  chave       String?       // identifica a mensagem dentro da origem (ex.: "canal:CTP")
+  ausenciaId  String?       // origem, quando a mensagem é de uma ausência
+  assunto     String?
+  mensagem    String
+  modoEnvio   String        // "EMAIL_MANUAL", "WHATSAPP_WEB_MANUAL", "OUTRO_MANUAL" ou "WEBHOOK_AUTO"
+  sucesso     Boolean       @default(true)
+  userId      String?       // quem registrou o envio
+  enviadoEm   DateTime      @default(now())
+
+  @@index([ausenciaId])
+}
+
+// ==========================================
+// 5. FASE 2: PPI (40 HORAS - 6 GRUPOS DO MANUAL)
+// ==========================================
+
+model PpiRegraCategoria {
+  id               String @id @default(cuid())
+  grupo            Int    // 1 a 6
+  nomeGrupo        String
+  descricao        String
+  ponderacaoTexto  String // ex: "2 horas por semestre"
+  horasPorUnidade  Float
+  unidade          String // "semestre", "visita", "participacao", "mes", "estagio", etc.
+  qtdMaxima        Int    // Quantidade máxima permitida
+  pontuacaoMaxima  Float  // Teto máximo em horas para esta linha
+
+  atividades       PpiAtividade[]
+}
+
+enum StatusPpi {
+  RASCUNHO
+  EM_ANALISE
+  DEFERIDA
+  INDEFERIDA
+}
+
+model PpiSolicitacao {
+  id              String    @id @default(cuid())
+  nomeEstudante   String
+  matricula       String
+  turmaAtual      String
+  metaHoras       Float     @default(40) // Confirmado: 40 horas!
+  totalValidado   Float     @default(0)
+  status          StatusPpi @default(EM_ANALISE)
+  observacoes     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  atividades      PpiAtividade[]
+
+  @@index([matricula])
+}
+
+model PpiAtividade {
+  id                  String            @id @default(cuid())
+  solicitacaoId       String
+  solicitacao         PpiSolicitacao    @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+  regraId             String
+  regra               PpiRegraCategoria @relation(fields: [regraId], references: [id])
+  descricaoComprovante String
+  // Hash ou código único do certificado para impedir contagem duplicada
+  codigoCertificado   String
+  dataRealizacao      DateTime
+  orientadorId        String?
+  orientador          User?             @relation(fields: [orientadorId], references: [id])
+  orientadorExterno   String?           // Caso técnico de laboratório ou outro servidor
+  quantidadeInformada Float             @default(1)
+  horasCalculadas     Float             // Calculado respeitando o teto da regra
+  aprovada            Boolean           @default(true)
+
+  @@unique([solicitacaoId, codigoCertificado]) // Impede reutilizar mesmo certificado!
+}
+
+// ==========================================
+// 6. FASE 2: PPE (PROGRESSÃO PARCIAL - ROD ARTS. 115-128)
+// ==========================================
+
+enum ModalidadePPE {
+  A_DEFINIR
+  PEI          // Até 30% da CH (Art. 117 §1º)
+  DEPENDENCIA  // 100% da CH (Art. 117 §2º)
+  DEPENDENCIA_EAD
+}
+
+enum StatusPPE {
+  AGUARDANDO_PROFESSOR
+  EM_ANDAMENTO
+  PRORROGADO        // Art. 124
+  APROVADO          // Art. 123 (inclusive antecipado)
+  REPROVADO
+  LANCADO_ACADEMICO // Art. 125
+}
+
+model RegistroPPE {
+  id             String        @id @default(cuid())
+  semestre       String        // ex: "2026.1"
+  nomeEstudante  String
+  matricula      String
+  disciplinaId   String
+  disciplina     Disciplina    @relation(fields: [disciplinaId], references: [id])
+  modalidade     ModalidadePPE @default(A_DEFINIR)
+  status         StatusPPE     @default(AGUARDANDO_PROFESSOR)
+  // Regra Art. 115: alerta caso aluno possua 3 ou mais pendências no mesmo semestre
+  alertaRetencao Boolean       @default(false)
+  notaFinal      Float?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  pei            PlanoEstudoIndividual?
+
+  @@index([semestre, matricula])
+}
+
+model PlanoEstudoIndividual {
+  id               String      @id @default(cuid())
+  ppeId            String      @unique
+  ppe              RegistroPPE @relation(fields: [ppeId], references: [id], onDelete: Cascade)
+  docenteId        String
+  docente          User        @relation(fields: [docenteId], references: [id])
+  cargaHorariaPei  Int         // Validado no app: <= 30% de disciplina.cargaHoraria
+  horasPresenciais Int
+  horasPraticas    Int         @default(0) // Obrigatório se disciplina.exigePratica == true (Art. 121)
+  objetivos        String      // Campo 1 do modelo oficial
+  conteudos        String      // Campo 2 do modelo oficial
+  criteriosAval    String?
+  prorrogadoAte    DateTime?   // Art. 124
+  justificativaProrrogacao String?
+  assinadoDocente  Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  encontros        PeiEncontro[]
+}
+
+model PeiEncontro {
+  id         String                @id @default(cuid())
+  peiId      String
+  pei        PlanoEstudoIndividual @relation(fields: [peiId], references: [id], onDelete: Cascade)
+  data       DateTime
+  conteudo   String
+  metodologiaAvaliacao String
+  realizado  Boolean               @default(false)
+}
+
+// ==========================================
+// 7. FASE 2: KANBAN DE PROCESSOS SEI & ATENDIMENTOS
+// ==========================================
+
+enum TipoProcesso {
+  APROVEITAMENTO_DISCIPLINA // Art. 22, V
+  GRADUADO_TRANSFERIDO      // Art. 22, XXIII
+  ESTAGIO                   // Art. 22, XIX
+  ORIENTACAO_MEDIACAO       // Art. 22, IV e VIII (pode ser sigiloso)
+  OUTRO_SEI
+}
+
+enum ColunaKanban {
+  NOVO
+  COM_PROFESSOR
+  AGUARDANDO_RETORNO
+  CONCLUIDO
+}
+
+model ProcessoKanban {
+  id           String       @id @default(cuid())
+  titulo       String
+  tipo         TipoProcesso
+  coluna       ColunaKanban @default(NOVO)
+  numeroSei    String?
+  prazo        DateTime?
+  sigiloso     Boolean      @default(false) // Restringe visualização apenas ao Coordenador (LGPD)
+  descricao    String?
+  criadoPorId  String
+  criadoPor    User         @relation(fields: [criadoPorId], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}

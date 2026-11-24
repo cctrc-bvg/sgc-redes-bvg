@@ -1,0 +1,781 @@
+# SGC-Redes — Manual do usuário
+
+> Gerado de `src/lib/ajuda/topicos.ts` por `npm run manual` — não edite à mão. O mesmo conteúdo está no sistema, em **Ajuda**
+> (com versão para imprimir/PDF em `/ajuda/manual`). As telas usam dados fictícios de demonstração.
+
+O SGC-Redes apoia a rotina da Coordenação do Curso Técnico Integrado em Redes de Computadores do IFCE Campus Boa Viagem:
+calendário, grade, ausências e substituições, refeições, comunicação por e-mail ou WhatsApp, PPE/PEI, PPI, diários,
+processos e relatórios. Ele complementa os sistemas oficiais (SUAP/Q-Acadêmico, SEI), sem substituí-los.
+
+## Sumário
+
+1. [Primeiros passos](#1-primeiros-passos)
+2. [Calendário acadêmico](#2-calendário-acadêmico)
+3. [Grade horária](#3-grade-horária)
+4. [Ausências e substituições](#4-ausências-e-substituições)
+5. [Alimentação](#5-alimentação)
+6. [Comunicação](#6-comunicação)
+7. [PPE / PEI](#7-ppe--pei)
+8. [PPI (40 horas)](#8-ppi-40-horas)
+9. [Diários](#9-diários)
+10. [Processos SEI](#10-processos-sei)
+11. [Relatórios](#11-relatórios)
+12. [Cadastros: usuários, turmas, disciplinas e ofertas](#12-cadastros-usuários-turmas-disciplinas-e-ofertas)
+13. [Planilhas, impressão e PDF](#13-planilhas-impressão-e-pdf)
+14. [Privacidade, segurança e auditoria](#14-privacidade-segurança-e-auditoria)
+15. [Quem vê o quê](#15-quem-vê-o-quê)
+
+## 1. Primeiros passos
+
+Acesso, troca de senha, painel inicial, menus e preferências de contato.
+
+No sistema: `/painel` · disponível para todos os perfis.
+
+### O que você pode fazer
+
+- Entrar com o e-mail institucional e a senha recebida da Coordenação.
+- Trocar a senha provisória no primeiro acesso (obrigatório).
+- Ver no painel só os módulos permitidos ao seu perfil, com as pendências de cada um.
+- Informar seu WhatsApp e dizer se aceita recebê-lo pelo sistema (Meu contato).
+- Sair do sistema em qualquer página (botão Sair). A sessão expira após 8 horas sem uso.
+
+### Fluxo: Primeiro acesso
+
+```mermaid
+flowchart LR
+  E0["Cadastro<br/>Coordenação<br/>cria o usuário e entrega a senha provisória em mensagem privada"]
+  E1["Login<br/>Você<br/>e-mail institucional + senha provisória"]
+  E0 --> E1
+  E2["Nova senha<br/>Você<br/>10+ caracteres, com letras e números"]
+  E1 --> E2
+  E3["Painel<br/>Sistema<br/>mostra os módulos do seu perfil"]
+  E2 --> E3
+```
+
+### Passo a passo
+
+**Entrar pela primeira vez** (Todos)
+
+1. Abra o endereço do sistema e informe seu e-mail institucional e a senha provisória.
+2. O sistema pede uma nova senha: use pelo menos 10 caracteres, com letras e números, diferente da provisória.
+3. Pronto: o painel abre com os módulos do seu perfil.
+
+**Ajustar preferências de contato** (Todos)
+
+1. No cabeçalho, clique em "Meu contato".
+2. Informe o WhatsApp (a máscara preenche o formato) e marque se aceita que o sistema use esse número.
+3. Sem WhatsApp, todas as mensagens continuam disponíveis para envio pelo e-mail institucional.
+
+**Esqueci a senha** (Todos)
+
+1. Peça à Coordenação: em Usuários, ela gera uma nova senha provisória para você.
+2. No próximo acesso, o sistema pede a troca da senha.
+
+### Telas
+
+![Tela de login com os campos e-mail e senha e o botão Entrar.](../public/manual/primeiros-passos-login.jpg)
+
+*Tela de entrada: e-mail institucional e senha.*
+
+![Painel da Coordenação com cartões dos módulos (calendário, grade, alimentação, comunicação, PPE, PPI, diários, processos, relatórios) e pendências.](../public/manual/primeiros-passos-painel.jpg)
+
+*Painel inicial: um cartão por módulo, com as pendências do dia.*
+
+![Painel de um professor, com menos módulos: calendário, grade, PPE e diários.](../public/manual/primeiros-passos-painel-professor.jpg)
+
+*Cada perfil vê só os seus módulos (aqui, o de um professor).*
+
+### Dúvidas frequentes
+
+- **Errei a senha várias vezes e fui bloqueado. E agora?** Depois de 5 tentativas erradas, o login daquele e-mail fica bloqueado por 15 minutos. Espere ou peça uma nova senha à Coordenação.
+- **Um menu que eu esperava não aparece.** Os menus dependem do perfil (veja "Quem vê o quê" no início da Ajuda). Se precisar de outro acesso, fale com a Coordenação.
+- **Preciso usar meu WhatsApp pessoal?** Não. Todas as comunicações funcionam pelo e-mail institucional; o WhatsApp é opcional.
+
+## 2. Calendário acadêmico
+
+Dias letivos, etapas N1–N4, sábados letivos, feriados, eventos e alterações imprevistas.
+
+No sistema: `/calendario`.
+
+### O que você pode fazer
+
+- Cadastrar as datas das etapas N1 a N4 e dos semestres de cada ano letivo.
+- Cadastrar eventos: férias docentes, matrícula, encontro pedagógico, acolhida, feriados, pontos facultativos, PITs/RITs, reuniões, avaliações finais e outros.
+- Registrar suspensões não previstas (falta de energia, de água, de transporte, luto oficial, ponto facultativo municipal…) como dias a repor.
+- Cadastrar sábados letivos, cada um seguindo a grade de um dia da semana.
+- Contar os dias letivos por mês, etapa, semestre e ano, comparando com a meta (50 por etapa, 200 no ano).
+- Ver o ano inteiro ou um mês, imprimir/salvar em PDF e exportar/importar em planilha.
+- Ao registrar uma alteração imprevista, abrir as mensagens prontas para avisar docentes, CAE, nutricionista, Gestão, CTP e turmas.
+
+### Fluxo: Montar o calendário do ano
+
+```mermaid
+flowchart LR
+  E0["Etapas e semestres<br/>Coordenação<br/>datas de início e fim de N1–N4"]
+  E1["Eventos<br/>Coordenação<br/>feriados, recesso, reuniões, avaliações"]
+  E0 --> E1
+  E2["Sábados letivos<br/>Coordenação<br/>data + dia cuja grade vale"]
+  E1 --> E2
+  E3["Contagem<br/>Sistema<br/>dias letivos por mês, etapa e ano; saldo da meta"]
+  E2 --> E3
+  E4["Consulta e PDF<br/>Todos<br/>visão anual, mensal e impressão"]
+  E3 --> E4
+```
+
+### Passo a passo
+
+**Cadastrar as etapas do ano** (Coordenação)
+
+1. Abra Calendário e escolha o ano (setas ← →).
+2. Clique em "Etapas e semestres" e informe início e término de N1 a N4 (e dos dois semestres, usados pelos diários).
+3. Salve. O resumo passa a mostrar os dias letivos de cada etapa e o saldo em relação à meta.
+
+**Cadastrar um feriado ou evento** (Coordenação)
+
+1. Clique em "Novo evento" (ou no número do dia, na visão do mês).
+2. Escolha o tipo, as datas (término vazio = um dia) e a descrição.
+3. Marque "Sem aula" se o dia sai da contagem de dias letivos (já vem marcado para feriado, férias etc.).
+4. Salve: o evento aparece colorido no calendário e entra na contagem.
+
+**Registrar uma suspensão não prevista (força maior)** (Coordenação)
+
+1. Em "Novo evento", escolha "Suspensão de aulas (força maior)" e o motivo (falta de energia, de água, de transporte, luto…).
+2. Marque "Imprevisto": o dia entra como dia letivo perdido, a repor.
+3. Ao salvar, o sistema abre as mensagens prontas para CAE, nutricionista, todos os docentes, Gestão, CTP e líderes de turma. Envie e registre cada uma.
+4. Cadastre o sábado letivo de reposição em Grade › Sábados letivos.
+
+**Copiar o calendário para o ano seguinte** (Coordenação)
+
+1. No calendário do ano atual, clique em "Exportar planilha (.xlsx)".
+2. No Excel ou LibreOffice, troque as datas para o novo ano.
+3. Em "Importar planilha", escolha o novo ano, envie o arquivo, confira a prévia e confirme.
+
+### Telas
+
+![Calendário anual com o resumo de dias letivos por etapa e os doze meses coloridos por tipo de evento.](../public/manual/calendario-ano.jpg)
+
+*Visão anual: resumo da contagem e os 12 meses, com cores por tipo de evento.*
+
+![Visão de um mês com cada dia marcado como letivo ou sem aula e os eventos escritos no dia.](../public/manual/calendario-mes.jpg)
+
+*Visão do mês: clique no dia para cadastrar um evento ou no evento para editá-lo.*
+
+![Formulário de novo evento com tipo, datas, descrição, motivo e as opções Sem aula e Imprevisto.](../public/manual/calendario-evento.jpg)
+
+*Cadastro de evento: tipo, datas, "Sem aula" e "Imprevisto".*
+
+### Dúvidas frequentes
+
+- **Por que o total do ano não bate com a soma dos meses de julho?** Dias fora das etapas (recesso entre N2 e N3, por exemplo) não contam como letivos, mesmo sendo dias úteis.
+- **Um feriado caiu num sábado letivo. O que acontece?** Evento com "Sem aula" vale também para o sábado letivo: o dia sai da contagem.
+- **A suspensão afeta outras telas?** Sim. Em dia sem aula pelo calendário, Ausências e Alimentação não mostram aulas nem refeições daquele dia.
+
+## 3. Grade horária
+
+Horários das turmas, grade individual do professor, janelas livres, sábados letivos e importação.
+
+No sistema: `/grade`.
+
+### O que você pode fazer
+
+- Consultar a grade de cada turma por ano e semestre, com disciplina e professor em cada horário.
+- Ver a sua grade individual (Minha grade) e responder convites de substituição.
+- Identificar janelas livres: horários vagos num turno em que a turma tem aula.
+- Conferir se as aulas na grade batem com a carga horária da matriz.
+- Editar a grade com verificação de choque de horário do professor entre turmas (Coordenação).
+- Copiar as disciplinas anuais do 1º para o 2º semestre.
+- Importar e exportar a grade em planilha; imprimir/salvar em PDF a grade de uma turma ou de todas.
+
+### Fluxo: Montar a grade do semestre
+
+```mermaid
+flowchart LR
+  E0["Ofertas<br/>Coordenação<br/>professor de cada disciplina na turma"]
+  E1["Grade<br/>Coordenação<br/>pela tela ou por planilha"]
+  E0 --> E1
+  E2["Conferência<br/>Sistema<br/>choques de horário e aulas × matriz"]
+  E1 --> E2
+  E3["Consulta<br/>Professores<br/>grade da turma e Minha grade"]
+  E2 --> E3
+```
+
+### Passo a passo
+
+**Montar a grade pela tela** (Coordenação)
+
+1. Em Grade, escolha ano e semestre e clique em "Ver grade" da turma; depois em "Editar grade".
+2. Em cada horário, escolha a disciplina (aparecem as anuais e as técnicas do semestre).
+3. Salve. Se o professor já tiver aula em outra turma naquele horário, o sistema recusa e marca a célula.
+
+**Montar a grade por planilha** (Coordenação)
+
+1. Em Grade, clique em "Importar planilha" e baixe o modelo: ele traz a grade atual ou, para turma sem grade, uma linha por aula semanal prevista de cada disciplina.
+2. Preencha Dia e Início (ou Turno e Bloco A–D) de cada aula.
+3. Escolha o modo: "Completar" muda só as linhas enviadas; "Substituir" deixa as turmas da planilha exatamente como nela.
+4. Envie, confira a prévia (erros por linha) e confirme.
+
+**Consultar a minha grade e responder convites** (Professor)
+
+1. Em Grade, clique em "Ver minha grade": aparecem suas aulas em todas as turmas e os sábados letivos.
+2. Se houver convite de substituição, ele aparece no topo: aceite ou recuse.
+
+### Telas
+
+![Quadro da grade de uma turma, com dias nas colunas e horários nas linhas, cada célula com disciplina e professor.](../public/manual/grade-turma.jpg)
+
+*Grade da turma, com janelas livres destacadas e a conferência com a matriz.*
+
+![Grade individual de um professor com as aulas em várias turmas e um convite de substituição.](../public/manual/grade-minha.jpg)
+
+*Minha grade (professor): aulas em todas as turmas e convites de substituição.*
+
+![Página de importação da grade com escolha do semestre, modo completar ou substituir e os passos para baixar o modelo e enviar o arquivo.](../public/manual/grade-importar.jpg)
+
+*Importação da grade por planilha.*
+
+### Dúvidas frequentes
+
+- **Uma disciplina não aparece para escolher na grade.** Ela precisa estar distribuída em Ofertas para a turma e o ano, e valer no semestre (técnicas são de um semestre só).
+- **Como funciona o sábado letivo na grade?** Cada sábado letivo segue a grade de um dia da semana (ex.: "grade de quarta"), cadastrado em Grade › Sábados letivos.
+
+## 4. Ausências e substituições
+
+Registro de falta docente, decisão de cobertura de cada horário, convites, refeições e mensagens.
+
+No sistema: `/ausencias`.
+
+### O que você pode fazer
+
+- Registrar a ausência de um docente numa data: o sistema mostra as aulas dele pela grade vigente.
+- Para cada horário perdido: substituição por outro docente, adiantamento de uma aula posterior da turma, dispensa da turma ou decidir depois.
+- Sugestões de cobertura priorizando professores da mesma turma e livres no horário.
+- Convidar docentes para substituir; eles aceitam ou recusam em Minha grade.
+- Calcular o impacto nas refeições da turma (lanches e almoço) e avisar a Assistência Estudantil com a urgência (24h, imprevisto, emergência).
+- Gerar as mensagens prontas para docentes, CTP, Gestão, CAE, nutricionista e líderes de turma.
+
+### Fluxo: Da ausência à comunicação
+
+```mermaid
+flowchart LR
+  E0["Registro<br/>Coordenação<br/>docente, data e aulas afetadas"]
+  E1["Cobertura<br/>Coordenação<br/>substituir, adiantar, dispensar ou decidir depois"]
+  E0 --> E1
+  E2["Convites<br/>Professores<br/>aceitam ou recusam em Minha grade"]
+  E1 --> E2
+  E3["Refeições<br/>Sistema<br/>calcula o impacto e avisa a CAE"]
+  E2 --> E3
+  E4["Mensagens<br/>Coordenação<br/>envia por e-mail ou WhatsApp e registra"]
+  E3 --> E4
+```
+
+### Passo a passo
+
+**Registrar uma ausência** (Coordenação)
+
+1. Em Ausências, clique em "Registrar ausência".
+2. Escolha o docente e a data: aparecem as aulas dele naquele dia.
+3. Marque as aulas afetadas e informe um motivo operacional, sem dados pessoais ou médicos (ex.: "Participação em evento").
+4. Salve: a página da ausência abre com a situação de cada horário.
+
+**Decidir a cobertura** (Coordenação)
+
+1. Em "Decidir a cobertura", escolha para cada horário: substituto sugerido, adiantamento de aula, dispensa ou decidir depois.
+2. Opcional: em "Convites de substituição", convide um ou mais docentes; quem aceitar primeiro assume o horário.
+3. Confira "Refeições da turma neste dia": dispensas podem cancelar lanche ou almoço, com aviso à CAE.
+4. Em "Mensagens prontas", copie cada texto para o e-mail ou WhatsApp e clique em "Já enviei: registrar".
+
+### Telas
+
+![Lista de ausências com data, turma, disciplina, docente e situação.](../public/manual/ausencias-lista.jpg)
+
+*Lista de ausências e a situação de cada uma.*
+
+![Página de uma ausência com a situação por horário, o formulário de cobertura, convites, refeições e mensagens prontas.](../public/manual/ausencias-detalhe.jpg)
+
+*Página da ausência: cobertura, convites, refeições e mensagens prontas.*
+
+### Dúvidas frequentes
+
+- **Posso registrar uma ausência que já aconteceu?** Sim, até 30 dias para trás, e ausências planejadas até um ano à frente.
+- **O docente avisou que não vai mais faltar.** Na página da ausência, use "Cancelar registro". Os avisos de refeição são desfeitos e a CAE vê que tudo volta ao normal.
+- **Por que não posso escrever o motivo real da falta?** Por privacidade (LGPD): o sistema e as mensagens trazem só um motivo operacional. Atestados e motivos pessoais ficam nos sistemas oficiais.
+
+## 5. Alimentação
+
+Avisos de refeição por turma (lanches e almoço), urgência, ciência da CAE e comunicação.
+
+No sistema: `/alimentacao`.
+
+### O que você pode fazer
+
+- Ver, por data, os avisos de cancelamento ou acréscimo de lanche da manhã (09:30), almoço (12:00) e lanche da tarde (15:00).
+- Classificar a urgência pela antecedência: 🟢 24h ou mais, 🟡 imprevisto (4h a 24h), 🔴 emergência (menos de 4h).
+- Lançar acréscimos (ex.: encontro de PEI no contraturno) e ajustar quantidades (Coordenação).
+- Dar ciência dos avisos (Assistência Estudantil).
+- Depois de ciência, ajuste ou acréscimo, abrir as mensagens prontas para CAE, nutricionista, Gestão e líderes de turma.
+- Respeitar o calendário: em dia sem aula, não há refeições previstas.
+
+### Fluxo: Aviso de refeição
+
+```mermaid
+flowchart LR
+  E0["Origem<br/>Sistema/Coordenação<br/>dispensa de turma ou acréscimo manual"]
+  E1["Urgência<br/>Sistema<br/>verde, amarelo ou vermelho pela antecedência"]
+  E0 --> E1
+  E2["Ciência<br/>Assistência Estudantil<br/>confirma no painel"]
+  E1 --> E2
+  E3["Comunicar<br/>Coordenação<br/>CAE, nutricionista, Gestão, turmas"]
+  E2 --> E3
+```
+
+### Passo a passo
+
+**Acrescentar uma refeição** (Coordenação)
+
+1. Em Alimentação, clique em "Acrescentar refeição".
+2. Escolha turma, data, refeição, quantidade e o motivo (sem dados de estudantes).
+3. Salve: o aviso vai para o painel da Assistência Estudantil e o sistema abre as mensagens prontas.
+
+**Dar ciência** (Assistência Estudantil)
+
+1. Em Alimentação, confira os avisos pendentes do dia.
+2. Clique em "Dar ciência" em cada aviso. A Coordenação vê a confirmação.
+
+### Telas
+
+![Painel de alimentação com avisos por turma, refeição, quantidade e etiqueta de urgência.](../public/manual/alimentacao-painel.jpg)
+
+*Avisos de refeição do dia, com urgência e ciência da CAE.*
+
+![Painel visto pela Assistência Estudantil, com os avisos e o botão Dar ciência.](../public/manual/alimentacao-cae.jpg)
+
+*Visão da Assistência Estudantil: só refeições, sem dados pessoais.*
+
+### Dúvidas frequentes
+
+- **A turma foi dispensada depois do almoço já servido.** Refeições cujo horário já passou não geram aviso; só as futuras afetadas.
+- **O almoço é sempre previsto?** Não. Os estudantes só almoçam no campus nos dias em que têm aula nos dois turnos (regime integral).
+
+## 6. Comunicação
+
+Mensagens prontas por e-mail ou WhatsApp, mensagem avulsa, textos-padrão, grupos e histórico.
+
+No sistema: `/comunicacao`.
+
+### O que você pode fazer
+
+- Modo semiautomático: o sistema escreve a mensagem e você envia pelo e-mail institucional ou pelo WhatsApp, e registra o envio.
+- Caixa de mensagem com Para, Assunto e Texto editáveis, botões de copiar, abrir no e-mail ou no WhatsApp e campos a preencher.
+- Mensagem avulsa para vários destinatários: grupos e setores, grupos de docentes (todos, por turma, por ano) e pessoas.
+- Textos-padrão por tipo de interação, com campos de substituição como {{data}} e {{codigo da turma}} — criar, editar e remover.
+- Cadastro do e-mail e da saudação de cada grupo ou setor (CAE, CTP, Gestão, nutricionista, professores, líderes).
+- Histórico dos envios registrados, exportável em planilha.
+
+### Fluxo: Envio semiautomático
+
+```mermaid
+flowchart LR
+  E0["Mensagem pronta<br/>Sistema<br/>texto, assunto e destinatário"]
+  E1["Revisar<br/>Você<br/>editar, preencher campos, escolher texto-padrão"]
+  E0 --> E1
+  E2["Enviar<br/>Você<br/>e-mail institucional ou WhatsApp"]
+  E1 --> E2
+  E3["Registrar<br/>Você<br/>'Já enviei: registrar' guarda no histórico"]
+  E2 --> E3
+```
+
+### Passo a passo
+
+**Enviar uma mensagem avulsa** (Coordenação)
+
+1. Em Comunicação, escolha um texto-padrão: os destinatários sugeridos já vêm marcados (você pode mudar).
+2. Marque os destinatários: grupos e setores, grupos de docentes ou pessoas.
+3. Preencha os campos do texto (turma, disciplina, data e hora têm listas e seletores).
+4. Clique em "Gerar mensagens": sai uma caixa por destinatário. Copie ou abra no e-mail/WhatsApp, envie e registre.
+
+**Criar ou editar um texto-padrão** (Coordenação)
+
+1. Em Comunicação › Textos-padrão, clique em "Novo texto-padrão" ou edite um existente.
+2. Escolha o tipo de interação, os destinatários sugeridos, o assunto e o texto.
+3. Use os botões de variáveis para inserir campos como {{data}}; a página explica como cada campo é preenchido.
+
+**Cadastrar o e-mail de um setor** (Coordenação)
+
+1. Em Comunicação, na seção de grupos e setores, informe o e-mail institucional e a saudação ("equipe da CAE").
+2. As próximas mensagens já saem com o destinatário e a saudação.
+
+### Telas
+
+![Formulário de mensagem avulsa com texto-padrão, destinatários, campos do texto e o botão Gerar mensagens.](../public/manual/comunicacao-avulsa.jpg)
+
+*Mensagem avulsa: texto-padrão, vários destinatários e campos com listas e datas.*
+
+![Lista de textos-padrão agrupados por tipo de interação, com botões para criar e editar.](../public/manual/comunicacao-modelos.jpg)
+
+*Textos-padrão editáveis, por tipo de interação.*
+
+### Dúvidas frequentes
+
+- **O sistema envia as mensagens sozinho?** Não, por padrão. Ele prepara e você envia: assim nada sai sem revisão. O envio automático pelo WhatsApp depende de configuração da TI.
+- **O que significa um campo entre chaves, como {{nome}}?** É um campo a preencher. Use "Substituir no texto" na caixa da mensagem ou edite à mão antes de enviar.
+
+## 7. PPE / PEI
+
+Progressão Parcial de Estudos: registro, modalidade, Plano de Estudo Individual e impressão.
+
+No sistema: `/ppe`.
+
+### O que você pode fazer
+
+- Registrar, por semestre, os estudantes e os componentes em PPE (Coordenação).
+- Alertar retenção quando o estudante tem 3 ou mais componentes pendentes (Art. 115).
+- O docente da disciplina define a modalidade: PEI ou Dependência (Arts. 117–118).
+- Preencher o PEI no modelo do campus, com trava de 30% da carga horária (Art. 117 §1º) e prática obrigatória quando a disciplina exige (Art. 121).
+- Cronograma de encontros, com cópia de outro PEI da mesma disciplina (G09).
+- Acompanhar a situação: em andamento, prorrogado, aprovado, reprovado, lançado no acadêmico. Imprimir o PEI.
+- Visível também à CTP e ao Conselho de Classe (Art. 127).
+
+### Fluxo: Ciclo da PPE
+
+```mermaid
+flowchart LR
+  E0["Registro<br/>Coordenação<br/>estudante e componente pendente"]
+  E1["Modalidade<br/>Professor<br/>PEI ou Dependência"]
+  E0 --> E1
+  E2["PEI<br/>Professor<br/>objetivos, conteúdos, carga e encontros"]
+  E1 --> E2
+  E3["Acompanhamento<br/>Coordenação/CTP<br/>situação e prorrogação"]
+  E2 --> E3
+  E4["Lançamento<br/>Coordenação<br/>marcado como lançado no acadêmico"]
+  E3 --> E4
+```
+
+### Passo a passo
+
+**Registrar uma PPE** (Coordenação)
+
+1. Em PPE / PEI, clique em "Registrar PPE".
+2. Informe semestre, estudante, matrícula e componente.
+3. Com 3 ou mais componentes no semestre, o sistema mostra o alerta de retenção.
+
+**Definir a modalidade e preencher o PEI** (Professor)
+
+1. Em PPE / PEI aparecem as PPEs das disciplinas que você leciona.
+2. Abra o registro e escolha PEI ou Dependência.
+3. No PEI, preencha carga horária (até 30% da disciplina), horas presenciais e práticas, objetivos, conteúdos, critérios e o cronograma.
+4. Salve e use "Imprimir" para gerar o documento para assinatura.
+
+### Telas
+
+![Lista de PPEs do semestre com estudante, componente, modalidade, situação e alerta de retenção.](../public/manual/ppe-lista.jpg)
+
+*PPEs do semestre e alertas de retenção.*
+
+![Formulário do Plano de Estudo Individual com carga horária, objetivos, conteúdos e cronograma de encontros.](../public/manual/ppe-pei.jpg)
+
+*Plano de Estudo Individual no modelo do campus.*
+
+### Dúvidas frequentes
+
+- **O sistema não deixa salvar o PEI.** Confira a carga horária: o PEI não pode passar de 30% da carga da disciplina, e disciplinas com prática exigem horas práticas.
+- **Vários estudantes na mesma disciplina precisam de PEI.** É um PEI por estudante. Preencha o primeiro e copie o cronograma para os demais.
+
+## 8. PPI (40 horas)
+
+Lançamento e auditoria das atividades da Prática Profissional Integrada, com os tetos do Manual 2022.
+
+No sistema: `/ppi`.
+
+### O que você pode fazer
+
+- Abrir a solicitação de PPI de um estudante e lançar as atividades com comprovante (só a Coordenação, G11).
+- Aplicar automaticamente os tetos de quantidade e de horas de cada uma das 32 categorias dos 6 grupos.
+- Impedir que o mesmo certificado conte duas vezes na solicitação.
+- Mostrar o progresso até as 40 horas e marcar a solicitação como em análise, deferida ou indeferida.
+- Gerar a ficha "Solicitação de Prática Profissional Integrada" para assinatura.
+
+### Fluxo: Auditoria de PPI
+
+```mermaid
+flowchart LR
+  E0["Solicitação<br/>Coordenação<br/>estudante, matrícula e turma"]
+  E1["Atividades<br/>Coordenação<br/>categoria, comprovante, quantidade"]
+  E0 --> E1
+  E2["Tetos<br/>Sistema<br/>horas validadas pelo Manual 2022"]
+  E1 --> E2
+  E3["Decisão e ficha<br/>Coordenação<br/>deferir e imprimir"]
+  E2 --> E3
+```
+
+### Passo a passo
+
+**Auditar uma solicitação** (Coordenação)
+
+1. Em PPI, clique em "Nova solicitação" ou busque o estudante por nome ou matrícula.
+2. Em "Lançar atividade", escolha a categoria, informe o comprovante, o código do certificado, a data e a quantidade.
+3. O sistema calcula as horas validadas respeitando os tetos; acompanhe o total até 40h.
+4. Atualize a situação e gere a ficha para assinatura.
+
+### Telas
+
+![Solicitação de PPI com o total de horas validadas, a lista de atividades e o formulário de lançamento.](../public/manual/ppi-solicitacao.jpg)
+
+*Solicitação de PPI: atividades, horas validadas e progresso até 40h.*
+
+### Dúvidas frequentes
+
+- **Lancei 10 horas e o sistema validou menos.** Cada categoria tem teto de quantidade e de horas (Manual 2022); o excedente não conta.
+
+## 9. Diários
+
+Semáforo de carga horária e preenchimento dos diários, com lembrete ao docente.
+
+No sistema: `/diarios`.
+
+### O que você pode fazer
+
+- Ver, por oferta (turma × disciplina × professor), as aulas previstas e ministradas e a situação do diário.
+- Ordenar do que precisa de atenção ao que está em dia (semáforo).
+- Registrar a situação do diário e enviar lembrete ao docente por e-mail ou WhatsApp (Coordenação).
+- O professor vê os próprios diários.
+
+### Passo a passo
+
+**Cobrar um diário atrasado** (Coordenação)
+
+1. Em Diários, abra a oferta em atenção.
+2. Atualize a situação, se for o caso.
+3. Em "Lembrete ao docente", copie a mensagem pronta, envie e registre.
+
+### Telas
+
+![Lista de diários com turma, disciplina, professor, aulas previstas e ministradas e a cor do semáforo.](../public/manual/diarios-lista.jpg)
+
+*Semáforo de diários.*
+
+### Dúvidas frequentes
+
+- **De onde vêm as aulas previstas?** Da grade e das datas dos semestres cadastradas no calendário.
+
+## 10. Processos SEI
+
+Quadro (kanban) de processos e atendimentos: aproveitamentos, transferências, estágios e mediações.
+
+No sistema: `/processos`.
+
+### O que você pode fazer
+
+- Acompanhar processos em 4 colunas: Novo, Com professor, Aguardando retorno, Concluído.
+- Registrar número SEI, prazo, tipo (etiqueta) e descrição.
+- Filtrar por etiqueta e mover os cartões entre colunas.
+- Marcar itens sigilosos (orientação e mediação), visíveis só à Coordenação.
+
+### Fluxo: Colunas do quadro
+
+```mermaid
+flowchart LR
+  E0["Novo<br/>Coordenação"]
+  E1["Com professor<br/>Docente"]
+  E0 --> E1
+  E2["Aguardando retorno<br/>Interessado/setor"]
+  E1 --> E2
+  E3["Concluído<br/>Coordenação"]
+  E2 --> E3
+```
+
+### Passo a passo
+
+**Cadastrar e acompanhar um processo** (Coordenação)
+
+1. Em Processos SEI, clique em "Novo item".
+2. Informe título, tipo, número SEI, prazo e, se preciso, marque "sigiloso".
+3. Mova o cartão de coluna conforme o andamento.
+
+### Telas
+
+![Quadro de processos com quatro colunas e cartões com título, tipo, número SEI e prazo.](../public/manual/processos-quadro.jpg)
+
+*Quadro de processos SEI.*
+
+### Dúvidas frequentes
+
+- **A CTP vê os itens sigilosos?** Não. Itens sigilosos aparecem só para a Coordenação (Art. 22, VIII).
+
+## 11. Relatórios
+
+Números consolidados de ausências, cobertura, alimentação, PPE e PPI, em tela, PDF e planilha.
+
+No sistema: `/relatorios`.
+
+### O que você pode fazer
+
+- Ausências por mês: aulas perdidas, substituídas, adiantadas, dispensadas, sem decisão e taxa de cobertura.
+- Avisos de refeição por urgência; PPE por situação e alertas de retenção; PPI por situação e metas atingidas.
+- Só números agregados, sem nomes de estudantes nem motivos (LGPD).
+- Imprimir/salvar em PDF e exportar em planilha.
+
+### Passo a passo
+
+**Gerar o relatório do ano** (Coordenação, CTP e Direção)
+
+1. Em Relatórios, escolha o ano e clique em "Ver".
+2. Use "Imprimir / PDF" ou "Exportar planilha".
+
+### Telas
+
+![Relatório consolidado com a tabela mensal de ausências e cobertura e os quadros de alimentação, PPE e PPI.](../public/manual/relatorios.jpg)
+
+*Relatório consolidado do ano.*
+
+## 12. Cadastros: usuários, turmas, disciplinas e ofertas
+
+Base do sistema: pessoas, turmas, matriz curricular e distribuição das disciplinas aos professores.
+
+No sistema: `/usuarios`.
+
+### O que você pode fazer
+
+- Usuários: cadastrar um a um (com máscara de telefone) ou em lote por planilha; gerar senha provisória; desativar (encerra as sessões na hora).
+- Turmas: código, ano do curso, estudantes ativos e médias de refeição.
+- Disciplinas: matriz curricular com núcleo, ano, semestre, carga horária, exigência de prática e programa; importação por planilha.
+- Ofertas: distribuir as disciplinas de cada turma aos professores por ano letivo, pela tela ou por planilha (o modelo já traz a matriz).
+
+### Fluxo: Ordem dos cadastros no início do ano
+
+```mermaid
+flowchart LR
+  E0["Usuários<br/>Coordenação<br/>professores e setores"]
+  E1["Turmas<br/>Coordenação<br/>confere estudantes e médias"]
+  E0 --> E1
+  E2["Disciplinas<br/>Coordenação<br/>matriz já vem cadastrada"]
+  E1 --> E2
+  E3["Ofertas<br/>Coordenação<br/>professor de cada disciplina"]
+  E2 --> E3
+  E4["Grade<br/>Coordenação<br/>horários do semestre"]
+  E3 --> E4
+```
+
+### Passo a passo
+
+**Cadastrar professores em lote** (Coordenação)
+
+1. Em Usuários, clique em "Importar planilha" e baixe o modelo.
+2. Preencha nome, e-mail institucional, perfil, SIAPE e WhatsApp (opcionais). O sistema aceita .xlsx e .csv (separado por ponto e vírgula, vírgula ou tabulação).
+3. Envie, confira a prévia e confirme. As senhas provisórias aparecem uma única vez, com opção de baixar.
+
+**Distribuir as disciplinas do ano** (Coordenação)
+
+1. Em Ofertas, escolha o ano e clique em "Distribuir disciplinas" da turma.
+2. Escolha o professor de cada disciplina e salve. Ou use "Importar planilha": o modelo já traz as disciplinas da matriz de cada turma.
+
+### Telas
+
+![Lista de usuários com nome, e-mail, perfil, situação e último acesso, e botões para cadastrar, importar e exportar.](../public/manual/cadastros-usuarios.jpg)
+
+*Usuários do sistema.*
+
+![Distribuição de disciplinas de uma turma com uma lista de professores para cada disciplina.](../public/manual/cadastros-ofertas.jpg)
+
+*Distribuição das disciplinas aos professores.*
+
+### Dúvidas frequentes
+
+- **Como desligo o acesso de quem saiu do campus?** Em Usuários, abra a pessoa e desative. O histórico continua, mas o acesso é encerrado na hora.
+
+## 13. Planilhas, impressão e PDF
+
+Importar e exportar dados em planilha e gerar PDF do calendário, das grades e dos relatórios.
+
+### O que você pode fazer
+
+- Exportar em .xlsx ou .csv: usuários, turmas, disciplinas, ofertas, grade, calendário, ausências, relatórios e histórico de comunicação (conforme o perfil).
+- Importar por planilha, sempre com prévia antes de gravar: usuários, disciplinas, ofertas, grade, calendário e sábados letivos.
+- O formato de exportação é o mesmo da importação: baixe, edite e envie de volta.
+- Imprimir ou salvar em PDF: calendário do ano, grades (uma turma ou todas), relatórios, PEI e ficha de PPI.
+- Exportações com dados pessoais ficam registradas na auditoria.
+
+### Fluxo: Importação com prévia
+
+```mermaid
+flowchart LR
+  E0["Modelo<br/>Você<br/>baixe o .xlsx ou .csv"]
+  E1["Preencher<br/>Você<br/>Excel ou LibreOffice"]
+  E0 --> E1
+  E2["Prévia<br/>Sistema<br/>criar, alterar, igual ou erro por linha"]
+  E1 --> E2
+  E3["Confirmar<br/>Você<br/>grava tudo ou nada"]
+  E2 --> E3
+```
+
+### Passo a passo
+
+**Salvar em PDF** (Todos)
+
+1. Clique em "Imprimir / PDF" na página desejada.
+2. No navegador, use Ctrl+P e escolha "Salvar como PDF". A orientação (retrato/paisagem) já vem ajustada.
+
+**Importar uma planilha** (Coordenação)
+
+1. Abra "Importar planilha" no módulo e baixe o modelo (ele já vem pré-preenchido quando possível).
+2. Preencha e envie o arquivo (até 1 MB e 500 linhas).
+3. Confira a prévia: linhas com erro explicam o que corrigir; nada é gravado enquanto houver erro.
+4. Clique em "Confirmar importação".
+
+### Telas
+
+![Página de importação do calendário com os passos: baixar o modelo, enviar a planilha e conferir a prévia.](../public/manual/planilhas-importacao.jpg)
+
+*Importação com prévia (exemplo: calendário).*
+
+![Versão para impressão do calendário acadêmico, com cabeçalho do IFCE e os meses do ano.](../public/manual/planilhas-impressao.jpg)
+
+*Versão para impressão/PDF do calendário.*
+
+### Dúvidas frequentes
+
+- **Meu CSV dá "Faltam colunas obrigatórias".** Use os títulos de coluna do modelo. O sistema aceita CSV separado por ponto e vírgula, vírgula ou tabulação, e arquivos do Excel em português.
+- **A importação apaga o que não está na planilha?** Não, exceto na grade com o modo "Substituir", que vale só para as turmas presentes na planilha.
+
+## 14. Privacidade, segurança e auditoria
+
+Como o sistema protege os dados (LGPD) e o que fica registrado na auditoria.
+
+### O que você pode fazer
+
+- Cada perfil vê só o necessário (minimização de dados): a Assistência Estudantil, por exemplo, vê apenas refeições.
+- Mensagens e registros usam motivos operacionais, sem dados médicos ou pessoais.
+- Senhas guardadas com criptografia forte; sessões expiram após 8 horas sem uso.
+- Auditoria (Coordenação): quem fez o quê e quando — logins, cadastros, alterações, envios e exportações —, sem guardar nomes ou senhas no registro.
+
+### Passo a passo
+
+**Consultar a auditoria** (Coordenação)
+
+1. Em Cadastros › Auditoria, filtre por ação, usuário e período.
+2. Cada linha mostra data, usuário, ação e os campos alterados.
+
+### Telas
+
+![Tela de auditoria com filtros de ação, usuário e período e a lista de registros.](../public/manual/privacidade-auditoria.jpg)
+
+*Registros de auditoria.*
+
+### Dúvidas frequentes
+
+- **Posso compartilhar uma planilha exportada?** Planilhas com dados pessoais devem ficar só com quem precisa delas para o trabalho e ser apagadas quando não forem mais necessárias.
+
+## 15. Quem vê o quê
+
+| Módulo | Coordenação | Professor(a) | CTP | Direção | Assistência Estudantil |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| Calendário acadêmico | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Grade e substituições | ✔ | ✔ | — | — | — |
+| Alimentação | ✔ | — | — | — | ✔ |
+| Comunicação | ✔ | — | — | — | — |
+| PPE / PEI | ✔ | ✔ | ✔ | — | — |
+| PPI (40h) | ✔ | — | — | — | — |
+| Diários | ✔ | ✔ | — | — | — |
+| Processos SEI | ✔ | — | ✔ | — | — |
+| Relatórios | ✔ | — | ✔ | ✔ | — |
+
+Cadastros (usuários, turmas, disciplinas, ofertas), auditoria e mensagens são da Coordenação. Módulos: 9.

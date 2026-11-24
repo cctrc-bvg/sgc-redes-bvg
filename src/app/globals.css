@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+
+/*
+ * Tokens derivados do Manual de Aplicação da Marca IF (2015).
+ * Regras de uso e contraste: docs/IDENTIDADE_VISUAL_UX.md
+ */
+@theme {
+  --font-sans: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* Verde oficial: decorativo / texto >= 24px apenas (3,45:1 sobre branco) */
+  --color-if-verde: #2f9e41;
+  --color-if-verde-50: #e8f5ea;
+  --color-if-verde-700: #237a32; /* ação primária, links, foco (5,38:1) */
+  --color-if-verde-800: #1b5e27; /* hover/ativo, títulos (7,84:1) */
+
+  /* Vermelho oficial: reservado a erro, perigo e emergência */
+  --color-if-vermelho: #cd191e;
+  --color-if-vermelho-50: #fdecec;
+  --color-if-vermelho-700: #a3141a;
+
+  --color-if-preto: #000000;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-if-verde-700);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
