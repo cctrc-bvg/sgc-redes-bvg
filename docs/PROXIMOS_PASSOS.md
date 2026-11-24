@@ -10,7 +10,7 @@
 ```bash
 cd ~/projetos/sgc-redes-bvg
 git status && git log --oneline -8          # branch minha-contribuicao, sincronizada com o fork
-gh pr view __PR__ -R cctrc-bvg/sgc-redes-bvg # situação do PR (comentários da revisão)
+gh pr view 1 -R cctrc-bvg/sgc-redes-bvg # situação do PR (comentários da revisão)
 ./scripts/dev.sh testar                     # esperado: typecheck ok + 380 testes passando
 ```
 
@@ -25,7 +25,7 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 **Repositórios:**
 - `origin` = fork `isaacmiranda/sgc-redes-bvg` (público, admin), branch `minha-contribuicao`, CI verde.
 - `cctrc-bvg/sgc-redes-bvg` = original (usuário só tem leitura). Contém só o commit inicial.
-- **PR __PR__** (`minha-contribuicao` → `main`): versão inicial completa, 48 commits. O texto está em
+- **PR #1** (https://github.com/cctrc-bvg/sgc-redes-bvg/pull/1, `minha-contribuicao` → `main`): versão inicial completa, 48 commits. O texto está em
   `.handoff/github/pr-minha-contribuicao.md`.
 - **Novos commits no branch entram automaticamente no PR.** Por isso, peça confirmação antes de cada push.
 
@@ -61,7 +61,7 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 
 ## 3. Pendências que dependem do usuário
 
-- [ ] **Acompanhar a revisão do PR __PR__** e responder aos comentários. Correções viram commits novos no mesmo branch,
+- [ ] **Acompanhar a revisão do PR #1** e responder aos comentários. Correções viram commits novos no mesmo branch,
       sem reescrever o histórico durante a revisão.
 - [ ] **Antes de reiniciar a máquina:** `sudo TMPDIR=/var/tmp dpkg --configure -a`. O pacote do kernel 7.0.0-44 ficou
       meio configurado porque o `/tmp` (tmpfs de 512 MB) encheu.
