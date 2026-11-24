@@ -88,10 +88,12 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 1. **PR #2 (`e2e-playwright`):** CI verde; acompanhar a revisão e corrigir em commits novos (push com confirmação).
 2. **Implantação em produção** (falta só o endereço): seguir `docs/IMPLANTACAO.md` — VM no Proxmox, Docker Compose,
    proxy reverso com HTTPS, `APP_URL`, backup diário (`scripts/backup-banco.sh`) e teste de restauração.
-3. **Ampliar o E2E aos poucos:** os roteiros Python de `.handoff/e2e/` (sem JS, fora do git) cobrem mais regras que os
+3. **Ampliar o E2E aos poucos** (branch `e2e-ampliado`, 24/11: +13 testes — exportação, turma, Meu contato,
+   calendário — e correção dos `<select>` que perdiam o valor após erro de validação). Os roteiros Python de `.handoff/e2e/` (sem JS, fora do git) cobrem mais regras que os
    de fumaça; levar ao Playwright só o que depende do navegador. Nesta máquina (Ubuntu 26.04):
    `PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64` e `TMPDIR=~/.cache/sgc-tmp`.
-4. **Prisma 7** quando sair do 6.x: o `prisma.config.ts` já existe; falta trocar `url = env(...)` do schema pela
+4. **Prisma 7/8** (em 24/11/2026 o `latest` do npm já é o 8.0.0-rc; o 7 estável é o 7.10.1 — esperar o 8 estável, que
+   exige adaptador de driver e o gerador novo): o `prisma.config.ts` já existe; falta trocar `url = env(...)` do schema pela
    configuração do datasource e testar com `./scripts/dev.sh docker`.
 5. **Mensagens prontas:** avaliar com a Coordenação os textos de PPI/PPE; o estudante não tem cadastro (e-mail digitado
    na caixa) — se o campus quiser, guardar o e-mail do estudante na PPE/PPI.
