@@ -8,6 +8,10 @@ import { exigirPermissao } from '@/lib/auth/dal';
 import { dataParaBanco } from '@/lib/ausencias/regras';
 import { ETAPAS, EventoSchema, nomeEtapa, validarSequencia, type Intervalo } from '@/lib/calendario/regras';
 import { lerAnoLetivo } from '@/lib/ofertas/regras';
+import { temPermissao } from '@/lib/auth/rbac';
+import { pedeComunicacao } from '@/lib/calendario/mensagens';
+import { lerModoEnvio, NOME_MODO } from '@/lib/comunicacao/mensagem';
+import { mensagensDoEvento } from '@/lib/calendario/comunicar';
 
 type CampoEvento = 'tipo' | 'inicio' | 'fim' | 'descricao' | 'motivo';
 export type EstadoEvento = { mensagem?: string; sucesso?: boolean; erros?: Partial<Record<CampoEvento, string>>; valores?: Record<string, string> };
@@ -58,6 +62,8 @@ export async function criarEvento(_e: EstadoEvento | undefined, formData: FormDa
     detalhes: { tipo: lido.dados.tipo, inicio: lido.dados.inicio, fim: lido.dados.fim, suspendeAulas: lido.dados.suspendeAulas },
   });
   revalidar();
+  // Alteração não prevista: leva direto às mensagens prontas para avisar docentes, CAE, nutricionista, Gestão e turmas.
+  if (pedeComunicacao(lido.dados) && temPermissao(usuario.role, 'comunicacao:enviar')) redirect(`/calendario/eventos/${criado.id}/comunicar?aviso=criado`);
   redirect(`/calendario?ano=${lido.dados.inicio.slice(0, 4)}&mes=${Number(lido.dados.inicio.slice(5, 7))}&aviso=criado`);
 }
 
@@ -76,6 +82,7 @@ export async function atualizarEvento(_e: EstadoEvento | undefined, formData: Fo
     detalhes: { tipo: lido.dados.tipo, inicio: lido.dados.inicio, fim: lido.dados.fim, suspendeAulas: lido.dados.suspendeAulas },
   });
   revalidar();
+  if (pedeComunicacao(lido.dados) && temPermissao(usuario.role, 'comunicacao:enviar')) redirect(`/calendario/eventos/${id}/comunicar?aviso=editado`);
   return { sucesso: true, mensagem: 'Evento salvo.', valores: lido.valores };
 }
 
@@ -153,4 +160,25 @@ export async function salvarEtapas(_e: EstadoEtapas | undefined, formData: FormD
   revalidatePath('/calendario');
   revalidatePath('/diarios');
   redirect(`/calendario?ano=${ano}&aviso=etapas`);
+}
+
+export type EstadoEnvioEvento = { mensagem?: string; sucesso?: boolean };
+
+/** Registra o envio de uma mensagem da alteração do calendário (texto regenerado no servidor). */
+export async function registrarEnvioEvento(_e: EstadoEnvioEvento | undefined, formData: FormData): Promise<EstadoEnvioEvento> {
+  const { usuario } = await exigirPermissao('comunicacao:enviar');
+  const modo = lerModoEnvio(formData.get('modo'));
+  if (!modo) return { mensagem: 'Escolha por onde a mensagem foi enviada.' };
+  const id = String(formData.get('eventoId') ?? '');
+  const dados = await mensagensDoEvento(id);
+  if (!dados) return { mensagem: 'Evento não encontrado.' };
+  const m = dados.mensagens.find((x) => x.chave === String(formData.get('chave') ?? ''));
+  if (!m) return { mensagem: 'Esta mensagem não se aplica mais. Recarregue a página.' };
+  const log = await prisma.logComunicacao.create({
+    data: { canal: m.canal, destino: m.destino, chave: `${m.chave}:${id}`, assunto: m.assunto, mensagem: m.texto, modoEnvio: modo, sucesso: true, userId: usuario.id },
+  });
+  await registrarAuditoria({ userId: usuario.id, acao: 'REGISTROU_ENVIO_MENSAGEM', entidade: 'LogComunicacao', entidadeId: log.id, detalhes: { canal: m.canal, modo, origem: 'calendario' } });
+  revalidatePath(`/calendario/eventos/${id}/comunicar`);
+  revalidatePath('/comunicacao');
+  return { sucesso: true, mensagem: `Envio por ${NOME_MODO[modo].toLowerCase()} registrado no histórico.` };
 }

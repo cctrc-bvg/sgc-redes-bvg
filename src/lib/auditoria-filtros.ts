@@ -135,6 +135,8 @@ export const NOME_ACAO: Record<string, string> = {
   EXCLUIU_PPE: 'Excluiu PPE',
   IMPORTOU_OFERTAS: 'Importou ofertas por planilha',
   IMPORTOU_SABADOS_LETIVOS: 'Importou sábados letivos por planilha',
+  IMPORTOU_GRADE: 'Importou a grade horária por planilha',
+  IMPORTOU_CALENDARIO: 'Importou o calendário acadêmico por planilha',
 };
 
 export function descreverAcao(acao: string): string {

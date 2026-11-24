@@ -43,7 +43,7 @@ export async function carregarAno(ano: number) {
     imprevisto: e.imprevisto,
     motivo: e.motivo,
   }));
-  const sabados = sabadosBd.map((s) => ({ data: dataDoBanco(s.data), diaSemanaReferente: s.diaSemanaReferente, observacao: s.observacao }));
+  const sabados = sabadosBd.map((s) => ({ id: s.id, data: dataDoBanco(s.data), diaSemanaReferente: s.diaSemanaReferente, observacao: s.observacao }));
   const doAno = intervaloDoAno(etapas, semestres);
   const periodos = (etapas.some(Boolean) ? etapas : semestres).filter((x): x is Intervalo => x !== null);
   const contagem = doAno

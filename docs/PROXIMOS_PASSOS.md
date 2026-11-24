@@ -10,7 +10,7 @@
 ```bash
 cd ~/projetos/sgc-redes-bvg
 git status && git log --oneline -20         # branch minha-contribuicao; enviada ao fork em 24/11/2026 (pergunte antes de novos push)
-./scripts/dev.sh testar                      # esperado: typecheck ok + 322 testes passando
+./scripts/dev.sh testar                      # esperado: typecheck ok + 373 testes passando
 ls .handoff/github .handoff/e2e              # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
@@ -139,13 +139,17 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
 5. ~~G05 integrado ao PEI~~ — decidido manter manual (ver decisões abaixo).
 6. ~~Convite de substituição~~ feito, com mensagem pronta ao convidado (e-mail ou WhatsApp).
 7. ~~Cabeçalho agrupado~~ feito. Os menus `<details>` ficam abertos ao navegar no cliente; fechar com JS se incomodar.
-8. **Mensagens prontas em outros módulos:** Alimentação já leva a comunicar (acréscimo, ajuste, ciência); decisões de PPI/PPE
-   e mudanças no calendário ainda não geram caixa de mensagem (usar a mensagem avulsa de `/comunicacao`).
+8. **Mensagens prontas em outros módulos:** Alimentação (acréscimo, ajuste, ciência) e calendário (alteração imprevista ou
+   suspensão → `/calendario/eventos/[id]/comunicar`) já levam a comunicar; decisões de PPI/PPE ainda não geram caixa de
+   mensagem (usar a mensagem avulsa de `/comunicacao`).
 9. ~~Textos-padrão editáveis~~ feito (`/comunicacao/modelos`, tabela `ModeloMensagem`; os de `modelos.ts` são o conjunto inicial).
-10. **Importação da grade horária por planilha** (hoje só pela tela); o PDF do aSc virou referência em
-    `.handoff/planilhas-exemplo/2-ofertas-2026-exemplo.xlsx`, aba "Grade do PDF".
-11. **Importação do calendário por planilha** e "duplicar o calendário do ano anterior".
-12. **Relatórios em PDF/planilha** (hoje só tela) e exportação do histórico de comunicação.
+10. ~~Importação da grade horária por planilha~~ feito (`/grade/importar`, modos completar/substituir, confere choques
+    de horário; o modelo de uma grade vazia traz uma linha por aula semanal prevista). O PDF do aSc segue como referência
+    em `.handoff/planilhas-exemplo/2-ofertas-2026-exemplo.xlsx`, aba "Grade do PDF".
+11. ~~Importação do calendário por planilha~~ feito (`/calendario/importar`): mesmo formato da exportação; para copiar
+    um ano, exportar, trocar as datas e importar no novo ano.
+12. ~~Relatórios em PDF/planilha e exportação do histórico de comunicação~~ feito (`/relatorios/imprimir`,
+    `/exportar/relatorios`, `/exportar/comunicacao`).
 
 ### Decisões de 24/11/2026 (sugestões aceitas pelo usuário)
 

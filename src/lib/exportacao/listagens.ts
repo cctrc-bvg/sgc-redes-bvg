@@ -2,11 +2,16 @@ import 'server-only';
 import { prisma } from '@/lib/db';
 import { NOME_PERFIL, type Permissao } from '@/lib/auth/rbac';
 import { dataDoBanco, formatarData, NOME_STATUS } from '@/lib/ausencias/regras';
-import { NOME_TIPO_EVENTO } from '@/lib/calendario/regras';
+import { COLUNAS_GRADE, linhaDaGrade } from '@/lib/importacao/grade';
+import { COLUNAS_CALENDARIO, INSTRUCOES_CALENDARIO, linhasDoCalendario } from '@/lib/importacao/calendario';
 import { carregarAno } from '@/lib/calendario/servidor';
-import { NOME_DIA, NOME_DIA_EXTENSO, periodoDaUrl } from '@/lib/grade/regras';
+import { periodoDaUrl } from '@/lib/grade/regras';
 import { anoLetivoAtual, lerAnoLetivo } from '@/lib/ofertas/regras';
 import { formatarWhatsapp } from '@/lib/usuarios/regras';
+import { NOME_CANAL } from '@/lib/ausencias/mensagens';
+import { NOME_MODO } from '@/lib/comunicacao/mensagem';
+import { linhasDoRelatorio } from '@/lib/relatorios/agregacoes';
+import { carregarRelatorio } from '@/lib/relatorios/servidor';
 
 export interface Listagem {
   titulo: string;
@@ -115,17 +120,10 @@ export const LISTAGENS: Record<string, Listagem> = {
       });
       return {
         nomeArquivo: `grade-${anoLetivo}-${semestreLetivo}`,
-        colunas: [['Turma', 12], ['Dia', 12], ['Turno', 10], ['Bloco', 8], ['Início', 8], ['Fim', 8], ['Disciplina', 40], ['Professor', 30]],
-        linhas: cs.map((c) => [
-          c.turma.codigo,
-          NOME_DIA[c.diaSemana] ?? String(c.diaSemana),
-          c.bloco.turno === 'MANHA' ? 'Manhã' : 'Tarde',
-          'ABCDEFGH'[c.bloco.ordem - 1] ?? String(c.bloco.ordem),
-          c.bloco.horaInicio,
-          c.bloco.horaFim,
-          c.oferta?.disciplina.nome ?? '',
-          c.oferta?.professor.nome ?? '',
-        ]),
+        colunas: COLUNAS_GRADE.map((c) => [c.titulo, c.largura]),
+        linhas: cs.map((c) =>
+          linhaDaGrade({ turma: c.turma.codigo, diaSemana: c.diaSemana, bloco: c.bloco, disciplina: c.oferta?.disciplina.nome ?? '', professor: c.oferta?.professor.nome ?? '' }),
+        ),
         notas: [`Período ${anoLetivo}.${semestreLetivo}.`],
       };
     },
@@ -136,23 +134,15 @@ export const LISTAGENS: Record<string, Listagem> = {
     dadosPessoais: false,
     gerar: async (sp) => {
       const cal = await carregarAno(anoDaUrl(sp));
-      const linhas = [
-        ...cal.eventos.map((e) => ({
-          inicio: e.inicio,
-          l: [formatarData(e.inicio), formatarData(e.fim), NOME_TIPO_EVENTO[e.tipo], e.descricao ?? '', e.motivo ?? '', e.suspendeAulas ? 'Sem aula' : 'Mantidas', simNao(e.imprevisto)],
-        })),
-        ...cal.sabados.map((s) => ({
-          inicio: s.data,
-          l: [formatarData(s.data), formatarData(s.data), 'Sábado letivo', `Grade de ${NOME_DIA_EXTENSO[s.diaSemanaReferente]}${s.observacao ? ` — ${s.observacao}` : ''}`, '', 'Letivo', 'Não'],
-        })),
-      ].sort((a, b) => a.inicio.localeCompare(b.inicio));
       return {
         nomeArquivo: `calendario-${cal.ano}`,
-        colunas: [['Início', 12], ['Término', 12], ['Tipo', 30], ['Descrição', 40], ['Motivo', 26], ['Aulas', 10], ['Imprevisto', 10]],
-        linhas: linhas.map((x) => x.l),
+        colunas: COLUNAS_CALENDARIO.map((c) => [c.titulo, c.largura]),
+        linhas: linhasDoCalendario(cal),
         notas: [
           `Dias letivos no ano: ${cal.contagem.letivos.length} (meta 200).`,
           ...cal.etapas.map((e, i) => `Etapa N${i + 1}: ${e ? `${formatarData(e.inicio)} a ${formatarData(e.fim)} — ${cal.porEtapa[i]} dia(s) letivo(s)` : 'não cadastrada'}.`),
+          '',
+          ...INSTRUCOES_CALENDARIO.slice(1),
         ],
       };
     },
@@ -172,6 +162,49 @@ export const LISTAGENS: Record<string, Listagem> = {
         nomeArquivo: `ausencias-${ano}`,
         colunas: [['Data', 12], ['Turma', 12], ['Disciplina', 36], ['Docente', 30], ['Motivo operacional', 30], ['Situação', 26]],
         linhas: as.map((a) => [formatarData(dataDoBanco(a.dataAula)), a.turma.codigo, a.oferta.disciplina.nome, a.professorAusente.nome, a.motivoOperacional, NOME_STATUS[a.status]]),
+      };
+    },
+  },  relatorios: {
+    titulo: 'Relatório consolidado',
+    permissao: 'relatorios:ver',
+    dadosPessoais: false,
+    gerar: async (sp) => {
+      const ano = anoDaUrl(sp);
+      return {
+        nomeArquivo: `relatorio-${ano}`,
+        colunas: [['Seção', 22], ['Período', 16], ['Indicador', 44], ['Valor', 10]],
+        linhas: linhasDoRelatorio(await carregarRelatorio(ano)),
+        notas: ['Só números, sem nomes de estudantes nem motivos (LGPD). Use filtro ou tabela dinâmica por Seção e Indicador.'],
+      };
+    },
+  },
+  comunicacao: {
+    titulo: 'Histórico de comunicação',
+    permissao: 'comunicacao:enviar',
+    dadosPessoais: true,
+    gerar: async (sp) => {
+      const ano = anoDaUrl(sp);
+      const logs = await prisma.logComunicacao.findMany({
+        where: { enviadoEm: { gte: new Date(Date.UTC(ano, 0, 1)), lt: new Date(Date.UTC(ano + 1, 0, 1)) } },
+        orderBy: { enviadoEm: 'desc' },
+        take: 5000,
+      });
+      const ids = [...new Set(logs.map((l) => l.userId).filter((x): x is string => !!x))];
+      const nomes = new Map((await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, nome: true } })).map((u) => [u.id, u.nome]));
+      const dataHora = (d: Date) => d.toLocaleString('pt-BR', { timeZone: 'America/Fortaleza', dateStyle: 'short', timeStyle: 'short' });
+      return {
+        nomeArquivo: `comunicacao-${ano}`,
+        colunas: [['Data e hora', 18], ['Destino', 34], ['Assunto', 40], ['Forma de envio', 22], ['Registrado por', 30], ['Situação', 10], ['Mensagem', 80]],
+        linhas: logs.map((l) => [
+          dataHora(l.enviadoEm),
+          l.canal ? NOME_CANAL[l.canal] : (l.destino ?? ''),
+          l.assunto ?? '',
+          NOME_MODO[l.modoEnvio] ?? l.modoEnvio,
+          l.userId ? (nomes.get(l.userId) ?? '') : '',
+          l.sucesso ? 'Enviado' : 'Falhou',
+          l.mensagem,
+        ]),
+        notas: [`Envios registrados em ${ano} (até 5.000, os mais recentes primeiro).`],
       };
     },
   },

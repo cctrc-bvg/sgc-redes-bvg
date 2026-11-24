@@ -3,6 +3,7 @@
  * motivos (LGPD). Funções puras sobre listas já buscadas no banco.
  */
 import type { StatusAusencia, StatusPPE, StatusPpi, TipoCobertura } from '@prisma/client';
+import type { DadosRelatorio } from './servidor';
 
 export interface AusenciaResumo {
   mes: string; // AAAA-MM
@@ -70,4 +71,37 @@ export function nomeMes(mes: string): string {
   const [ano, m] = mes.split('-').map(Number);
   const nomes = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   return `${nomes[m - 1]}/${ano}`;
+}
+
+export const NIVEIS_SLA = [
+  { chave: 'VERDE_24H_MAIS', rotulo: 'Planejados (24h+)', icone: '🟢' },
+  { chave: 'AMARELO_4H_A_24H', rotulo: 'Imprevistos (4h–24h)', icone: '🟡' },
+  { chave: 'VERMELHO_MENOS_4H', rotulo: 'Emergências (< 4h)', icone: '🔴' },
+] as const;
+
+export const COLUNAS_MENSAIS: [keyof LinhaMensal, string][] = [
+  ['ausencias', 'Ausências'],
+  ['aulasPerdidas', 'Aulas perdidas'],
+  ['substituidas', 'Substituídas'],
+  ['adiantadas', 'Adiantadas'],
+  ['dispensadas', 'Dispensadas'],
+  ['pendentes', 'Sem decisão'],
+  ['cobertura', 'Cobertura (%)'],
+];
+
+/** Formato longo (Seção, Período, Indicador, Valor): fácil de filtrar e de usar em tabela dinâmica. */
+export function linhasDoRelatorio(r: DadosRelatorio): string[][] {
+  const linhas: string[][] = [];
+  for (const l of [...r.linhas, { ...r.total, mes: '' }]) {
+    for (const [campo, rotulo] of COLUNAS_MENSAIS) linhas.push(['Ausências docentes', l.mes ? nomeMes(l.mes) : `Total ${r.ano}`, rotulo, String(l[campo])]);
+  }
+  linhas.push(['Alimentação', String(r.ano), 'Avisos de refeição', String(r.alertas)]);
+  for (const s of r.sla) linhas.push(['Alimentação', String(r.ano), s.rotulo, String(s.total)]);
+  linhas.push(['PPE', String(r.ano), 'Registros', String(r.ppes)]);
+  for (const p of r.ppePorStatus) linhas.push(['PPE', String(r.ano), p.rotulo, String(p.total)]);
+  linhas.push(['PPE', String(r.ano), 'Estudantes com alerta de retenção (Art. 115)', String(r.retidos)]);
+  linhas.push(['PPI', 'Todas', 'Solicitações', String(r.ppis)]);
+  for (const p of r.ppiPorStatus) linhas.push(['PPI', 'Todas', p.rotulo, String(p.total)]);
+  linhas.push(['PPI', 'Todas', 'Com 40h ou mais validadas', String(r.ppiConcluidas)]);
+  return linhas;
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { LinkExportar } from '@/components/barra-impressao';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { NOME_CANAL } from '@/lib/ausencias/mensagens';
@@ -68,7 +69,10 @@ export default async function PaginaComunicacao() {
       </section>
 
       <section aria-labelledby="historico" className="mt-8">
-        <h2 id="historico" className="text-lg font-semibold text-slate-900">Histórico de envios (últimos 50)</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="historico" className="text-lg font-semibold text-slate-900">Histórico de envios (últimos 50)</h2>
+          <LinkExportar href="/exportar/comunicacao">Exportar histórico do ano</LinkExportar>
+        </div>
         {historico.length === 0 ? (
           <p className="mt-2 text-slate-700">Nenhuma mensagem enviada ainda.</p>
         ) : (

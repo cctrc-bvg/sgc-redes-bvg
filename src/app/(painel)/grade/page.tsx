@@ -4,6 +4,7 @@ import { LinkExportar, LinkImpressao } from '@/components/barra-impressao';
 import { SeletorPeriodo } from '@/components/quadro-grade';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
+import { temPermissao } from '@/lib/auth/rbac';
 import { anosDoSeletor, periodoDaUrl } from '@/lib/grade/regras';
 
 export const metadata: Metadata = { title: 'Grade — SGC-Redes' };
@@ -56,6 +57,11 @@ export default async function PaginaGrade({ searchParams }: { searchParams: Prom
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <LinkImpressao href={`/grade/imprimir${periodo}`}>Imprimir / PDF de todas as turmas</LinkImpressao>
         <LinkExportar href={`/exportar/grade${periodo}`}>Exportar planilha</LinkExportar>
+        {temPermissao(usuario.role, 'grade:editar') && (
+          <Link href={`/grade/importar${periodo}`} className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
+            Importar planilha
+          </Link>
+        )}
         <Link href={`/grade/sabados${periodo}`} className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2">
           Sábados letivos
         </Link>

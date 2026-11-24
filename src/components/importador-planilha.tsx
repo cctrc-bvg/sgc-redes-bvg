@@ -35,10 +35,10 @@ export function ImportadorPlanilha({ acao, modeloBase, itens }: { acao: Acao; mo
           O modelo já vem preenchido. Edite no Excel ou no LibreOffice: a aba &quot;Instruções&quot; explica cada coluna.
         </p>
         <div className="mt-3 flex flex-wrap gap-3">
-          <a href={`${modeloBase}?formato=xlsx`} className={classeLinkModelo} download>
+          <a href={`${modeloBase}${modeloBase.includes('?') ? '&' : '?'}formato=xlsx`} className={classeLinkModelo} download>
             Baixar modelo (.xlsx)
           </a>
-          <a href={`${modeloBase}?formato=csv`} className={classeLinkModelo} download>
+          <a href={`${modeloBase}${modeloBase.includes('?') ? '&' : '?'}formato=csv`} className={classeLinkModelo} download>
             Baixar modelo (.csv)
           </a>
         </div>

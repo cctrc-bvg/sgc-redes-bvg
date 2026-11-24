@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contarPor, nomeMes, resumoMensalAusencias, totalizar } from './agregacoes';
+import { contarPor, linhasDoRelatorio, NIVEIS_SLA, nomeMes, resumoMensalAusencias, totalizar } from './agregacoes';
 
 describe('resumo mensal de ausências', () => {
   const lista = [
@@ -33,5 +33,27 @@ describe('utilidades', () => {
   it('nome do mês', () => {
     expect(nomeMes('2026-11')).toBe('nov/2026');
     expect(nomeMes('2027-01')).toBe('jan/2027');
+  });
+});
+
+describe('linhasDoRelatorio (planilha)', () => {
+  it('formato longo: meses, total e demais seções', () => {
+    const linhas = linhasDoRelatorio({
+      ano: 2026,
+      linhas: [{ mes: '2026-03', ausencias: 2, aulasPerdidas: 4, substituidas: 2, adiantadas: 1, dispensadas: 0, pendentes: 1, cobertura: 75 }],
+      total: { mes: 'total', ausencias: 2, aulasPerdidas: 4, substituidas: 2, adiantadas: 1, dispensadas: 0, pendentes: 1, cobertura: 75 },
+      alertas: 3,
+      sla: NIVEIS_SLA.map((n) => ({ ...n, total: 1 })),
+      ppes: 0,
+      ppePorStatus: [],
+      retidos: 0,
+      ppis: 1,
+      ppiPorStatus: [{ rotulo: 'Deferida', total: 1 }],
+      ppiConcluidas: 1,
+    });
+    expect(linhas[0]).toEqual(['Ausências docentes', 'mar/2026', 'Ausências', '2']);
+    expect(linhas).toContainEqual(['Ausências docentes', 'Total 2026', 'Cobertura (%)', '75']);
+    expect(linhas).toContainEqual(['Alimentação', '2026', 'Emergências (< 4h)', '1']);
+    expect(linhas.at(-1)).toEqual(['PPI', 'Todas', 'Com 40h ou mais validadas', '1']);
   });
 });

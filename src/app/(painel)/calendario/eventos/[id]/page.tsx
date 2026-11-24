@@ -25,6 +25,11 @@ export default async function PaginaEvento({ params }: { params: Promise<{ id: s
         <span aria-current="page" className="text-slate-700">Editar evento</span>
       </nav>
       <h1 className="mt-2 text-2xl font-bold text-slate-900">Editar evento</h1>
+      <p className="mt-2">
+        <Link href={`/calendario/eventos/${e.id}/comunicar`} className="text-if-verde-700 underline underline-offset-2">
+          Comunicar este evento (mensagens prontas para docentes, CAE, nutricionista, Gestão e turmas)
+        </Link>
+      </p>
       <div className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <FormularioEvento
           inicial={{ id: e.id, tipo: e.tipo, inicio, fim: fim === inicio ? '' : fim, descricao: e.descricao ?? '', suspendeAulas: e.suspendeAulas, imprevisto: e.imprevisto, motivo: e.motivo ?? '' }}
