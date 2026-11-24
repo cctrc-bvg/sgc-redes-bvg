@@ -347,6 +347,7 @@ enum CanalWhatsapp {
   ASSISTENCIA_ESTUDANTIL
   CTP
   LIDERES_TURMA
+  NUTRICIONISTA // nutricionista do campus: avisada das alterações de refeição
 }
 
 model ConfiguracaoCanal {

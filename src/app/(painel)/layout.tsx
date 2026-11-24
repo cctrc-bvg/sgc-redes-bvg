@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { exigirUsuario } from '@/lib/auth/dal';
 import { NOME_PERFIL, temPermissao, type Permissao } from '@/lib/auth/rbac';
+import { FecharMenus } from '@/components/fechar-menus';
 import { sair } from './actions';
 
 /**
@@ -32,6 +33,7 @@ export default async function LayoutPainel({ children }: { children: React.React
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       <header className="border-b-4 border-if-verde bg-white">
+        <FecharMenus />
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link href="/painel" className="rounded-sm">
             <span className="block text-xl font-bold text-if-verde-800">SGC-Redes</span>
@@ -44,14 +46,15 @@ export default async function LayoutPainel({ children }: { children: React.React
             </span>
             {grupos.length > 1 ? (
               grupos.map((g) => (
-                <details key={g.titulo} className="relative">
+                // name: só um menu aberto por vez (nativo, sem JS); FecharMenus fecha ao navegar ou clicar fora.
+                <details key={g.titulo} name="menu-cabecalho" data-menu-cabecalho="" className="relative">
                   <summary className={`${classeLink} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>
                     {g.titulo} <span aria-hidden="true">▾</span>
                   </summary>
-                  <ul className="absolute right-0 z-10 mt-1 min-w-48 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
+                  <ul className="absolute left-0 z-20 mt-1 min-w-48 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
                     {g.links.map((l) => (
                       <li key={l.href}>
-                        <Link href={l.href} className={`${classeLink} w-full px-2`}>
+                        <Link href={l.href} className={`${classeLink} w-full whitespace-nowrap px-2`}>
                           {l.rotulo}
                         </Link>
                       </li>

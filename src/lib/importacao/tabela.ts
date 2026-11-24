@@ -24,9 +24,11 @@ export function normalizarCabecalho(texto: string): string {
 }
 
 /** Detecta o separador pela primeira linha: ";" (Excel em português) ou ",". */
-function detectarSeparador(primeiraLinha: string): ';' | ',' {
+/** Ponto e vírgula (Excel em português), vírgula ou tabulação ("Texto separado por tabulações" salvo como .csv). */
+function detectarSeparador(primeiraLinha: string): ';' | ',' | '\t' {
   const contar = (c: string) => primeiraLinha.split(c).length - 1;
-  return contar(';') >= contar(',') ? ';' : ',';
+  const [melhor] = ([';', '\t', ','] as const).map((c) => [c, contar(c)] as const).sort((a, b) => b[1] - a[1]);
+  return melhor[1] > 0 ? melhor[0] : ';';
 }
 
 /**

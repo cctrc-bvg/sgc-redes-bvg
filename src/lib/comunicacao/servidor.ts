@@ -2,7 +2,10 @@ import 'server-only';
 import type { CanalWhatsapp } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { CAMPO_SAUDACAO, NOME_CANAL } from '@/lib/ausencias/mensagens';
-import { contatoDoUsuario, primeiroNome, saudacao, type MensagemPronta } from './mensagem';
+import { contatoDoUsuario, preencherCampos, primeiroNome, saudacao, type MensagemPronta } from './mensagem';
+
+/** Texto que já começa com saudação (ex.: vindo de um texto-padrão) não ganha outra. */
+const temSaudacao = (texto: string) => /^(olá|ola|oi|prezad|car[oa]s?\b|bom dia|boa tarde|boa noite|📢|\*)/i.test(texto.trim());
 
 /** Destinatários da mensagem avulsa: grupos/setores ativos e usuários ativos. Valor "canal:X" ou "usuario:<id>". */
 export async function opcoesDeDestino() {
@@ -18,6 +21,13 @@ export async function opcoesDeDestino() {
 
 /** Monta a mensagem avulsa com saudação e contato do destinatário; null se o destino não existir. */
 export async function mensagemAvulsa(destino: string, assunto: string, texto: string): Promise<MensagemPronta | null> {
+  const m = await montarAvulsa(destino, assunto, texto);
+  if (!m) return null;
+  const v = m.variaveis ?? {};
+  return { ...m, assunto: preencherCampos(m.assunto, v), texto: preencherCampos(m.texto, v) };
+}
+
+async function montarAvulsa(destino: string, assunto: string, texto: string): Promise<MensagemPronta | null> {
   const [tipo, id] = destino.split(':', 2);
   if (tipo === 'canal' && id && id in NOME_CANAL) {
     const canal = id as CanalWhatsapp;
@@ -32,7 +42,8 @@ export async function mensagemAvulsa(destino: string, assunto: string, texto: st
       whatsapp: null,
       aceitaWhatsapp: true,
       assunto,
-      texto: `${saudacao(cfg.saudacao, CAMPO_SAUDACAO[canal])}\n\n${texto}`,
+      texto: temSaudacao(texto) ? texto : `${saudacao(cfg.saudacao, CAMPO_SAUDACAO[canal])}\n\n${texto}`,
+      variaveis: cfg.saudacao ? { destinatarios: cfg.saudacao } : {},
     };
   }
   if (tipo === 'usuario' && id) {
@@ -45,7 +56,8 @@ export async function mensagemAvulsa(destino: string, assunto: string, texto: st
       destino: 'Usuário do sistema',
       ...contatoDoUsuario(u),
       assunto,
-      texto: `${saudacao(primeiroNome(u.nome), 'nome do destinatário')}\n\n${texto}`,
+      texto: temSaudacao(texto) ? texto : `${saudacao(primeiroNome(u.nome), 'nome do destinatário')}\n\n${texto}`,
+      variaveis: { nome: primeiroNome(u.nome) },
     };
   }
   return null;

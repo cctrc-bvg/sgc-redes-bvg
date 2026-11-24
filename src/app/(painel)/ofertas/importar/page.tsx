@@ -17,7 +17,7 @@ export default async function PaginaImportarOfertas() {
       </nav>
       <h1 className="mt-2 text-2xl font-bold text-slate-900">Importar a distribuição de disciplinas por planilha</h1>
       <p className="mt-1 text-slate-700">
-        Lance ou troque o professor de várias disciplinas e turmas de uma vez. O modelo vem com as ofertas do ano. Nada é removido pela planilha.
+        Lance ou troque o professor de várias disciplinas e turmas de uma vez. O modelo já vem com as disciplinas da matriz curricular de cada turma (e os professores já lançados): preencha o e-mail do professor; linhas sem professor são ignoradas. Nada é removido pela planilha.
       </p>
       <div className="mt-6">
         <ImportadorPlanilha acao={importarOfertas} modeloBase="/ofertas/importar/modelo" itens="ofertas" />

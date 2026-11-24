@@ -10,7 +10,7 @@
 ```bash
 cd ~/projetos/sgc-redes-bvg
 git status && git log --oneline -20         # branch minha-contribuicao; enviada ao fork em 24/11/2026 (pergunte antes de novos push)
-./scripts/dev.sh testar                      # esperado: typecheck ok + 316 testes passando
+./scripts/dev.sh testar                      # esperado: typecheck ok + 322 testes passando
 ls .handoff/github .handoff/e2e              # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
@@ -62,7 +62,8 @@ no GitHub. Novos `git push` continuam pedindo confirmação:
 | `2f022d2` | Convite de substituição: Coordenação convida, docente aceita/recusa em "Minha grade" |
 | `f4b53a4` | Cabeçalho da Coordenação com menus "Operação" e "Cadastros" (`<details>`, sem JS) |
 | `124b677`, `a1c5672` | Pendências nos cards do painel; este roteiro |
-| *(último)* | **Comunicação sem depender do WhatsApp:** mensagens prontas com e-mail institucional, campos `{{...}}`, cópia; "Meu contato" |
+| `d3bb879` | **Comunicação sem depender do WhatsApp:** mensagens prontas com e-mail institucional, campos `{{...}}`, cópia; "Meu contato" |
+| *(último)* | Textos-padrão por tipo de interação; modelo de ofertas com a matriz de cada turma |
 
 **Telas** (todas funcionam sem JavaScript):
 - Acesso: `/login`, `/painel` (cards por perfil; **todos os módulos já abrem**), `/conta/senha`, `/conta/contato`
@@ -85,7 +86,7 @@ no GitHub. Novos `git push` continuam pedindo confirmação:
 editáveis em `/turmas`),
 grupos e setores de comunicação (saudação padrão só para professores e líderes), regras PPI, 8 blocos de horário (A–D manhã/tarde, 60 min) e as **47 disciplinas da matriz**.
 
-**Verificado:** 316 testes unitários, typecheck, `next build` e 14 roteiros E2E sem JavaScript contra PostgreSQL
+**Verificado:** 322 testes unitários, typecheck, `next build` e 14 roteiros E2E sem JavaScript contra PostgreSQL
 real, todos verdes em 24/11/2026: login, usuários, disciplinas, ofertas, grade, importação, turmas, ausências (inclui comunicação, auditoria e relatórios), alimentação, processos, diários, PPI, PPE e importação de ofertas/sábados.
 As migrações que convertem dados (ofertas e grade) foram testadas com linhas no formato antigo.
 
@@ -106,6 +107,10 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
       (caixas de mensagem: copiar, colar, substituir campos, abrir no e-mail) e a Alimentação vista pela AE.
 - [ ] **Cadastrar em `/comunicacao`** o e-mail institucional e a saudação de cada grupo/setor (CAE, CTP, Gestão,
       professores, turmas). Sem isso as mensagens saem com "Para" vazio e um campo `{{...}}` na saudação.
+- [ ] **Testar as planilhas de exemplo** (local, fora do git, têm nomes reais da grade 2026):
+      `.handoff/planilhas-exemplo/1-usuarios-professores-exemplo.xlsx` (Usuários › Importar) e depois
+      `2-ofertas-2026-exemplo.xlsx` (Ofertas › Importar). E-mails fictícios `@exemplo.com`. Artes II (REDES-1 e 3) e
+      Servidores (REDES-3) ficaram de fora por não serem da matriz do ano da turma.
 - [ ] **Configurar `APP_URL`** no servidor de produção: as mensagens aos docentes trazem o link de "Minha grade".
 - [x] ~~Envio automático (Evolution API)~~ — **decidido em 24/11/2026: continuar semiautomático** (e-mail ou WhatsApp Web
       com o texto pronto). O código da Evolution fica, desligado, para o futuro.
@@ -133,6 +138,9 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
 7. ~~Cabeçalho agrupado~~ feito. Os menus `<details>` ficam abertos ao navegar no cliente; fechar com JS se incomodar.
 8. **Mensagens prontas em outros módulos:** acréscimo de refeição (`/alimentacao/adicionar`) e decisões de PPI/PPE ainda
    não geram caixa de mensagem; usar a mensagem avulsa de `/comunicacao` enquanto isso.
+9. **Textos-padrão editáveis pela Coordenação** (hoje fixos em `modelos.ts`): tabela no banco + tela em Comunicação.
+10. **Importação da grade horária por planilha** (hoje só pela tela); o PDF do aSc virou referência em
+    `.handoff/planilhas-exemplo/2-ofertas-2026-exemplo.xlsx`, aba "Grade do PDF".
 
 ### Decisões de 24/11/2026 (sugestões aceitas pelo usuário)
 
@@ -197,6 +205,12 @@ e nas decisões da seção 5.
   Mensagens individuais: convidado, substituto, docente da aula adiantada e docente ausente; CTP recebe aviso de dispensa.
   Canal **inativo** não gera mensagem. `User.usaWhatsapp = false` (em "Meu contato"): ninguém recebe link para o número
   da pessoa, e ela própria não vê botões nem a opção WhatsApp.
+- **Textos-padrão** (`src/lib/comunicacao/modelos.ts`): modelos fixos no código por tipo de interação (convite, substituição,
+  adiantamento, turma, CAE, CTP, Gestão, docente ausente, diário, reunião, comunicado, PPI, PPE, processo SEI), com variáveis
+  `{{turma}}`, `{{data}}`, `{{horarios}}`, `{{nome}}` etc. Cada mensagem gerada traz `tipo` e `variaveis`; o select
+  "Texto-padrão" da caixa troca assunto e texto, e o que o sistema não sabe vira campo a preencher. Na mensagem avulsa
+  o select lista todos os modelos (sem JS, o servidor aplica o modelo quando o texto vem vazio). Editar modelos pela
+  tela ficou para depois (backlog).
 - **Mensagens:** sempre regeneradas no servidor; Gestão só recebe dispensa, impacto alimentar ou aula sem cobertura (G08);
   líderes de turma sem nome de docente; AE sem docente nem disciplina.
 - **Diários:** espelho do sistema acadêmico (a Coordenação atualiza); amarelo quando ministradas < esperadas − 10%

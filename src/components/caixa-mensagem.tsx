@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { camposPendentes, linkEmail, linkWhatsapp, preencherCampos, textoParaEmail, type MensagemPronta } from '@/lib/comunicacao/mensagem';
+import { MODELOS_TEXTO, modeloPorId, modelosDoTipo, NOME_TIPO_INTERACAO, TIPOS_INTERACAO } from '@/lib/comunicacao/modelos';
 
 const botao =
   'inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-3 text-sm font-semibold text-slate-800 hover:bg-slate-100';
@@ -48,12 +49,29 @@ export function CaixaMensagem({ mensagem, mostrarWhatsapp, children }: { mensage
   const [texto, setTexto] = useState(mensagem.texto);
   const [valores, setValores] = useState<Record<string, string>>({});
   const [aviso, setAviso] = useState('');
+  const [modelo, setModelo] = useState('');
   const areaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => setMontado(true), []);
 
-  const campos = camposPendentes(mensagem.texto, mensagem.assunto);
-  const restantes = camposPendentes(texto, assunto);
+  const campos = camposPendentes(texto, assunto);
+  const opcoesModelo = mensagem.tipo ? modelosDoTipo(mensagem.tipo) : MODELOS_TEXTO;
+
+  const aplicarModelo = (id: string) => {
+    setModelo(id);
+    const escolhido = modeloPorId(id);
+    if (!escolhido) {
+      setTexto(mensagem.texto);
+      setAssunto(mensagem.assunto);
+      setAviso('Texto gerado pelo sistema restaurado.');
+      return;
+    }
+    const valores = mensagem.variaveis ?? {};
+    setTexto(preencherCampos(escolhido.texto, valores));
+    setAssunto(preencherCampos(escolhido.assunto, valores));
+    setAviso(`Texto-padrão "${escolhido.rotulo}" aplicado. Confira os campos a preencher.`);
+  };
+  const restantes = campos;
   const whatsapp = mostrarWhatsapp && mensagem.aceitaWhatsapp;
 
   const acao = async (fazer: () => Promise<string> | string) => setAviso(await fazer());
@@ -92,6 +110,38 @@ export function CaixaMensagem({ mensagem, mostrarWhatsapp, children }: { mensage
           />
         </div>
       </div>
+
+      {montado && opcoesModelo.length > 0 && (
+        <div>
+          <label htmlFor={id('modelo')} className="block text-sm font-semibold text-slate-800">
+            Texto-padrão
+          </label>
+          <select
+            id={id('modelo')}
+            value={modelo}
+            onChange={(e) => aplicarModelo(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-slate-400 bg-white px-3 py-2 text-slate-900 sm:max-w-md"
+          >
+            <option value="">Texto gerado pelo sistema</option>
+            {mensagem.tipo
+              ? opcoesModelo.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.rotulo}
+                  </option>
+                ))
+              : TIPOS_INTERACAO.map((t) => (
+                  <optgroup key={t} label={NOME_TIPO_INTERACAO[t]}>
+                    {modelosDoTipo(t).map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.rotulo}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+          </select>
+          <p className="mt-0.5 text-sm text-slate-600">Troca o assunto e o texto; o que o sistema não souber vira campo a preencher.</p>
+        </div>
+      )}
 
       <div>
         <label htmlFor={id('texto')} className="block text-sm font-semibold text-slate-800">
@@ -189,6 +239,7 @@ export function CaixaMensagem({ mensagem, mostrarWhatsapp, children }: { mensage
                 setAssunto(mensagem.assunto);
                 setPara(mensagem.para ?? '');
                 setValores({});
+                setModelo('');
                 return 'Texto original restaurado.';
               })
             }

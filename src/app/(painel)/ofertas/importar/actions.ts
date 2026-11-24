@@ -23,6 +23,8 @@ export async function importarOfertas(_estado: EstadoImportacao | undefined, for
   const plano = planejarImportacaoOfertas({ registros: entrada.registros, contexto: { turmas, disciplinas, docentes, ofertas } });
   const avisos = avisoColunasDesconhecidas(entrada.desconhecidas);
   const nada = plano.criar.length + plano.alterar.length === 0;
+  const ignoradas = plano.linhas.filter((l) => l.situacao === 'ignorar').length;
+  const sobreIgnoradas = ignoradas > 0 ? ` ${ignoradas} linha(s) sem professor ficaram de fora.` : '';
 
   if (!entrada.confirmar || plano.temErros) {
     if (plano.temErros) return { linhas: plano.linhas, avisos, mensagem: 'Há linhas com erro. Nada foi gravado: corrija a planilha e envie de novo.' };
@@ -31,8 +33,8 @@ export async function importarOfertas(_estado: EstadoImportacao | undefined, for
       avisos,
       dados: nada ? undefined : serializarDados(entrada),
       mensagem: nada
-        ? 'A planilha é igual à distribuição atual: não há nada para gravar.'
-        : `Prévia pronta: ${plano.criar.length} oferta(s) nova(s) e ${plano.alterar.length} troca(s) de professor. Confira e confirme abaixo.`,
+        ? `A planilha é igual à distribuição atual: não há nada para gravar.${sobreIgnoradas}`
+        : `Prévia pronta: ${plano.criar.length} oferta(s) nova(s) e ${plano.alterar.length} troca(s) de professor.${sobreIgnoradas} Confira e confirme abaixo.`,
     };
   }
   if (nada) return { concluido: true, sucesso: true, mensagem: 'Nada para gravar: a distribuição já está igual à planilha.' };

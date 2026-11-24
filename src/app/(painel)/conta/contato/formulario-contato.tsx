@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { CampoTelefone } from '@/components/campo-telefone';
 import { Alerta, BotaoPrimario, Campo } from '@/components/campo';
 import { salvarContato, type EstadoContato } from './actions';
 
@@ -19,10 +20,9 @@ export function FormularioContato({ whatsapp, usaWhatsapp }: { whatsapp: string;
           </span>
         </label>
       </div>
-      <Campo
+      <CampoTelefone
         id="whatsapp"
         rotulo="WhatsApp (opcional)"
-        type="tel"
         autoComplete="tel"
         defaultValue={v?.whatsapp ?? whatsapp}
         erros={estado?.erros?.whatsapp ? [estado.erros.whatsapp] : undefined}

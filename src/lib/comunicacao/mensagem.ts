@@ -4,6 +4,7 @@
  * tendo desligado o WhatsApp), a mensagem continua disponível para copiar ou abrir no e-mail.
  */
 import type { CanalWhatsapp } from '@prisma/client';
+import type { TipoInteracao } from './modelos';
 
 export interface MensagemPronta {
   /** Identifica a mensagem dentro da origem (ex.: "canal:CTP", "substituto:<userId>"). */
@@ -22,6 +23,10 @@ export interface MensagemPronta {
   aceitaWhatsapp: boolean;
   assunto: string;
   texto: string;
+  /** Tipo de interação: define os textos-padrão oferecidos na caixa. */
+  tipo?: TipoInteracao;
+  /** Valores das variáveis `{{...}}` dos textos-padrão (as que faltarem viram campos a preencher). */
+  variaveis?: Readonly<Record<string, string>>;
 }
 
 /** Campos a preencher: `{{nome do destinatário}}`. */

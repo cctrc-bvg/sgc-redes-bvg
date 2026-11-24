@@ -69,6 +69,13 @@ describe('importação de ofertas', () => {
     expect(troca.linhas[0].detalhe).toMatch(/antes: Ana/);
   });
 
+  it('ignora linha sem professor (modelo com a matriz inteira)', () => {
+    const p = planejarImportacaoOfertas({ registros: [linha(2, 'REDES-1', 'qualquer', '  ')], contexto });
+    expect(p.temErros).toBe(false);
+    expect(p.criar).toEqual([]);
+    expect(p.linhas[0]).toMatchObject({ situacao: 'ignorar', detalhe: 'Sem professor: linha ignorada.' });
+  });
+
   it('recusa turma, disciplina, professor e ano inválidos, disciplina de outro ano e repetição', () => {
     const p = planejarImportacaoOfertas({
       contexto,

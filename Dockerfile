@@ -10,6 +10,10 @@ RUN npm ci
 
 # ---------- migrator: aplica migrações e seed (executa uma vez e encerra) ----------
 FROM deps AS migrator
+# O seed importa dados fixos de src/lib (regras PPI, matriz curricular, blocos de horário).
+COPY src/lib/ppi-regras-2022.ts ./src/lib/
+COPY src/lib/disciplinas/matriz-curricular.ts ./src/lib/disciplinas/
+COPY src/lib/grade/blocos-horario.ts ./src/lib/grade/
 CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed"]
 
 # ---------- builder: build de produção do Next.js ----------

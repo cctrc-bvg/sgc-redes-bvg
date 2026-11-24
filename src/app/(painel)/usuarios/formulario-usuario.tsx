@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useActionState } from 'react';
 import type { Role } from '@prisma/client';
+import { CampoTelefone } from '@/components/campo-telefone';
 import { Alerta, BotaoPrimario, Campo, Selecao } from '@/components/campo';
 import { NOME_PERFIL, PERFIS } from '@/lib/auth/rbac';
 import { atualizarUsuario, criarUsuario, type EstadoUsuario } from './actions';
@@ -90,13 +91,10 @@ export function FormularioUsuario({ modo, usuarioId, iniciais, proprio }: Props)
           defaultValue={valor('siape')}
           erros={estado?.erros?.siape}
         />
-        <Campo
+        <CampoTelefone
           id="whatsapp"
           rotulo="WhatsApp (opcional)"
-          type="tel"
-          inputMode="tel"
           autoComplete="off"
-          placeholder="(88) 99999-8888"
           defaultValue={valor('whatsapp')}
           erros={estado?.erros?.whatsapp}
           dica="Usado só para lembretes individuais (ex.: diários)."

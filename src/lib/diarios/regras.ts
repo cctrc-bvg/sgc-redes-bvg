@@ -87,6 +87,8 @@ export function lembreteDoDiario(o: {
 }): MensagemPronta {
   return {
     chave: `diario:${o.id}`,
+    tipo: 'lembrete_diario',
+    variaveis: { nome: primeiroNome(o.professor.nome), disciplina: o.disciplina.nome, 'codigo da turma': o.turma.codigo },
     titulo: `Docente: ${o.professor.nome}`,
     canal: null,
     destino: 'Docente (lembrete de diário)',

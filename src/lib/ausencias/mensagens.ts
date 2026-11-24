@@ -5,6 +5,7 @@
  */
 import type { CanalWhatsapp, NivelUrgenciaSla, StatusAusencia, TipoRefeicao } from '@prisma/client';
 import { contatoDoUsuario, primeiroNome, saudacao, type MensagemPronta } from '@/lib/comunicacao/mensagem';
+import type { TipoInteracao } from '@/lib/comunicacao/modelos';
 import { deveAvisarGestao, formatarData, NOME_STATUS } from './regras';
 
 export const NOME_REFEICAO_HORARIO: Record<TipoRefeicao, string> = {
@@ -120,12 +121,22 @@ export function mensagemAssistencia(d: DadosMensagem): string | null {
   ].join('\n');
 }
 
+/** Nutricionista do campus: as mesmas alterações de refeição, para o planejamento do cardápio e das quantidades. */
+export function mensagemNutricionista(d: DadosMensagem): string | null {
+  const texto = mensagemAssistencia(d);
+  if (texto === null) return null;
+  return texto
+    .replace('*AVISO DE REPLANEJAMENTO ALIMENTAR', '*AVISO À NUTRICIONISTA — REPLANEJAMENTO ALIMENTAR')
+    .replace('_Aviso também disponível no painel de Alimentação do SGC-Redes._', 'A Assistência Estudantil também foi avisada.');
+}
+
 export const NOME_CANAL: Record<CanalWhatsapp, string> = {
   GRUPO_PROFESSORES: 'Grupo de professores',
   GRUPO_GESTAO_DIR_COORD: 'Gestão (Direção e Coordenações)',
   ASSISTENCIA_ESTUDANTIL: 'Assistência Estudantil (CAE)',
   CTP: 'CTP (Coord. Técnico-Pedagógica)',
   LIDERES_TURMA: 'Turma (líderes ou grupo da turma)',
+  NUTRICIONISTA: 'Nutricionista do campus',
 };
 
 /** Campo a preencher quando o canal não tem saudação cadastrada. */
@@ -135,6 +146,7 @@ export const CAMPO_SAUDACAO: Record<CanalWhatsapp, string> = {
   ASSISTENCIA_ESTUDANTIL: 'destinatário na CAE',
   CTP: 'destinatário na CTP',
   LIDERES_TURMA: 'líderes da turma',
+  NUTRICIONISTA: 'nome da nutricionista',
 };
 
 /** CTP: turma dispensada em algum horário (acompanhamento pedagógico e reposição). */
@@ -181,8 +193,18 @@ export interface ExtrasMensagem {
 const ASSUNTO = '[SGC-Redes]';
 const onde = (link: string | null) => (link ? `Detalhes no SGC-Redes, em Minha grade: ${link}` : 'Detalhes no SGC-Redes, em Minha grade.');
 
-function individual(p: PessoaMensagem, chave: string, papel: string, assunto: string, corpo: string[]): MensagemPronta {
+function individual(
+  p: PessoaMensagem,
+  chave: string,
+  papel: string,
+  assunto: string,
+  corpo: string[],
+  tipo: TipoInteracao,
+  variaveis: Record<string, string>,
+): MensagemPronta {
   return {
+    tipo,
+    variaveis: { ...variaveis, nome: primeiroNome(p.nome) },
     chave,
     titulo: `${papel}: ${p.nome}`,
     canal: null,
@@ -202,11 +224,56 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
   const canal = new Map(x.canais.map((c) => [c.canal, c]));
   const quando = `${d.codigoTurma} — ${formatarData(d.dataISO)}`;
   const lista: MensagemPronta[] = [];
+  const lista_ = (linhas: string[]) => linhas.map((l) => `- ${l}`).join('\n');
+  const dispensa = d.horarios.some((h) => h.situacao === 'dispensa');
+  const reposicao = !dispensa
+    ? 'Nenhuma aula ficou sem atendimento.'
+    : d.status === 'REPOSICAO_AGENDADA'
+      ? 'A reposição das aulas dispensadas já está agendada.'
+      : 'A reposição das aulas dispensadas será combinada com a Coordenação.';
+  // Variáveis dos textos-padrão (src/lib/comunicacao/modelos.ts).
+  const base: Record<string, string> = {
+    turma: d.turma,
+    'codigo da turma': d.codigoTurma,
+    data: formatarData(d.dataISO),
+    dia: d.diaSemana,
+    disciplina: d.disciplina,
+    situacao: NOME_STATUS[d.status],
+    reposicao,
+    ...(x.linkMinhaGrade ? { link: x.linkMinhaGrade } : {}),
+  };
+  const horariosDe = (paraEstudantes: boolean) => lista_(d.horarios.map((h) => `${h.bloco}: ${textoHorario(h, paraEstudantes)}`));
+  const VARIAVEIS_CANAL: Record<CanalWhatsapp, Record<string, string>> = {
+    GRUPO_PROFESSORES: { horarios: lista_(d.horarios.filter((h) => h.situacao === 'pendente').map((h) => h.bloco)) },
+    ASSISTENCIA_ESTUDANTIL: {
+      refeicoes: lista_(
+        d.refeicoes.map((r) => `${r.acao === 'CANCELAR_REFEICAO' ? 'CANCELAR' : 'ADICIONAR'} ${NOME_REFEICAO_HORARIO[r.tipo]}: ${r.quantidade} estudante(s) — ${ETIQUETA_SLA[r.nivel]}`),
+      ),
+    },
+    LIDERES_TURMA: { horarios: horariosDe(true) },
+    NUTRICIONISTA: {
+      refeicoes: lista_(
+        d.refeicoes.map((r) => `${r.acao === 'CANCELAR_REFEICAO' ? 'CANCELAR' : 'ADICIONAR'} ${NOME_REFEICAO_HORARIO[r.tipo]}: ${r.quantidade} estudante(s) — ${ETIQUETA_SLA[r.nivel]}`),
+      ),
+    },
+    CTP: { horarios: lista_(d.horarios.filter((h) => h.situacao === 'dispensa').map((h) => h.bloco)) },
+    GRUPO_GESTAO_DIR_COORD: { horarios: horariosDe(false) },
+  };
+  const TIPO_CANAL: Record<CanalWhatsapp, TipoInteracao> = {
+    GRUPO_PROFESSORES: 'convite_grupo',
+    ASSISTENCIA_ESTUDANTIL: 'alimentacao',
+    LIDERES_TURMA: 'aviso_turma',
+    NUTRICIONISTA: 'alimentacao',
+    CTP: 'ctp',
+    GRUPO_GESTAO_DIR_COORD: 'gestao',
+  };
 
   const doCanal = (c: CanalWhatsapp, texto: string | null, assunto: string) => {
     const cfg = canal.get(c);
     if (texto === null || (cfg && !cfg.ativo)) return;
     lista.push({
+      tipo: TIPO_CANAL[c],
+      variaveis: { ...base, ...VARIAVEIS_CANAL[c], ...(cfg?.saudacao ? { destinatarios: cfg.saudacao } : {}) },
       chave: `canal:${c}`,
       titulo: NOME_CANAL[c],
       canal: c,
@@ -231,7 +298,7 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
         `- ${cabecalhoData(d)}, ${c.bloco} (${d.disciplina})`,
         `Para aceitar ou recusar, acesse o SGC-Redes, em Minha grade${x.linkMinhaGrade ? `: ${x.linkMinhaGrade}` : '.'}`,
         'Se preferir, responda a esta mensagem.',
-      ]),
+      ], 'convite_individual', { ...base, horarios: `- ${c.bloco} (${d.disciplina})` }),
     );
   }
 
@@ -250,7 +317,7 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
         ...blocos.map((b) => `- ${b} (no lugar de ${d.disciplina})`),
         onde(x.linkMinhaGrade),
         'Obrigado(a)!',
-      ]),
+      ], 'substituicao', { ...base, horarios: lista_(blocos.map((b) => `${b} (no lugar de ${d.disciplina})`)) }),
     );
   }
   for (const [id, linhas] of porOrigem) {
@@ -262,11 +329,15 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
         ...linhas.map((h) => `- sua aula de ${h.disciplinaOrigem ?? 'sua disciplina'} ${h.blocoOrigem ? `(${h.blocoOrigem}) ` : ''}passa para ${h.bloco}.`),
         'O horário de origem fica vago.',
         onde(x.linkMinhaGrade),
-      ]),
+      ], 'adiantamento', {
+        ...base,
+        horarios: lista_(linhas.map((h) => `${h.disciplinaOrigem ?? 'sua aula'} ${h.blocoOrigem ? `(${h.blocoOrigem}) ` : ''}passa para ${h.bloco}`)),
+      }),
     );
   }
 
   doCanal('ASSISTENCIA_ESTUDANTIL', mensagemAssistencia(d), 'Replanejamento alimentar');
+  doCanal('NUTRICIONISTA', mensagemNutricionista(d), 'Replanejamento alimentar');
   doCanal('LIDERES_TURMA', mensagemLideres(d), 'Aviso à turma');
   doCanal('CTP', mensagemCtp(d), 'Turma dispensada');
   doCanal('GRUPO_GESTAO_DIR_COORD', mensagemGestao(d), 'Informe à Gestão');
@@ -283,7 +354,7 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
             ? 'A reposição das aulas dispensadas já está agendada.'
             : 'Combine com a Coordenação a reposição das aulas dispensadas.'
           : 'Nenhuma aula ficou sem atendimento.',
-      ]),
+      ], 'docente_ausente', { ...base, horarios: horariosDe(false) }),
     );
   }
   return lista;

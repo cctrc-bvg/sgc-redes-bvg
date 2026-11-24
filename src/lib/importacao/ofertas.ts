@@ -44,6 +44,11 @@ export function planejarImportacaoOfertas(params: { registros: { numero: number;
 
   for (const { numero, valores } of params.registros) {
     const descricao = [valores.turma, valores.disciplina].filter(Boolean).join(' · ') || '(linha vazia)';
+    // O modelo traz a matriz inteira de cada turma: sem professor, a linha fica para depois.
+    if (!valores.professor.trim()) {
+      plano.linhas.push({ numero, descricao, situacao: 'ignorar', detalhe: 'Sem professor: linha ignorada.' });
+      continue;
+    }
     const erros: string[] = [];
     const ano = lerAnoLetivo(valores.anoLetivo.trim());
     if (!ano) erros.push('Ano letivo: use 4 dígitos (ex.: 2026).');
@@ -102,8 +107,9 @@ export function planejarImportacaoOfertas(params: { registros: { numero: number;
 export const INSTRUCOES_OFERTAS = [
   'Importação da distribuição de disciplinas (ofertas) — SGC-Redes',
   'Preencha a aba "Dados", uma disciplina de uma turma por linha, e envie em Ofertas › Importar planilha. Antes de gravar, o sistema mostra a prévia.',
-  'Este modelo já vem com as ofertas do ano: troque o e-mail do professor ou acrescente linhas.',
-  'Ano letivo: 4 dígitos. Turma: o código (ex.: REDES-1). Disciplina: o código do catálogo (ex.: BIO.1) ou o nome exato.',
+  'Este modelo já vem com todas as disciplinas da matriz curricular para cada turma ativa (pelo ano do curso), com o professor das ofertas já lançadas.',
+  'Preencha o e-mail do professor nas linhas que faltam. Linhas sem professor são ignoradas: preencha só o que já estiver definido.',
+  'Ano letivo: 4 dígitos. Turma: o código (ex.: REDES-1). Disciplina: o nome exato do catálogo (como no modelo) ou o código (ex.: BIO.1).',
   'E-mail do professor: o do cadastro de usuários (docentes ativos, inclusive a Coordenação).',
   'A disciplina precisa ser do ano do curso da turma. Técnicas entram no semestre certo automaticamente; as aulas previstas são a carga horária.',
   'Linhas iguais às ofertas atuais não mudam nada. A planilha nunca remove ofertas: para isso, use a tela de distribuição. Máximo de 500 linhas.',

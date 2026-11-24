@@ -54,6 +54,7 @@ async function main() {
     { canal: 'ASSISTENCIA_ESTUDANTIL', nomeExibicao: 'Assistência Estudantil (Refeitório)' },
     { canal: 'CTP', nomeExibicao: 'CTP - Coord. Técnico-Pedagógica' },
     { canal: 'LIDERES_TURMA', nomeExibicao: 'Líderes das Turmas de Redes', saudacao: 'líderes de turma' },
+    { canal: 'NUTRICIONISTA', nomeExibicao: 'Nutricionista do campus' },
   ];
   for (const c of canais) {
     await prisma.configuracaoCanal.upsert({

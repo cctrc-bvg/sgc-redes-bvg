@@ -8,6 +8,7 @@ import { carregarAusencia, intervaloDoDia } from '@/lib/ausencias/servidor';
 import { configuracaoEvolution, destinoValido, enviarPorEvolution } from '@/lib/comunicacao/evolution';
 import { emailsValidos, lerModoEnvio, NOME_MODO, type MensagemPronta, type ModoEnvioManual } from '@/lib/comunicacao/mensagem';
 import { mensagemAvulsa } from '@/lib/comunicacao/servidor';
+import { modeloPorId } from '@/lib/comunicacao/modelos';
 
 export type EstadoEnvio = { mensagem?: string; sucesso?: boolean };
 
@@ -121,7 +122,7 @@ export type EstadoAvulsa = {
   mensagem?: string;
   sucesso?: boolean;
   erros?: Partial<Record<'destino' | 'assunto' | 'texto' | 'modo', string>>;
-  valores?: { destino: string; assunto: string; texto: string };
+  valores?: { destino: string; assunto: string; texto: string; modelo: string };
   pronta?: MensagemPronta;
 };
 
@@ -132,9 +133,11 @@ export type EstadoAvulsa = {
 export async function prepararAvulsa(_estado: EstadoAvulsa | undefined, formData: FormData): Promise<EstadoAvulsa> {
   const { usuario } = await exigirPermissao('comunicacao:enviar');
   const destino = String(formData.get('destino') ?? '');
-  const assunto = String(formData.get('assunto') ?? '').trim();
-  const texto = String(formData.get('texto') ?? '').trim();
-  const valores = { destino, assunto, texto };
+  // Sem JavaScript, o texto-padrão escolhido entra quando o texto (ou o assunto) vem vazio.
+  const modelo = modeloPorId(String(formData.get('modelo') ?? ''));
+  const assunto = String(formData.get('assunto') ?? '').trim() || (modelo?.assunto ?? '');
+  const texto = String(formData.get('texto') ?? '').trim() || (modelo?.texto ?? '');
+  const valores = { destino, assunto, texto, modelo: modelo?.id ?? '' };
   const erros: EstadoAvulsa['erros'] = {};
   if (assunto.length < 3 || assunto.length > 150) erros.assunto = 'Use de 3 a 150 caracteres.';
   if (texto.length < 3 || texto.length > 4000) erros.texto = 'Use de 3 a 4.000 caracteres.';

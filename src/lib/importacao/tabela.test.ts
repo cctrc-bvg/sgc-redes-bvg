@@ -2,6 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { celulaSegura, gerarCsv, lerCsv, lerSimNao, mapearColunas, normalizarCabecalho } from './tabela';
 
 describe('lerCsv', () => {
+  it('aceita arquivo separado por tabulação (Excel: "Texto separado por tabulações" salvo como .csv)', () => {
+    const t = lerCsv('Nome completo\tE-mail\tPerfil\tSIAPE\tWhatsApp\r\nJoão Exemplo\tjoao@exemplo.com\tProfessor(a)\t2222222\t\r\n');
+    expect(t.cabecalho).toEqual(['Nome completo', 'E-mail', 'Perfil', 'SIAPE', 'WhatsApp']);
+    expect(t.linhas[0].celulas).toEqual(['João Exemplo', 'joao@exemplo.com', 'Professor(a)', '2222222', '']);
+  });
+
   it('lê ";" com BOM e CRLF, descartando linhas vazias', () => {
     const t = lerCsv('﻿nome;carga\r\nBiologia I;80\r\n;\r\n\r\nFísica I;80\r\n');
     expect(t.cabecalho).toEqual(['nome', 'carga']);

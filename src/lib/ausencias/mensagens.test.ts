@@ -90,6 +90,7 @@ const extras = (mudar: Partial<ExtrasMensagem> = {}): ExtrasMensagem => ({
     { canal: 'ASSISTENCIA_ESTUDANTIL', email: 'cae@ifce.edu.br', saudacao: null, ativo: true },
     { canal: 'CTP', email: null, saudacao: 'equipe da CTP', ativo: false },
     { canal: 'LIDERES_TURMA', email: null, saudacao: 'líderes de turma', ativo: true },
+    { canal: 'NUTRICIONISTA', email: 'nutri@ifce.edu.br', saudacao: null, ativo: true },
   ],
   pessoas: new Map([
     ['ana', pessoa('ana', 'Ana Souza')],
@@ -156,5 +157,53 @@ describe('mensagensDaAusencia (e-mail e WhatsApp)', () => {
     const canais = ativa.canais.map((c) => (c.canal === 'CTP' ? { ...c, ativo: true } : c));
     const ctp = mensagensDaAusencia(d, { ...ativa, canais }).find((m) => m.canal === 'CTP')!;
     expect(ctp.texto.startsWith('Olá, equipe da CTP!')).toBe(true);
+  });
+});
+
+describe('textos-padrão aplicados às mensagens da ausência', () => {
+  it('cada mensagem tem tipo e variáveis suficientes para os modelos do seu tipo', async () => {
+    const { modelosDoTipo } = await import('@/lib/comunicacao/modelos');
+    const { camposPendentes, preencherCampos } = await import('@/lib/comunicacao/mensagem');
+    const d: DadosMensagem = {
+      ...base,
+      status: 'TURMA_DISPENSADA',
+      horarios: [
+        { bloco: 'Manhã A', situacao: 'substituicao', detalhe: 'Bruno Lima', substitutoId: 'bruno' },
+        { bloco: 'Manhã B', situacao: 'pendente' },
+        { bloco: 'Tarde B', situacao: 'dispensa' },
+      ],
+      refeicoes: [{ tipo: 'ALMOCO', acao: 'CANCELAR_REFEICAO', quantidade: 30, nivel: 'AMARELO_4H_A_24H' }],
+    };
+    const canais = extras().canais.map((c) => ({ ...c, ativo: true, saudacao: c.saudacao ?? 'equipe' }));
+    const msgs = mensagensDaAusencia(d, extras({ canais, convites: [{ id: 'c1', professorId: 'carla', bloco: 'Manhã B' }] }));
+    expect(msgs.every((m) => m.tipo)).toBe(true);
+    for (const m of msgs)
+      for (const modelo of modelosDoTipo(m.tipo!)) {
+        const texto = preencherCampos(`${modelo.assunto}\n${modelo.texto}`, m.variaveis ?? {});
+        expect(camposPendentes(texto), `${m.chave} / ${modelo.id}`).toEqual([]);
+      }
+    const sub = msgs.find((m) => m.chave === 'substituto:bruno')!;
+    expect(sub.variaveis).toMatchObject({ nome: 'Bruno', horarios: '- Manhã A (no lugar de Redes de Computadores)', 'codigo da turma': 'REDES-2' });
+  });
+});
+
+describe('nutricionista do campus', () => {
+  it('recebe as alterações de refeição junto com a CAE, sem docente', () => {
+    const d: DadosMensagem = {
+      ...base,
+      status: 'TURMA_DISPENSADA',
+      horarios: [{ bloco: 'Tarde A', situacao: 'dispensa' }],
+      refeicoes: [{ tipo: 'LANCHE_TARDE', acao: 'CANCELAR_REFEICAO', quantidade: 28, nivel: 'VERDE_24H_MAIS' }],
+    };
+    const msgs = mensagensDaAusencia(d, extras());
+    const chaves = msgs.map((m) => m.chave);
+    expect(chaves.indexOf('canal:NUTRICIONISTA')).toBe(chaves.indexOf('canal:ASSISTENCIA_ESTUDANTIL') + 1);
+    const nutri = msgs.find((m) => m.canal === 'NUTRICIONISTA')!;
+    expect(nutri.para).toBe('nutri@ifce.edu.br');
+    expect(nutri.texto).toContain('Olá, {{nome da nutricionista}}!');
+    expect(nutri.texto).toContain('AVISO À NUTRICIONISTA');
+    expect(nutri.texto).toContain('CANCELAR *Lanche da tarde (15:00)*: 28 estudante(s)');
+    expect(nutri.texto).not.toMatch(/Ana|painel de Alimentação/);
+    expect(nutri.tipo).toBe('alimentacao');
   });
 });
