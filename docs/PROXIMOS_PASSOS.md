@@ -56,7 +56,12 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 | `79b0026` | PPE/PEI (RF06, `/ppe`): Art. 115, travas dos Arts. 117/121, cronograma, cópia de cronograma (G09) |
 | `6dc096e` | Relatórios consolidados (`/relatorios`), sem dados pessoais |
 | `de5ec21` | Importação em lote de ofertas e sábados letivos |
-| *(último)* | Este roteiro atualizado |
+| `d6bfb6a` | Este roteiro atualizado (madrugada) |
+| `525ef78` | CI no GitHub Actions: typecheck, testes e build (`.github/workflows/ci.yml`) |
+| `8b2562c` | PEI para impressão (`/ppe/[id]/imprimir`) |
+| `2f022d2` | Convite de substituição: Coordenação convida, docente aceita/recusa em "Minha grade" |
+| `f4b53a4` | Cabeçalho da Coordenação com menus "Operação" e "Cadastros" (`<details>`, sem JS) |
+| *(último)* | Pendências nos cards do painel; este roteiro |
 
 **Telas** (todas funcionam sem JavaScript):
 - Acesso: `/login`, `/painel` (cards por perfil; **todos os módulos já abrem**), `/conta/senha`.
@@ -113,16 +118,15 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
 ### P1 — próximos passos
 
 1. **Testes E2E versionados** — migrar `.handoff/e2e/` (Python, sem JS) para Playwright no projeto, + roteiros com JS.
-2. **CI (GitHub Actions)** — typecheck + testes + build em PRs.
+2. ~~CI~~ feito. Conferir a primeira execução no GitHub depois do `git push` (nunca rodou lá).
 3. **`prisma.config.ts`** — o Prisma avisa que `package.json#prisma` (seed) será removido no Prisma 7. **Cuidado:** com o
    arquivo de configuração o Prisma 6 deixa de carregar o `.env` sozinho (precisa de `import 'dotenv/config'`), o que afeta
    `scripts/dev.sh` e o Dockerfile (`npx prisma db seed`). Fazer junto com o teste da stack Docker.
-4. **Impressão do PEI** no modelo oficial do campus (a PPI já tem `/ppi/[id]/ficha`).
+4. ~~Impressão do PEI~~ feito (`/ppe/[id]/imprimir`); conferir com o modelo em papel do campus.
 5. **G05 integrado ao PEI:** ao agendar encontro de PEI no contraturno, oferecer a caixa "gerar aviso de refeição"
    (hoje o acréscimo é lançado à mão em `/alimentacao/adicionar`).
-6. **Convite de substituição com resposta do professor** (`substituicao:responder`): hoje a Coordenação escolhe o
-   substituto depois de combinar; o professor só vê a substituição em "Minha grade".
-7. **Cabeçalho:** a Coordenação já tem 9 links; considerar um menu agrupado (Cadastros, Operação, Acadêmico).
+6. ~~Convite de substituição~~ feito. Possível evolução: avisar o convidado pelo WhatsApp com link direto.
+7. ~~Cabeçalho agrupado~~ feito. Os menus `<details>` ficam abertos ao navegar no cliente; fechar com JS se incomodar.
 
 ### Feito (referência)
 
