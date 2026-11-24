@@ -17,6 +17,7 @@ import {
   planejarCoberturas,
   PREFIXO_DECISAO,
   statusDaAusencia,
+  sugerirSubstitutos,
 } from '@/lib/ausencias/regras';
 import { carregarDia, contextoDaAusencia, impactoDaTurma, recalcularAlertasDaTurma } from '@/lib/ausencias/servidor';
 
@@ -138,6 +139,10 @@ export async function decidirAusencia(_estado: EstadoDecisao | undefined, formDa
         professorSubstitutoId: status === 'COBERTA_POR_SUBSTITUICAO' && substitutos.length === 1 ? substitutos[0] : null,
       },
     });
+    await tx.conviteSubstituicao.updateMany({
+      where: { ausenciaId, status: 'PENDENTE', blocoId: { in: coberturas.map((c) => c.blocoId) } },
+      data: { status: 'ENCERRADO', respondidoEm: agora },
+    });
     return recalcularAlertasDaTurma(tx, { turmaId: registro.turmaId, dataISO, agora, ausenciaId, justificativa: justificativa || null });
   });
 
@@ -187,4 +192,84 @@ export async function cancelarAusencia(_estado: EstadoCancelamento | undefined, 
   revalidatePath('/ausencias');
   revalidatePath('/alimentacao');
   redirect(`/ausencias?data=${dataISO}&aviso=cancelada`);
+}
+
+export type EstadoConvite = { mensagem?: string; sucesso?: boolean };
+
+/** A Coordenação convida um docente livre para cobrir um horário ainda sem decisão. */
+export async function convidarSubstituto(_estado: EstadoConvite | undefined, formData: FormData): Promise<EstadoConvite> {
+  const { usuario } = await exigirPermissao('ausencias:registrar');
+  const ausenciaId = String(formData.get('ausenciaId') ?? '');
+  const blocoId = String(formData.get('blocoId') ?? '');
+  const professorId = String(formData.get('professorId') ?? '');
+  const registro = await prisma.ausenciaDocente.findUnique({ where: { id: ausenciaId }, select: { dataAula: true } });
+  if (!registro) return { mensagem: 'Ausência não encontrada.' };
+  const dia = await carregarDia(dataDoBanco(registro.dataAula));
+  const ausencia = dia.ausencias.find((a) => a.id === ausenciaId)!;
+  if (!ausencia.blocoIds.includes(blocoId)) return { mensagem: 'Horário inválido.' };
+  if (dia.coberturas.some((c) => c.ausenciaId === ausenciaId && c.blocoId === blocoId)) return { mensagem: 'Este horário já foi decidido.' };
+  if (!professorId) return { mensagem: 'Escolha o docente a convidar.' };
+  if (!sugerirSubstitutos(contextoDaAusencia(dia, ausenciaId), ausencia.turmaId, blocoId).some((s) => s.id === professorId)) {
+    return { mensagem: 'Este docente não está livre neste horário.' };
+  }
+  const existente = await prisma.conviteSubstituicao.findUnique({ where: { ausenciaId_blocoId_professorId: { ausenciaId, blocoId, professorId } } });
+  if (existente?.status === 'PENDENTE') return { mensagem: 'Este docente já foi convidado e ainda não respondeu.' };
+  const convite = existente
+    ? await prisma.conviteSubstituicao.update({ where: { id: existente.id }, data: { status: 'PENDENTE', respondidoEm: null, criadoEm: new Date() } })
+    : await prisma.conviteSubstituicao.create({ data: { ausenciaId, blocoId, professorId } });
+  await registrarAuditoria({ userId: usuario.id, acao: 'CONVIDOU_SUBSTITUTO', entidade: 'AusenciaDocente', entidadeId: ausenciaId, detalhes: { conviteId: convite.id, blocoId, professorId } });
+  revalidatePath(`/ausencias/${ausenciaId}`);
+  revalidatePath('/grade/minha');
+  return { sucesso: true, mensagem: 'Convite registrado. O docente vê o convite em "Minha grade".' };
+}
+
+/** O docente aceita ou recusa. Aceitar cria a substituição, se o horário ainda estiver pendente e ele livre. */
+export async function responderConvite(_estado: EstadoConvite | undefined, formData: FormData): Promise<EstadoConvite> {
+  const { usuario } = await exigirPermissao('substituicao:responder');
+  const convite = await prisma.conviteSubstituicao.findUnique({
+    where: { id: String(formData.get('conviteId') ?? '') },
+    include: { ausencia: { select: { id: true, dataAula: true, turmaId: true, status: true, justificativa: true } } },
+  });
+  if (!convite || convite.professorId !== usuario.id) return { mensagem: 'Convite não encontrado.' };
+  if (convite.status !== 'PENDENTE') return { mensagem: 'Este convite já foi respondido ou encerrado.' };
+  const resposta = String(formData.get('resposta') ?? '');
+  const agora = new Date();
+  if (resposta === 'recusar') {
+    await prisma.conviteSubstituicao.update({ where: { id: convite.id }, data: { status: 'RECUSADO', respondidoEm: agora } });
+    await registrarAuditoria({ userId: usuario.id, acao: 'RECUSOU_CONVITE', entidade: 'AusenciaDocente', entidadeId: convite.ausenciaId, detalhes: { conviteId: convite.id } });
+    revalidatePath('/grade/minha');
+    revalidatePath(`/ausencias/${convite.ausenciaId}`);
+    return { sucesso: true, mensagem: 'Convite recusado. A Coordenação foi informada pelo sistema.' };
+  }
+  if (resposta !== 'aceitar') return { mensagem: 'Resposta inválida.' };
+
+  const dataISO = dataDoBanco(convite.ausencia.dataAula);
+  const dia = await carregarDia(dataISO);
+  const ausencia = dia.ausencias.find((a) => a.id === convite.ausenciaId)!;
+  const encerrar = () =>
+    prisma.conviteSubstituicao.update({ where: { id: convite.id }, data: { status: 'ENCERRADO', respondidoEm: agora } });
+  if (dia.coberturas.some((c) => c.ausenciaId === ausencia.id && c.blocoId === convite.blocoId)) {
+    await encerrar();
+    return { mensagem: 'A Coordenação já resolveu este horário de outro jeito. Obrigado!' };
+  }
+  if (!sugerirSubstitutos(contextoDaAusencia(dia, ausencia.id), ausencia.turmaId, convite.blocoId).some((s) => s.id === usuario.id)) {
+    return { mensagem: 'Você não está mais livre neste horário (já tem aula ou outra substituição).' };
+  }
+  const minhas = dia.coberturas.filter((c) => c.ausenciaId === ausencia.id);
+  const status = statusDaAusencia(ausencia.blocoIds.length, [...minhas, { tipo: 'SUBSTITUICAO' as const }], convite.ausencia.status === 'REPOSICAO_AGENDADA');
+  await prisma.$transaction(async (tx) => {
+    await tx.coberturaBloco.create({ data: { ausenciaId: ausencia.id, blocoId: convite.blocoId, tipo: 'SUBSTITUICAO', substitutoId: usuario.id } });
+    await tx.conviteSubstituicao.update({ where: { id: convite.id }, data: { status: 'ACEITO', respondidoEm: agora } });
+    await tx.conviteSubstituicao.updateMany({
+      where: { ausenciaId: ausencia.id, blocoId: convite.blocoId, status: 'PENDENTE', NOT: { id: convite.id } },
+      data: { status: 'ENCERRADO', respondidoEm: agora },
+    });
+    await tx.ausenciaDocente.update({ where: { id: ausencia.id }, data: { status, decididaEm: agora } });
+    await recalcularAlertasDaTurma(tx, { turmaId: ausencia.turmaId, dataISO, agora, ausenciaId: ausencia.id, justificativa: convite.ausencia.justificativa });
+  });
+  await registrarAuditoria({ userId: usuario.id, acao: 'ACEITOU_CONVITE', entidade: 'AusenciaDocente', entidadeId: ausencia.id, detalhes: { conviteId: convite.id, status } });
+  revalidatePath('/grade/minha');
+  revalidatePath(`/ausencias/${ausencia.id}`);
+  revalidatePath('/ausencias');
+  return { sucesso: true, mensagem: 'Substituição confirmada. Obrigado!' };
 }

@@ -373,3 +373,10 @@ export function instanteDaRefeicao(dataISO: string, horario: string): Date {
 export function deveAvisarGestao(status: StatusAusencia, temImpactoAlimentar: boolean): boolean {
   return status === 'PENDENTE_DECISAO' || status === 'TURMA_DISPENSADA' || status === 'REPOSICAO_AGENDADA' || temImpactoAlimentar;
 }
+
+export const NOME_STATUS_CONVITE: Record<'PENDENTE' | 'ACEITO' | 'RECUSADO' | 'ENCERRADO', string> = {
+  PENDENTE: '⏳ Aguardando resposta',
+  ACEITO: '✔ Aceito',
+  RECUSADO: '✖ Recusado',
+  ENCERRADO: '— Encerrado (horário já decidido)',
+};

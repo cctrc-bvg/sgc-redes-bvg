@@ -7,6 +7,7 @@ import { temPermissao } from '@/lib/auth/rbac';
 import {
   descreverBloco,
   formatarData,
+  NOME_STATUS_CONVITE,
   OPCAO_DISPENSA,
   OPCAO_PENDENTE,
   opcaoAdiantamento,
@@ -21,7 +22,7 @@ import { configuracaoEvolution, destinoValido } from '@/lib/comunicacao/evolutio
 import { prisma } from '@/lib/db';
 import { FormularioEnvio } from '../../comunicacao/formulario-envio';
 import { SituacaoAusencia } from '../situacao';
-import { FormularioCancelamento, FormularioDecisao, type HorarioDecisao } from './formularios';
+import { FormularioCancelamento, FormularioConvite, FormularioDecisao, type HorarioDecisao } from './formularios';
 
 export const metadata: Metadata = { title: 'Ausência — SGC-Redes' };
 
@@ -94,6 +95,11 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
         ])
       : [];
   const ativos = alertas.filter((a) => !a.canceladoEm);
+  const convites = await prisma.conviteSubstituicao.findMany({
+    where: { ausenciaId: id },
+    orderBy: { criadoEm: 'asc' },
+    select: { id: true, blocoId: true, status: true, professor: { select: { nome: true } } },
+  });
   const cancelados = alertas.filter((a) => a.canceladoEm);
 
   return (
@@ -140,6 +146,35 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
         </p>
         <FormularioDecisao ausenciaId={id} horarios={horariosDecisao} justificativa={registro.justificativa ?? ''} reposicao={registro.status === 'REPOSICAO_AGENDADA'} />
       </section>
+
+      {(pendentes.length > 0 || convites.length > 0) && (
+        <section aria-labelledby="convites" className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 id="convites" className="text-lg font-semibold text-slate-900">Convites de substituição</h2>
+          <p className="mb-4 mt-1 text-sm text-slate-700">
+            O docente convidado responde em &quot;Minha grade&quot;. Ao aceitar, a substituição é gravada se o horário ainda estiver pendente.
+          </p>
+          {convites.length > 0 && (
+            <ul className="mb-4 space-y-1 text-sm text-slate-800">
+              {convites.map((c) => (
+                <li key={c.id}>
+                  {descreverBloco(bloco.get(c.blocoId)!)} · {c.professor.nome}: {NOME_STATUS_CONVITE[c.status]}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="space-y-4">
+            {pendentes.map((b) => (
+              <FormularioConvite
+                key={b}
+                ausenciaId={id}
+                blocoId={b}
+                rotulo={descreverBloco(bloco.get(b)!)}
+                opcoes={sugerirSubstitutos(ctx, registro.turmaId, b).map((s) => ({ valor: s.id, rotulo: `${s.nome}${s.daTurma ? ' (leciona na turma)' : ''}` }))}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="refeicoes" className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h2 id="refeicoes" className="text-lg font-semibold text-slate-900">Refeições da turma neste dia</h2>

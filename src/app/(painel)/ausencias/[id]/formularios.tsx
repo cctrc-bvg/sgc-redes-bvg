@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import { Alerta, AreaTexto, BotaoPrimario, Selecao } from '@/components/campo';
-import { cancelarAusencia, decidirAusencia, type EstadoCancelamento, type EstadoDecisao } from '../actions';
+import { cancelarAusencia, convidarSubstituto, decidirAusencia, type EstadoCancelamento, type EstadoConvite, type EstadoDecisao } from '../actions';
 
 export interface HorarioDecisao {
   /** Nome do campo (`decisao:<blocoId>`) e chave das escolhas. */
@@ -79,6 +79,30 @@ export function FormularioCancelamento({ ausenciaId }: { ausenciaId: string }) {
       >
         {enviando ? 'Cancelando…' : 'Cancelar registro'}
       </button>
+    </form>
+  );
+}
+
+export function FormularioConvite({ ausenciaId, blocoId, rotulo, opcoes }: { ausenciaId: string; blocoId: string; rotulo: string; opcoes: { valor: string; rotulo: string }[] }) {
+  const [estado, acao, enviando] = useActionState<EstadoConvite | undefined, FormData>(convidarSubstituto, undefined);
+  const id = `convite-${blocoId}`;
+  return (
+    <form action={acao} className="flex flex-wrap items-end gap-3" noValidate>
+      <input type="hidden" name="ausenciaId" value={ausenciaId} />
+      <input type="hidden" name="blocoId" value={blocoId} />
+      <Selecao id={id} name="professorId" rotulo={`Convidar para ${rotulo}`} opcoes={[{ valor: '', rotulo: 'Selecione…' }, ...opcoes]} defaultValue="" />
+      <button
+        type="submit"
+        disabled={enviando}
+        className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-70"
+      >
+        {enviando ? 'Convidando…' : 'Convidar'}
+      </button>
+      {estado?.mensagem && (
+        <div className="w-full">
+          <Alerta tipo={estado.sucesso ? 'sucesso' : 'erro'}>{estado.mensagem}</Alerta>
+        </div>
+      )}
     </form>
   );
 }

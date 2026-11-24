@@ -4,7 +4,9 @@ import { QuadroGrade, SeletorPeriodo, type ConteudoCelula } from '@/components/q
 import { exigirPermissao } from '@/lib/auth/dal';
 import { blocosOrdenados, celulasDoProfessor } from '@/lib/grade/consultas';
 import { anosDoSeletor, chaveCelula, periodoDaUrl } from '@/lib/grade/regras';
-import { formatarData, hojeEmFortaleza, somarDias } from '@/lib/ausencias/regras';
+import { dataDoBanco, dataParaBanco, descreverBloco, formatarData, hojeEmFortaleza, somarDias } from '@/lib/ausencias/regras';
+import { prisma } from '@/lib/db';
+import { RespostaConvite } from './convites';
 import { mudancasDoProfessor } from '@/lib/ausencias/servidor';
 import { AvisoSabados } from '../sabados/aviso';
 
@@ -19,6 +21,15 @@ export default async function PaginaMinhaGrade({ searchParams }: { searchParams:
     celulasDoProfessor(usuario.id, anoLetivo, semestreLetivo),
     mudancasDoProfessor(usuario.id, hoje, somarDias(hoje, 14)),
   ]);
+  const convites = await prisma.conviteSubstituicao.findMany({
+    where: { professorId: usuario.id, status: 'PENDENTE', ausencia: { dataAula: { gte: dataParaBanco(hoje) } } },
+    orderBy: [{ ausencia: { dataAula: 'asc' } }],
+    select: {
+      id: true,
+      bloco: true,
+      ausencia: { select: { dataAula: true, turma: { select: { nome: true } }, oferta: { select: { disciplina: { select: { nome: true } } } } } },
+    },
+  });
 
   const conteudo = new Map<string, ConteudoCelula[]>();
   for (const c of celulas) {
@@ -41,6 +52,22 @@ export default async function PaginaMinhaGrade({ searchParams }: { searchParams:
       <p className="mt-1 text-slate-700">
         {celulas.length} aula(s) por semana em {new Set(celulas.map((c) => c.turma.nome)).size} turma(s).
       </p>
+      {convites.length > 0 && (
+        <section aria-labelledby="convites" className="mt-4 rounded-lg border border-if-verde-700 bg-if-verde-50 p-4">
+          <h2 id="convites" className="font-semibold text-slate-900">Convites de substituição ({convites.length})</h2>
+          <ul className="mt-2 space-y-3">
+            {convites.map((c) => {
+              const descricao = `${formatarData(dataDoBanco(c.ausencia.dataAula))} · ${descreverBloco(c.bloco)} · ${c.ausencia.turma.nome} (aula de ${c.ausencia.oferta.disciplina.nome})`;
+              return (
+                <li key={c.id} className="space-y-2">
+                  <p className="text-slate-800">{descricao}</p>
+                  <RespostaConvite conviteId={c.id} descricao={descricao} />
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
       {mudancas.length > 0 && (
         <section aria-labelledby="mudancas" className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4">
           <h2 id="mudancas" className="font-semibold text-slate-900">

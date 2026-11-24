@@ -40,6 +40,7 @@ model User {
   ausenciasRegistradas   AusenciaDocente[]  @relation("ProfessorAusente")
   substituicoesFeitas    AusenciaDocente[]  @relation("ProfessorSubstituto")
   coberturasFeitas       CoberturaBloco[]
+  convitesSubstituicao   ConviteSubstituicao[]
   peisOrientados         PlanoEstudoIndividual[]
   ppisOrientadas         PpiAtividade[]
   logsAuditoria          AuditLog[]
@@ -174,6 +175,7 @@ model BlocoHorario {
   grades     GradeHorario[]
   coberturas CoberturaBloco[] @relation("BlocoCoberto")
   adiantamentosOrigem CoberturaBloco[] @relation("BlocoOrigemAdiantamento")
+  convites   ConviteSubstituicao[]
 
   @@unique([turno, ordem])
 }
@@ -244,6 +246,7 @@ model AusenciaDocente {
 
   alertasAlimentacao  AlertaAlimentacao[]
   coberturas          CoberturaBloco[]
+  convites            ConviteSubstituicao[]
 
   @@unique([dataAula, ofertaId])
   @@index([dataAula])
@@ -269,6 +272,30 @@ model CoberturaBloco {
   blocoOrigem   BlocoHorario?   @relation("BlocoOrigemAdiantamento", fields: [blocoOrigemId], references: [id])
 
   @@unique([ausenciaId, blocoId])
+}
+
+enum StatusConvite {
+  PENDENTE
+  ACEITO
+  RECUSADO
+  ENCERRADO // o horário foi decidido de outro jeito (ou por outro docente) antes da resposta
+}
+
+// Convite da Coordenação a um docente para cobrir um horário de uma ausência (substituicao:responder).
+model ConviteSubstituicao {
+  id           String          @id @default(cuid())
+  ausenciaId   String
+  ausencia     AusenciaDocente @relation(fields: [ausenciaId], references: [id], onDelete: Cascade)
+  blocoId      String
+  bloco        BlocoHorario    @relation(fields: [blocoId], references: [id])
+  professorId  String
+  professor    User            @relation(fields: [professorId], references: [id])
+  status       StatusConvite   @default(PENDENTE)
+  criadoEm     DateTime        @default(now())
+  respondidoEm DateTime?
+
+  @@unique([ausenciaId, blocoId, professorId])
+  @@index([professorId, status])
 }
 
 // ==========================================
