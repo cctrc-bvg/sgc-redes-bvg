@@ -1,7 +1,7 @@
 # Próximos Passos — Retomada do Desenvolvimento
 
-> Atualizado em **23/11/2026** (2ª sessão). Leia este arquivo inteiro antes de continuar. Ele resume o estado do projeto, o que está
-> bloqueado, o que fazer em seguida e as armadilhas já encontradas (para não redescobri-las).
+> Atualizado em **24/11/2026**. Leia este arquivo inteiro antes de continuar. Ele resume o estado do projeto, o que
+> depende do usuário, o que fazer em seguida e as armadilhas já encontradas (para não redescobri-las).
 
 ---
 
@@ -9,9 +9,9 @@
 
 ```bash
 cd ~/projetos/sgc-redes-bvg
-git status && git log --oneline -9          # branch minha-contribuicao, em dia com origin
-./scripts/dev.sh testar                      # esperado: typecheck ok + 191 testes passando
-ls .handoff/                                 # rascunhos de issue/PR e roteiros E2E (local, fora do git)
+git status && git log --oneline -12         # branch minha-contribuicao, em dia com origin
+./scripts/dev.sh testar                      # esperado: typecheck ok + 220 testes passando
+ls .handoff/github .handoff/e2e              # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
 Depois, confira a seção 3 (o que depende do usuário) antes de escolher a próxima tarefa na seção 4.
@@ -20,84 +20,82 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 
 ## 2. Estado atual
 
-**Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (permissão de admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
-(somente leitura; contém **apenas o commit inicial com a licença**). O FSD, o README e o código inicial existem só no fork.
+**Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
+(somente leitura; contém só o commit inicial com a licença). FSD, README e código existem só no fork.
 
-**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**. 18 commits à frente do upstream (4 do código inicial + 14 novos):
+**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**, 21 commits à frente do upstream:
 
 | Commit | Conteúdo |
 | :--- | :--- |
-| `8ebdce6` | Projeto executável: Next 16, React 19, Prisma 6, Tailwind 4, Vitest 5; Dockerfile multi-stage; migração inicial |
+| `8ebdce6` | Projeto executável: Next 16, React 19, Prisma 6, Tailwind 4, Vitest; Dockerfile multi-stage; migração inicial |
 | `63a28c9` | `docs/IDENTIDADE_VISUAL_UX.md` (Marca IF, contraste, Nielsen, WCAG/eMAG) + tokens de cor e Open Sans |
 | `1217372` | Correção: progresso da PPI mostrava 100% com 39,9h |
-| `1be36a8` | Testes das regras de alimentação/SLA/PEI/PPI; tabela PPI movida para `src/lib/ppi-regras-2022.ts` |
+| `1be36a8` | Testes das regras de alimentação/SLA/PEI/PPI; tabela PPI em `src/lib/ppi-regras-2022.ts` |
 | `605ec1c` | `scripts/dev.sh` (setup, testar, banco nativo/docker, dev, studio, docker, tudo) |
 | `fd88bb4` | Login, sessões no banco, RBAC do FSD, troca obrigatória de senha, auditoria; seed sem senha fixa |
 | `b62b737` | Cadastro/gestão de usuários pela Coordenação (`/usuarios`) |
+| `2389278`, `a8d3a5f` | Este roteiro; `AGENTS.md` versionado |
 | `d3cb489` | Correção: motor de alimentação valida a data (formato e calendário) |
-| `126dc21` | Catálogo de Disciplinas (`/disciplinas`), permissão `disciplinas:gerenciar`, campo `Disciplina.ativa` |
-| `9dc1367` | Consulta ao catálogo (Professor, CTP, Direção); matriz do PPC e blocos de horário (G01) no seed |
-| `5afbbb0` | Núcleo, ano e semestre da disciplina (técnicas semestrais, 50% prática); G01 resolvida (sábados por data) |
+| `126dc21` | Catálogo de Disciplinas (`/disciplinas`), `disciplinas:gerenciar`, `Disciplina.ativa` |
+| `9dc1367` | Consulta ao catálogo (Professor, CTP, Direção: `disciplinas:ver`); matriz do PPC e blocos (G01) no seed |
+| `5afbbb0` | Núcleo, ano e semestre da disciplina (técnicas semestrais, 50% prática) |
 | `888653b` | Matriz do 3º ano corrigida: siglas SEGR, EB, PRD, RSF; Projeto de Redes 80h |
-| `ae6face` | Ofertas: distribuição de disciplinas por turma e ano letivo (`/ofertas`) |
-| *(último)* | Grade horária (RF01): grade da turma, minha grade, edição com trava de choque, sábados letivos (G14) |
+| `ae6face` | Ofertas: distribuição de disciplinas por turma e ano letivo (`/ofertas`, `ofertas:gerenciar`) |
+| `e01c1e1` | Grade horária (RF01): turma, minha grade, edição com trava de choque, janelas, sábados letivos (G14) |
+| `060369d` | Importação em lote (.xlsx/.csv) de disciplinas e usuários, com modelos pré-preenchidos |
+| *(último)* | Este roteiro atualizado para a retomada |
 
-**`AGENTS.md`** (raiz): gerado pelo `next dev` com orientações para assistentes de código sobre o Next 16; versionado
-para não reaparecer como alteração pendente. Pode ser editado fora do bloco `nextjs-agent-rules`.
+**Telas** (todas funcionam sem JavaScript):
+- Acesso: `/login`, `/painel` (cards por perfil; só "Grade" já abre), `/conta/senha`.
+- Coordenação: `/usuarios` (+`/novo`, `/[id]`, `/[id]/senha`, `/importar`), `/disciplinas/nova`, `/disciplinas/importar`,
+  `/ofertas`, `/ofertas/[turmaId]?ano=AAAA`, `/grade/turma/[id]/editar`, cadastro em `/grade/sabados`.
+- Consulta (Professor, CTP, Direção conforme permissão): `/disciplinas`, `/disciplinas/[id]`, `/grade`, `/grade/minha`,
+  `/grade/turma/[id]`, `/grade/sabados`. Período da grade por `?ano=AAAA&sem=1|2`.
+- Modelos de planilha: `/disciplinas/importar/modelo?formato=xlsx|csv`, `/usuarios/importar/modelo?formato=xlsx|csv`.
 
-**Telas existentes:** `/login`, `/painel` (cards dos módulos do perfil, todos "Em desenvolvimento"), `/conta/senha`,
-`/usuarios`, `/usuarios/novo`, `/usuarios/[id]`, `/usuarios/[id]/senha`, `/disciplinas`, `/disciplinas/nova`, `/disciplinas/[id]`,
-`/ofertas`, `/ofertas/[turmaId]?ano=AAAA`, `/grade`, `/grade/minha`, `/grade/turma/[id]` (+`/editar`), `/grade/sabados`
-(período por `?ano=AAAA&sem=1|2`).
+**Dados no seed** (idempotente; nunca sobrescreve edições): coordenador inicial, turmas `REDES-1..3` (com `anoCurso`),
+canais WhatsApp, regras PPI, 8 blocos de horário (A–D manhã/tarde, 60 min) e as **47 disciplinas da matriz**.
 
-**Verificado:** 191 testes unitários, typecheck, `next build`, fluxos E2E contra PostgreSQL real (login, usuários e
-disciplinas: 33; ofertas: 35; grade: 44 verificações). **Nunca verificado:** `docker compose up --build` (Docker não instalado na máquina de desenvolvimento).
+**Verificado:** 220 testes unitários, typecheck, `next build` e 6 roteiros E2E sem JavaScript contra PostgreSQL real
+(login, usuários, disciplinas 33, ofertas 35, grade 44, importação 42 verificações), todos verdes em 24/11/2026.
+As migrações que convertem dados (ofertas e grade) foram testadas com linhas no formato antigo.
+
+**Nunca verificado:** `docker compose up --build` (stack completa em contêiner).
 
 ---
 
-## 3. Pendências que dependem do usuário (bloqueios)
+## 3. Pendências que dependem do usuário
 
-- [ ] **Instalar um PostgreSQL** e testar no navegador: `sudo apt install -y postgresql` → `./scripts/dev.sh banco nativo`
-      → `./scripts/dev.sh dev`. (Alternativa Docker: `sudo apt install -y docker.io docker-compose-v2`,
-      `sudo usermod -aG docker $USER`, sair/entrar, `./scripts/dev.sh banco docker`.)
+- [ ] **Atualizar o banco Docker de desenvolvimento** (`sgc_dev_db`, já rodando): `./scripts/dev.sh banco docker` aplica
+      as migrações novas e o seed; depois `./scripts/dev.sh dev` e testar no navegador. Se esse banco recebeu a matriz
+      numa versão anterior, Projeto de Redes pode estar com 40h (o seed não sobrescreve CH): corrigir pela tela.
+      Obs.: o usuário já está no grupo `docker`; uma sessão de terminal antiga precisa de `sg docker -c "..."`.
 - [ ] **Testar a stack Docker completa:** `./scripts/dev.sh docker` (senha inicial em `docker compose logs migrate`).
-      Pontos de risco: Prisma no Alpine (openssl/musl) e o motor do Prisma no `standalone`.
-- [ ] **Decidir a publicação no `cctrc-bvg`:** abrir issue + PR com os 11 commits, ou primeiro um PR dentro do próprio fork.
-      Textos prontos em `.handoff/github/` (o PR tem um item "Docker" a marcar após o teste e um `#<número>` da issue).
-- [x] ~~Transcrição da matriz~~ — conferida: siglas SEGR, EB, PRD, RSF; Projeto de Redes 80h; o total de 960h do
-      3º ano no PPC tem erro de soma (correto: 1.080h).
-- [ ] A grade 2026 diverge da matriz em aulas/semana de algumas anuais (ex.: Geografia II 2 aulas vs. 40h;
-      Servidores no 3º ano): confirmar se há PPC mais novo. Não bloqueia.
-- [ ] **Responder G01–G13** (tabela em `.handoff/github/issue-decisoes-g01-g13.md`; G01–G12 também no FSD, seção 5).
-      G01 resolvida: blocos A–D de 60 min; sábados letivos existem e variam com o calendário (cadastro por data).
-      Alternativa: autorizar o uso dos padrões sugeridos no FSD.
+      Riscos: Prisma no Alpine (openssl/musl), motor do Prisma e **ExcelJS** no `standalone`. É pesado para 4 GB de RAM.
+- [ ] **Decidir a publicação no `cctrc-bvg`:** issue + PR, ou primeiro um PR dentro do fork. Textos prontos e
+      atualizados em `.handoff/github/` (o PR tem o item "Docker" a marcar após o teste e um `#<número>` da issue).
+      **Confirmar com o usuário antes de criar issue/PR** no repositório da organização.
+- [ ] **Responder G02–G13** (`.handoff/github/issue-decisoes-g01-g13.md`; também no FSD, seção 5) ou autorizar os padrões
+      sugeridos no FSD. G01 e G14 já resolvidas.
+- [ ] (Não bloqueia) A grade 2026 diverge da matriz em aulas/semana de algumas anuais (ex.: Geografia II 2 aulas vs.
+      40h): confirmar se há PPC mais novo. A tela da grade já aponta "⚠ difere" nesses casos.
 
 ---
 
 ## 4. Backlog priorizado
 
-### P1 — não depende de G01–G13 (pode começar já)
+### P1 — não depende de decisões pendentes
 
-1. ~~Validar a data no motor de alimentação~~ — feito (`d3cb489`).
-2. ~~Catálogo de Disciplinas~~ — feito. Desativar em vez de excluir quando já há ofertas/PPEs; exclusão só para
-   cadastro por engano. Falta: **importar a matriz do curso** (lista real de disciplinas e CH — pedir ao usuário
-   ou ao PPC) e decidir se Professor/CTP devem **consultar** o catálogo (hoje só a Coordenação vê).
-   → Ambos feitos: matriz importada pelo seed (47 disciplinas) e consulta liberada a Professor, CTP e Direção.
-3. ~~Ofertas~~ — feito. `DisciplinaOferta` agora tem `anoLetivo` + `semestreLetivo` (null = anual; técnica de
-   semestre ímpar do curso → .1, par → .2), única por ano/turma/disciplina; `aulasPrevistas` = carga horária (blocos
-   de 60 min). Tela por turma com um select de professor por disciplina; oferta já usada na grade não pode ficar sem
-   professor. Ofertar disciplina de outro ano **não é necessário** ("Artes II" no 3º ano da grade 2026 foi um caso
-   único, confirmado pela Coordenação).
-3b. **Importação em lote (CSV/XLSX)** — PEDIDO DO USUÁRIO, próxima tarefa: cadastro de disciplinas e de usuários por
-   upload, com **planilha de exemplo pré-preenchida** para baixar, editar e enviar. Pré-visualizar e validar antes de
-   gravar (mesmas regras dos formulários), tudo ou nada.
-4. **Turmas** — `anoCurso` (1–3) adicionado e preenchido pelo seed; hoje só via seed (`REDES-1..3`); tela para editar `qtdAlunosAtivos` e médias de refeição
-   (`qtdMedia*`), usadas nos avisos à Assistência Estudantil.
-5. **Tela de auditoria** (`auditoria:ver`, só Coordenação) — filtrar `AuditLog` por ação, usuário e data.
-6. **Limpeza de sessões expiradas** — linhas de `Sessao` vencidas só são apagadas quando o cookie é reapresentado.
-   Apagar vencidas no login (barato) ou por rotina periódica.
-7. **Testes E2E versionados** — migrar os roteiros de `.handoff/e2e/` (Python, sem JS) para Playwright no projeto,
-   incluindo um teste com JavaScript habilitado.
+1. **Turmas** (tela) — hoje só via seed. Editar nome, `anoCurso`, `qtdAlunosAtivos` e médias de refeição (`qtdMedia*`,
+   usadas nos avisos à Assistência Estudantil); ativar/desativar.
+2. **Importação em lote de ofertas e sábados letivos** — mesmo padrão de `src/lib/importacao/` (o usuário pediu lote
+   "seja de disciplinas, de usuários"; ofertas e calendário são os próximos candidatos naturais).
+3. **Tela de auditoria** (`auditoria:ver`, só Coordenação) — filtrar `AuditLog` por ação, usuário e data.
+4. **Limpeza de sessões expiradas** — apagar `Sessao` vencidas no login (barato) ou por rotina periódica.
+5. **Semáforo de diários (RF08)** — não depende de decisões: ofertas já têm `aulasPrevistas`/`aulasMinistradas`.
+   Incluir aqui a visão do professor das **próprias ofertas**.
+6. **Kanban SEI (RF09)** — não depende de decisões.
+7. **Testes E2E versionados** — migrar `.handoff/e2e/` (Python, sem JS) para Playwright no projeto, + um com JS.
 8. **`prisma.config.ts`** — o Prisma avisa que `package.json#prisma` (seed) será removido no Prisma 7.
 9. **CI (GitHub Actions)** — typecheck + testes + build em PRs.
 
@@ -105,61 +103,73 @@ disciplinas: 33; ofertas: 35; grade: 44 verificações). **Nunca verificado:** `
 
 | Módulo (FSD) | Requisito | Decisões |
 | :--- | :--- | :--- |
-| ~~Grade e janelas livres~~ | RF01 | feito (G01 e G14 resolvidas) |
-| Ausências e substituição | RF02 | G01, G03 |
+| Ausências e substituição | RF02 | G03 (G01/G14 ok; usar `diaDaGradeNaData()`) |
 | Painel de alimentação (AE) | RF03, RF04 | G02, G04, G05, G06, G13 |
 | Hub de comunicação WhatsApp | RF05 | G07, G08 |
 | PPE / PEI | RF06 | G09, G10 |
 | PPI (40h) | RF07 | G11 |
-| Semáforo de diários | RF08 | — (depende das ofertas, P1-3) |
-| Kanban SEI | RF09 | — (pode ir para P1 se houver pressa) |
 | Relatórios | — | depende dos módulos acima |
 
-Ordem sugerida após as decisões: Grade → Ausências → Alimentação → Comunicação (núcleo da Fase 1).
+Ordem sugerida: Ausências → Alimentação → Comunicação (núcleo da Fase 1).
+
+### Feito nesta fase (referência)
+
+Catálogo + matriz, consulta ao catálogo, ofertas, grade (RF01) com sábados letivos, importação em lote. Detalhes nos
+commits da seção 2 e nas decisões da seção 5.
 
 ---
 
 ## 5. Decisões já tomadas (não rediscutir sem motivo novo)
 
-- **Disciplinas:** técnicas são **semestrais** (CH da coluna "Semestre" do PPC) e têm **metade da carga prática**
-  (`exigePratica` verdadeiro); propedêuticas e diversificadas são **anuais**. Validado no formulário
-  (`DisciplinaSchema`). Ofertas devem respeitar isso: anual = ano letivo inteiro; técnica = um semestre.
-- **Sábados letivos** existem mas dependem do calendário civil: cadastrar por data (`SabadoLetivo`), cada um seguindo a
-  grade de um dia da semana (G14). Use `diaDaGradeNaData()` para saber qual grade vale numa data (ausências!).
-- **Grade:** por ano + semestre letivo; anuais aparecem nos dois semestres, técnicas só no seu. Janelas livres são
-  calculadas (vago em turno com aula), não gravadas. Choque de professor entre turmas é recusado no servidor.
-  Professores (`grade:ver`) veem todas as turmas e a própria grade; só a Coordenação edita (`grade:editar`).
-- **Prisma 6.x**, não 7: o schema usa `url = env(...)` no datasource.
-- **Sessões próprias no banco**, não NextAuth (v5 ainda beta para Next 16). `NEXTAUTH_URL` → `APP_URL`;
-  `AUTH_SECRET` removido. Caminho futuro: SSO SUAP via OIDC.
+**Curso e calendário (confirmadas pela Coordenação):**
+- **Disciplinas técnicas são semestrais** (CH da coluna "Semestre" do PPC) e têm **metade da carga prática**
+  (`exigePratica` = sim); **propedêuticas e diversificadas são anuais**. Validado em `DisciplinaSchema`.
+- **Matriz:** códigos repetidos entre anos recebem sufixo do ano (BIO.1, BIO.2…); técnicas do 3º ano: SEGR, EB, PRD, RSF;
+  o total de 960h do 3º ano impresso no PPC tem erro de soma (correto: 1.080h). Dados em `src/lib/disciplinas/matriz-curricular.ts`.
+- **G01:** 4 blocos de 60 min por turno — manhã 07:30–11:45 (intervalo 09:30–09:45), tarde 13:00–17:20 (intervalo
+  15:00–15:20). Coincidem com os horários de refeição do motor (09:30, 12:00, 15:00).
+- **G14:** há **sábados letivos**, variáveis com o calendário civil; cada um segue a grade de um dia da semana
+  (`SabadoLetivo`). Use `diaDaGradeNaData()` para saber qual grade vale numa data.
+- **Ofertas:** uma por ano letivo × turma × disciplina; anual → `semestreLetivo` null; técnica de semestre ímpar do curso
+  → .1, par → .2; `aulasPrevistas` = CH. Ofertar disciplina de outro ano **não é necessário** (Artes no 3º ano foi caso único).
+- **Grade:** por ano + semestre letivo; anuais nos dois semestres, técnicas só no seu. Janelas livres são **calculadas**
+  (vago em turno com aula), não gravadas. Choque de professor entre turmas é recusado no servidor.
+- **Acesso:** professores veem a grade de todas as turmas e a própria grade; Professor, CTP e Direção consultam o
+  catálogo; só a Coordenação edita catálogo, ofertas, grade e sábados. Coordenação também leciona (recebe ofertas).
+- **Importação em lote** por .xlsx ou .csv com modelo pré-preenchido para baixar, editar e enviar; prévia antes de gravar.
+
+**Técnicas:**
+- **Prisma 6.x**, não 7 (schema usa `url = env(...)`).
+- **Sessões próprias no banco**, não NextAuth. `APP_URL` no lugar de `NEXTAUTH_URL`. Futuro: SSO SUAP via OIDC.
 - **Senha provisória** gerada pelo sistema, exibida uma vez, troca obrigatória no 1º acesso.
-- **Cookie de sessão** sem `Expires` (fecha com o navegador; computadores compartilhados); 8h de inatividade no banco.
-- **Verde oficial `#2f9e41` não é usado em texto** (3,45:1). Ações/links: `if-verde-700`. Vermelho só para erro/emergência.
-  Status sempre com ícone + texto.
-- **Formulários funcionam sem JavaScript** (Server Actions + `useActionState`) — é um requisito de acessibilidade.
+- **Cookie de sessão** sem `Expires`; 8h de inatividade no banco.
+- **Verde oficial `#2f9e41` não é usado em texto** (3,45:1). Ações/links: `if-verde-700`. Status sempre com ícone + texto.
+- **Formulários funcionam sem JavaScript** (Server Actions + `useActionState`) — requisito de acessibilidade.
+- **ExcelJS** (não o pacote `xlsx` do npm, abandonado e vulnerável) para planilhas; fora do bundle (`serverExternalPackages`).
+- **Dados pessoais fora do repositório:** a grade de exemplo (PDF aSc 2026) tem nomes de professores — não versionar;
+  cadastrar pela tela ou por importação.
 - Interface, mensagens, commits e documentação **em português**.
 
 ---
 
-- **Grade de exemplo (PDF aSc 2026)** traz professores por disciplina/turma: útil para testar as Ofertas (P1-3), mas os
-  **nomes de professores não vão para o repositório** (dados pessoais em repositório público). Cadastrar pela tela.
-
 ## 6. Convenções do código
 
-- **Acesso:** toda página e Server Action protegida começa com `exigirUsuario()` ou `exigirPermissao('...')`
-  (`src/lib/auth/dal.ts`). O `src/proxy.ts` só faz checagem otimista do cookie. Novas permissões vão em
-  `src/lib/auth/rbac.ts` (com teste em `auth.test.ts`).
-- **Nunca** use `acao.bind(null, id)` com `useActionState`: no envio sem JS o React re-renderiza sem fim e prende o
-  servidor a 100% de CPU. Passe o id por `<input type="hidden">` e leia do `FormData`.
-- **Formulários:** componentes `Campo`, `Selecao`, `BotaoPrimario`, `BotaoSecundario`, `Alerta` (`src/components/campo.tsx`);
-  validação com zod no servidor (`z.flattenError(...).fieldErrors`); `noValidate` no `<form>`; devolver os valores
-  digitados no estado para não perder o que foi preenchido.
-- **Código só de servidor** importa `'server-only'`. Componentes cliente não podem importar módulos com `node:crypto`
-  (ex.: `PERFIS` fica em `rbac.ts`, não em `usuarios/regras.ts`).
-- **Regras de negócio puras** em `src/lib/**` com testes `*.test.ts` ao lado; o alias `@/` funciona também no Vitest.
-- **Auditoria:** `registrarAuditoria()` registra ação e campos alterados, **nunca** valores pessoais ou senhas.
-- **Alterar o schema:** edite só as linhas necessárias (não rode `prisma format`, ele realinha o arquivo inteiro).
-  Gere a migração sem banco:
+- **Acesso:** toda página, Server Action e Route Handler protegido começa com `exigirUsuario()` ou
+  `exigirPermissao('...')` (`src/lib/auth/dal.ts`). O `src/proxy.ts` só faz checagem otimista. Novas permissões em
+  `src/lib/auth/rbac.ts` (com teste em `auth.test.ts`). Módulo pronto no painel: preencha `href` em `MODULOS`.
+- **Nunca** use `acao.bind(null, id)` com `useActionState`: sem JS o React re-renderiza sem fim (CPU 100%). Passe ids
+  por `<input type="hidden">`. Arquivo `'use server'` só exporta funções assíncronas (constantes vão para `src/lib`).
+- **Formulários:** `Campo`, `Selecao`, `AreaTexto`, `BotaoPrimario`, `BotaoSecundario`, `Alerta` (`src/components/campo.tsx`);
+  zod no servidor (`z.flattenError(...).fieldErrors`); `noValidate`; devolver os valores digitados no estado.
+- **Formulários de lote** (distribuição, grade): o servidor monta a lista de itens a partir do banco e lê só esses
+  campos do `FormData`; campo ausente = "não mexer"; planejamento puro (`planejar*`) + gravação em transação, tudo ou nada.
+- **Código só de servidor** importa `'server-only'`. Componentes cliente não importam módulos com `node:crypto`, Prisma
+  ou ExcelJS — recebem dados prontos por props (ex.: nomes de campo da grade).
+- **Regras de negócio puras** em `src/lib/**` com `*.test.ts` ao lado; o alias `@/` funciona no Vitest.
+- **Auditoria:** `registrarAuditoria()` com ação, ids e campos alterados; **nunca** nomes, e-mails ou senhas.
+- **Importação em lote:** colunas/regras em `src/lib/importacao/<entidade>.ts` (puro, reaproveita o zod do formulário);
+  planilhas em `planilha.ts`; entrada/confirmação em `servidor.ts`; tela em `src/components/importador-planilha.tsx`.
+- **Alterar o schema:** edite só as linhas necessárias (não rode `prisma format`). Gere a migração sem banco:
   ```bash
   git show HEAD:prisma/schema.prisma > /tmp/schema_antigo.prisma
   mkdir -p prisma/migrations/AAAAMMDDHHMMSS_nome
@@ -168,36 +178,45 @@ Ordem sugerida após as decisões: Grade → Ausências → Alimentação → Co
     --script > prisma/migrations/AAAAMMDDHHMMSS_nome/migration.sql
   npx prisma generate
   ```
-- **Commits** pequenos e temáticos, mensagem em português; correções de bugs em commit separado.
+  **Revise o SQL:** troca de coluna gera `DROP` + `ADD ... NOT NULL`, que perde dados ou falha com linhas existentes.
+  Reescreva convertendo (veja `20261124150000_ofertas_ano_letivo`) e teste com linhas no formato antigo.
+- **Commits** pequenos e temáticos, em português; correções de bugs em commit separado.
 
 ---
 
 ## 7. Ambiente local e armadilhas conhecidas
 
-- Máquina com **4 GB de RAM e HDD**: rode tudo com `nice -n 15 ionice -c 2 -n 7`, um processo pesado por vez.
-  O `scripts/dev.sh` já faz isso.
-- **npm 9.2 do Ubuntu** falha com `reading 'edgesOut'`: use `npx -y npm@10 install` (o `dev.sh` faz automaticamente).
-- **Sem Postgres/Docker na máquina de desenvolvimento?** Use `npx prisma dev -n sgc-teste -d` (Postgres embutido).
-  Exige `&connection_limit=1&pgbouncer=true` na `DATABASE_URL`, senão dá `42P05 prepared statement already exists`.
-- **`prisma migrate reset` é bloqueado** quando executado por um assistente de IA; para recomeçar o banco de teste,
-  remova e recrie a instância (`npx prisma dev stop|rm sgc-teste`). O `.handoff/e2e/e2e_ambiente.sh` faz isso.
-- **Servidor standalone de teste:** copie `.next/static` para `.next/standalone/.next/static`; inicie com `exec` e
-  localize o processo pela porta (`ss -ltnp | grep :3123`), não pelo PID do shell. Evite `pkill -f <texto>`:
-  ele pode encerrar o próprio shell que contém o texto.
-- **Processo preso em 100% de CPU:** `kill -USR1 <pid>` ativa o inspetor; `node .handoff/e2e/inspecionar-cpu.mjs`
-  pausa e mostra a pilha com trechos do código (foi assim que se achou o problema do `.bind`).
+- Máquina com **4 GB de RAM e HDD**: tudo com `nice -n 15 ionice -c 2 -n 7`, um processo pesado por vez. O build leva
+  ~1–2 min; a bateria completa de E2E (6 roteiros, cada um com banco recriado) passa de 10 min — rode em segundo plano.
+- **npm 9.2 do Ubuntu** falha com `reading 'edgesOut'`: use `npx -y npm@10 install` (o `dev.sh` faz isso).
+- **Postgres de teste sem Docker:** `npx prisma dev -n sgc-teste -d`. Exige `&connection_limit=1&pgbouncer=true` na
+  `DATABASE_URL`, senão `42P05 prepared statement already exists`.
+- **`prisma migrate reset` é bloqueado** para assistentes de IA: recrie a instância (`npx prisma dev stop|rm sgc-teste`).
+- **Servidor standalone de teste:** copie `.next/static` para `.next/standalone/.next/static`; localize o processo pela
+  porta (`ss -ltnp | grep :3123`). Evite `pkill -f <texto>` (pode matar o próprio shell).
+- **Processo a 100% de CPU:** `kill -USR1 <pid>` e `node .handoff/e2e/inspecionar-cpu.mjs` mostram a pilha.
+- **Roteiros E2E (Python, sem JS):**
+  - o 1º formulário com Server Action em toda página logada é o **"Sair"** do cabeçalho — escolha o formulário pelo
+    campo (`form_com(pag, "campo")`); na grade do 2º semestre há dois formulários com os mesmos campos ocultos;
+  - o React separa textos adjacentes com `<!-- -->` (troque por "" antes de comparar) e o `<strong>` vira espaço;
+  - para **contar** ocorrências, remova os blocos `<script>…</script>` (o payload RSC repete os textos);
+  - consultas ao banco no roteiro: arquivo `.ts` temporário **dentro do projeto** + `npx tsx` (para achar `@prisma/client`).
+- **Auditoria de dependências:** alertas altos vêm do Prisma (`effect`/`deepmerge-ts`, pré-existentes); o `uuid`
+  moderado vem do ExcelJS e não se aplica (só v3/v5/v6 com buffer).
 
 ---
 
 ## 8. Verificação antes de cada commit
 
 ```bash
-./scripts/dev.sh testar                                   # typecheck + testes unitários
-NEXT_TELEMETRY_DISABLED=1 nice -n 15 npx next build       # build de produção
-# Se mexeu em telas/ações: E2E sem JavaScript contra Postgres temporário
-.handoff/e2e/e2e_ambiente.sh                              # recria banco, migra, seed, sobe servidor na 3123
-python3 -I .handoff/e2e/e2e_usuarios.py && python3 -I .handoff/e2e/e2e_disciplinas.py
-# e2e_login.py troca a senha da coordenação para outra: rode-o num banco recriado
+./scripts/dev.sh testar                                         # typecheck + testes unitários
+NEXT_TELEMETRY_DISABLED=1 nice -n 15 ionice -c 2 -n 7 npx next build
+# Se mexeu em telas/ações: E2E sem JavaScript, CADA roteiro num banco recriado (eles alteram senhas e dados)
+for s in e2e_login e2e_usuarios e2e_disciplinas e2e_ofertas e2e_grade e2e_importacao; do
+  bash .handoff/e2e/e2e_ambiente.sh >/dev/null 2>&1          # recria banco, migra, seed, sobe servidor na 3123
+  echo "$s: $(python3 -I .handoff/e2e/$s.py 2>&1 | grep -E 'FALHA|TUDO CERTO' | tr '\n' ' ')"
+done
 ```
 
-Após o E2E, desligue o servidor (porta 3123) e o banco (`npx prisma dev stop sgc-teste && npx prisma dev rm sgc-teste`).
+Depois do E2E, desligue o servidor e o banco:
+`ss -ltnp | grep :3123` (matar o pid) e `npx prisma dev stop sgc-teste && npx prisma dev rm sgc-teste`.
