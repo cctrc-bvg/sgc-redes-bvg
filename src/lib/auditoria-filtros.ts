@@ -100,6 +100,10 @@ export const NOME_ACAO: Record<string, string> = {
   REGISTROU_ENVIO_WHATSAPP: 'Registrou envio de WhatsApp',
   ENVIOU_WHATSAPP_AUTOMATICO: 'Enviou WhatsApp automático',
   EDITOU_CANAL_WHATSAPP: 'Editou canal de WhatsApp',
+  CRIOU_PROCESSO: 'Cadastrou processo/atendimento',
+  EDITOU_PROCESSO: 'Editou processo/atendimento',
+  MOVEU_PROCESSO: 'Moveu processo de etapa',
+  EXCLUIU_PROCESSO: 'Excluiu processo/atendimento',
 };
 
 export function descreverAcao(acao: string): string {
