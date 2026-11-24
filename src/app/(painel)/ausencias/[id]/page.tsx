@@ -16,7 +16,9 @@ import {
   sugerirAdiantamentos,
   sugerirSubstitutos,
 } from '@/lib/ausencias/regras';
-import { ETIQUETA_SLA, linkWhatsapp, NOME_CANAL, NOME_REFEICAO_HORARIO } from '@/lib/ausencias/mensagens';
+import { ETIQUETA_SLA, NOME_REFEICAO_HORARIO } from '@/lib/ausencias/mensagens';
+import { NOME_MODO } from '@/lib/comunicacao/mensagem';
+import { CaixaMensagem } from '@/components/caixa-mensagem';
 import { carregarAusencia, contextoDaAusencia, impactoDaTurma } from '@/lib/ausencias/servidor';
 import { configuracaoEvolution, destinoValido } from '@/lib/comunicacao/evolution';
 import { prisma } from '@/lib/db';
@@ -43,6 +45,16 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
   const { registro, dia, ausencia, alertas, horarios, mensagens, dataISO } = dados;
   // Envio automático só com a API configurada e destino válido no canal (G07).
   const comApi = podeComunicar && configuracaoEvolution() !== null;
+  const mostrarWhatsapp = usuario.usaWhatsapp;
+  const enviados = podeComunicar
+    ? await prisma.logComunicacao.findMany({
+        where: { ausenciaId: id, sucesso: true },
+        orderBy: { enviadoEm: 'desc' },
+        select: { chave: true, modoEnvio: true, enviadoEm: true },
+      })
+    : [];
+  const ultimoEnvio = new Map<string, (typeof enviados)[number]>();
+  for (const e of enviados) if (e.chave && !ultimoEnvio.has(e.chave)) ultimoEnvio.set(e.chave, e);
   const canaisAutomaticos = new Set(
     comApi
       ? (await prisma.configuracaoCanal.findMany({ where: { ativo: true, destinoId: { not: null } } }))
@@ -151,7 +163,7 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
         <section aria-labelledby="convites" className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h2 id="convites" className="text-lg font-semibold text-slate-900">Convites de substituição</h2>
           <p className="mb-4 mt-1 text-sm text-slate-700">
-            O docente convidado responde em &quot;Minha grade&quot;. Ao aceitar, a substituição é gravada se o horário ainda estiver pendente.
+            O docente convidado responde em &quot;Minha grade&quot;; a mensagem para ele (e-mail ou WhatsApp) aparece em Mensagens prontas. Ao aceitar, a substituição é gravada se o horário ainda estiver pendente.
           </p>
           {convites.length > 0 && (
             <ul className="mb-4 space-y-1 text-sm text-slate-800">
@@ -216,24 +228,38 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
 
       {podeComunicar && (
         <section aria-labelledby="mensagens" className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 id="mensagens" className="text-lg font-semibold text-slate-900">Mensagens para o WhatsApp</h2>
+          <h2 id="mensagens" className="text-lg font-semibold text-slate-900">Mensagens prontas</h2>
           <p className="mb-4 mt-1 text-sm text-slate-700">
-            Modo semiautomático (G07): abra o WhatsApp com o texto pronto, escolha o grupo e depois registre o envio. A Gestão só é avisada
-            de dispensa, impacto na alimentação ou aula sem cobertura (G08).
+            Modo semiautomático (G07): o sistema gera os textos e você encaminha pelo e-mail institucional
+            {mostrarWhatsapp ? ' ou pelo WhatsApp' : ''}, depois registra o envio. Trechos entre {'{{ }}'} são destinatários sem cadastro:
+            preencha antes de enviar. E-mail e saudação dos grupos e setores ficam em Comunicação. A Gestão só é avisada de dispensa, impacto
+            na alimentação ou aula sem cobertura (G08).
           </p>
           {mensagens.length === 0 ? (
             <p className="text-slate-700">Nenhuma mensagem necessária no momento.</p>
           ) : (
             <ul className="space-y-6">
-              {mensagens.map((m) => (
-                <li key={m.canal}>
-                  <h3 className="font-semibold text-slate-900">{NOME_CANAL[m.canal]}</h3>
-                  <pre className="mt-2 whitespace-pre-wrap rounded-md bg-slate-50 p-3 font-sans text-sm text-slate-800">{m.texto}</pre>
-                  <div className="mt-2">
-                    <FormularioEnvio ausenciaId={id} canal={m.canal} link={linkWhatsapp(m.texto)} automatico={canaisAutomaticos.has(m.canal)} />
-                  </div>
-                </li>
-              ))}
+              {mensagens.map((m) => {
+                const ultimo = ultimoEnvio.get(m.chave);
+                return (
+                  <li key={m.chave}>
+                    <CaixaMensagem mensagem={m} mostrarWhatsapp={mostrarWhatsapp}>
+                      {ultimo && (
+                        <p className="text-sm text-if-verde-800">
+                          <span aria-hidden="true">✔ </span>Envio registrado ({NOME_MODO[ultimo.modoEnvio] ?? ultimo.modoEnvio},{' '}
+                          {new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Fortaleza', dateStyle: 'short', timeStyle: 'short' }).format(ultimo.enviadoEm)}).
+                        </p>
+                      )}
+                      <FormularioEnvio
+                        ausenciaId={id}
+                        chave={m.chave}
+                        automatico={m.canal !== null && canaisAutomaticos.has(m.canal)}
+                        mostrarWhatsapp={mostrarWhatsapp}
+                      />
+                    </CaixaMensagem>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

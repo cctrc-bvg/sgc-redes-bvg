@@ -2,6 +2,7 @@
  * Semáforo de diários e carga horária (RF08, Art. 22, VI e VII). Espelha o que a Coordenação confere
  * no sistema acadêmico: aulas ministradas × previstas e se o diário está em dia.
  */
+import { contatoDoUsuario, primeiroNome, type MensagemPronta } from '@/lib/comunicacao/mensagem';
 import * as z from 'zod';
 
 export type Semaforo = 'concluida' | 'atrasado' | 'atencao' | 'em-dia';
@@ -64,7 +65,7 @@ export function validarMinistradas(ministradas: number, previstas: number): stri
   return ministradas > limite ? `Valor alto demais para ${previstas} aulas previstas. Confira o número.` : null;
 }
 
-/** Lembrete ao docente (WhatsApp), sem expor dados de estudantes. */
+/** Lembrete ao docente (e-mail ou WhatsApp), sem expor dados de estudantes. */
 export function mensagemLembrete(p: { professor: string; disciplina: string; turma: string; ministradas: number; previstas: number }): string {
   return [
     `Olá, ${p.professor}! Aqui é a Coordenação do Curso Técnico em Redes de Computadores.`,
@@ -73,10 +74,30 @@ export function mensagemLembrete(p: { professor: string; disciplina: string; tur
   ].join('\n');
 }
 
-/** Número de WhatsApp para link wa.me: só dígitos, com DDI 55 quando faltar. */
-export function numeroWhatsapp(bruto: string | null | undefined): string | null {
-  const d = (bruto ?? '').replace(/\D/g, '');
-  if (d.length === 10 || d.length === 11) return `55${d}`;
-  if ((d.length === 12 || d.length === 13) && d.startsWith('55')) return d;
-  return null;
+export { numeroWhatsapp } from '@/lib/comunicacao/mensagem';
+
+/** Lembrete de diário pronto para e-mail ou WhatsApp (o docente escolhe se aceita WhatsApp). */
+export function lembreteDoDiario(o: {
+  id: string;
+  aulasMinistradas: number;
+  aulasPrevistas: number;
+  turma: { codigo: string };
+  disciplina: { nome: string };
+  professor: { nome: string; email: string; whatsapp: string | null; usaWhatsapp: boolean };
+}): MensagemPronta {
+  return {
+    chave: `diario:${o.id}`,
+    titulo: `Docente: ${o.professor.nome}`,
+    canal: null,
+    destino: 'Docente (lembrete de diário)',
+    ...contatoDoUsuario(o.professor),
+    assunto: `[SGC-Redes] Lembrete do diário — ${o.disciplina.nome} (${o.turma.codigo})`,
+    texto: mensagemLembrete({
+      professor: primeiroNome(o.professor.nome),
+      disciplina: o.disciplina.nome,
+      turma: o.turma.codigo,
+      ministradas: o.aulasMinistradas,
+      previstas: o.aulasPrevistas,
+    }),
+  };
 }

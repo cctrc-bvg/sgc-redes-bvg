@@ -46,13 +46,14 @@ async function main() {
     await prisma.turma.updateMany({ where: { codigo: t.codigo, anoCurso: null }, data: { anoCurso: t.anoCurso } });
   }
 
-  // 3. Canais de WhatsApp padrão
-  const canais: { canal: CanalWhatsapp; nomeExibicao: string }[] = [
-    { canal: 'GRUPO_PROFESSORES', nomeExibicao: 'Grupo Professores - Redes' },
+  // 3. Grupos e setores para as mensagens (e-mail e saudação editáveis em Comunicação).
+  // Sem saudação, a mensagem traz um campo {{...}} para preencher.
+  const canais: { canal: CanalWhatsapp; nomeExibicao: string; saudacao?: string }[] = [
+    { canal: 'GRUPO_PROFESSORES', nomeExibicao: 'Grupo Professores - Redes', saudacao: 'professores(as)' },
     { canal: 'GRUPO_GESTAO_DIR_COORD', nomeExibicao: 'Grupo Gestão (Coord + DE + DG)' },
     { canal: 'ASSISTENCIA_ESTUDANTIL', nomeExibicao: 'Assistência Estudantil (Refeitório)' },
     { canal: 'CTP', nomeExibicao: 'CTP - Coord. Técnico-Pedagógica' },
-    { canal: 'LIDERES_TURMA', nomeExibicao: 'Líderes das Turmas de Redes' },
+    { canal: 'LIDERES_TURMA', nomeExibicao: 'Líderes das Turmas de Redes', saudacao: 'líderes de turma' },
   ];
   for (const c of canais) {
     await prisma.configuracaoCanal.upsert({

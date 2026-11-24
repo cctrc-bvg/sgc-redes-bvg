@@ -1,6 +1,6 @@
 # Próximos Passos — Retomada do Desenvolvimento
 
-> Atualizado em **24/11/2026** (madrugada: Fase 1 completa e módulos da Fase 2). Leia este arquivo inteiro antes de continuar. Ele resume o estado do projeto, o que
+> Atualizado em **24/11/2026** (Fase 1 e 2 completas; comunicação por e-mail institucional sem depender do WhatsApp). Leia este arquivo inteiro antes de continuar. Ele resume o estado do projeto, o que
 > depende do usuário, o que fazer em seguida e as armadilhas já encontradas (para não redescobri-las).
 
 ---
@@ -9,8 +9,8 @@
 
 ```bash
 cd ~/projetos/sgc-redes-bvg
-git status && git log --oneline -20         # branch minha-contribuicao; commits da madrugada AINDA NÃO enviados ao fork
-./scripts/dev.sh testar                      # esperado: typecheck ok + 302 testes passando
+git status && git log --oneline -20         # branch minha-contribuicao; enviada ao fork em 24/11/2026 (pergunte antes de novos push)
+./scripts/dev.sh testar                      # esperado: typecheck ok + 316 testes passando
 ls .handoff/github .handoff/e2e              # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
@@ -23,8 +23,8 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 **Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
 (somente leitura; contém só o commit inicial com a licença). FSD, README e código existem só no fork.
 
-**Branch `minha-contribuicao`** — **sem PR aberto**. Até `91723c9` está no fork; os commits seguintes são locais
-(o usuário não autorizou `git push` nesta sessão):
+**Branch `minha-contribuicao`** — **sem PR aberto**. Enviada ao fork em 24/11/2026 com autorização do usuário; CI verde
+no GitHub. Novos `git push` continuam pedindo confirmação:
 
 | Commit | Conteúdo |
 | :--- | :--- |
@@ -61,10 +61,12 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 | `8b2562c` | PEI para impressão (`/ppe/[id]/imprimir`) |
 | `2f022d2` | Convite de substituição: Coordenação convida, docente aceita/recusa em "Minha grade" |
 | `f4b53a4` | Cabeçalho da Coordenação com menus "Operação" e "Cadastros" (`<details>`, sem JS) |
-| *(último)* | Pendências nos cards do painel; este roteiro |
+| `124b677`, `a1c5672` | Pendências nos cards do painel; este roteiro |
+| *(último)* | **Comunicação sem depender do WhatsApp:** mensagens prontas com e-mail institucional, campos `{{...}}`, cópia; "Meu contato" |
 
 **Telas** (todas funcionam sem JavaScript):
-- Acesso: `/login`, `/painel` (cards por perfil; **todos os módulos já abrem**), `/conta/senha`.
+- Acesso: `/login`, `/painel` (cards por perfil; **todos os módulos já abrem**), `/conta/senha`, `/conta/contato`
+  (cada pessoa decide se o WhatsApp dela é usado; desligado = só e-mail).
 - Coordenação: `/usuarios` (+`/novo`, `/[id]`, `/[id]/senha`, `/importar`), `/disciplinas/nova`, `/disciplinas/importar`,
   `/turmas` (+`/nova`, `/[id]`), `/ofertas` (+`/importar`), `/ofertas/[turmaId]?ano=AAAA`, `/grade/turma/[id]/editar`,
   cadastro em `/grade/sabados` (+`/importar`), `/ausencias` (+`/nova`, `/[id]`), `/comunicacao`, `/auditoria`,
@@ -81,9 +83,9 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 
 **Dados no seed** (idempotente; nunca sobrescreve edições): coordenador inicial, turmas `REDES-1..3` (com `anoCurso`;
 editáveis em `/turmas`),
-canais WhatsApp, regras PPI, 8 blocos de horário (A–D manhã/tarde, 60 min) e as **47 disciplinas da matriz**.
+grupos e setores de comunicação (saudação padrão só para professores e líderes), regras PPI, 8 blocos de horário (A–D manhã/tarde, 60 min) e as **47 disciplinas da matriz**.
 
-**Verificado:** 302 testes unitários, typecheck, `next build` e 14 roteiros E2E sem JavaScript contra PostgreSQL
+**Verificado:** 316 testes unitários, typecheck, `next build` e 14 roteiros E2E sem JavaScript contra PostgreSQL
 real, todos verdes em 24/11/2026: login, usuários, disciplinas, ofertas, grade, importação, turmas, ausências (inclui comunicação, auditoria e relatórios), alimentação, processos, diários, PPI, PPE e importação de ofertas/sábados.
 As migrações que convertem dados (ofertas e grade) foram testadas com linhas no formato antigo.
 
@@ -101,11 +103,14 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
       Riscos: Prisma no Alpine (openssl/musl), motor do Prisma e **ExcelJS** no `standalone`. É pesado para 4 GB de RAM.
 - [x] ~~Enviar os commits da madrugada ao fork~~ — enviados em 24/11/2026; primeira execução do CI no GitHub passou.
 - [ ] **Testar no navegador com JavaScript** os módulos novos (os E2E são sem JS). Em especial a página da ausência
-      (vários formulários) e a Alimentação vista pela AE.
-- [ ] **Configurar a Evolution API** se quiserem envio automático (G07): `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`,
-      `EVOLUTION_INSTANCIA` no `.env` e o JID de cada grupo em `/comunicacao`. Sem isso, fica no modo semiautomático.
-- [ ] **Decidir a publicação no `cctrc-bvg`:** issue + PR, ou primeiro um PR dentro do fork. Textos prontos e
-      atualizados em `.handoff/github/` (o PR tem o item "Docker" a marcar após o teste e um `#<número>` da issue).
+      (caixas de mensagem: copiar, colar, substituir campos, abrir no e-mail) e a Alimentação vista pela AE.
+- [ ] **Cadastrar em `/comunicacao`** o e-mail institucional e a saudação de cada grupo/setor (CAE, CTP, Gestão,
+      professores, turmas). Sem isso as mensagens saem com "Para" vazio e um campo `{{...}}` na saudação.
+- [ ] **Configurar `APP_URL`** no servidor de produção: as mensagens aos docentes trazem o link de "Minha grade".
+- [x] ~~Envio automático (Evolution API)~~ — **decidido em 24/11/2026: continuar semiautomático** (e-mail ou WhatsApp Web
+      com o texto pronto). O código da Evolution fica, desligado, para o futuro.
+- [ ] **Publicação no `cctrc-bvg`** — **decidido: depois do teste no navegador, issue + PR a partir do fork.** Textos em
+      `.handoff/github/` (o PR tem o item "Docker" a marcar após o teste e um `#<número>` da issue).
       **Confirmar com o usuário antes de criar issue/PR** no repositório da organização.
 - [x] ~~Responder G02–G13~~ — **padrões do FSD aceitos em 24/11/2026** (FSD, seção 5). Todas as decisões G01–G14 fechadas.
 - [x] ~~Grade 2026 × matriz~~ — o usuário confirmou (24/11/2026) que a turma de 2026 tem as aulas normais e que Geografia
@@ -123,10 +128,22 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
    arquivo de configuração o Prisma 6 deixa de carregar o `.env` sozinho (precisa de `import 'dotenv/config'`), o que afeta
    `scripts/dev.sh` e o Dockerfile (`npx prisma db seed`). Fazer junto com o teste da stack Docker.
 4. ~~Impressão do PEI~~ feito (`/ppe/[id]/imprimir`); conferir com o modelo em papel do campus.
-5. **G05 integrado ao PEI:** ao agendar encontro de PEI no contraturno, oferecer a caixa "gerar aviso de refeição"
-   (hoje o acréscimo é lançado à mão em `/alimentacao/adicionar`).
-6. ~~Convite de substituição~~ feito. Possível evolução: avisar o convidado pelo WhatsApp com link direto.
+5. ~~G05 integrado ao PEI~~ — decidido manter manual (ver decisões abaixo).
+6. ~~Convite de substituição~~ feito, com mensagem pronta ao convidado (e-mail ou WhatsApp).
 7. ~~Cabeçalho agrupado~~ feito. Os menus `<details>` ficam abertos ao navegar no cliente; fechar com JS se incomodar.
+8. **Mensagens prontas em outros módulos:** acréscimo de refeição (`/alimentacao/adicionar`) e decisões de PPI/PPE ainda
+   não geram caixa de mensagem; usar a mensagem avulsa de `/comunicacao` enquanto isso.
+
+### Decisões de 24/11/2026 (sugestões aceitas pelo usuário)
+
+- **Publicação:** testar no navegador, depois issue + PR do fork para o `cctrc-bvg` (com confirmação antes).
+- **Escolhas da madrugada** (seção 5, "Implementação da Fase 1 e 2"): aceitas; levar à Coordenação para validar.
+- **WhatsApp:** semiautomático; o sistema funciona **inteiro sem integração**. Toda comunicação também por **e-mail institucional**.
+- **G05 no PEI:** continua manual (`/alimentacao/adicionar`) para não guardar a turma do estudante com PEI.
+- **Playwright:** poucos roteiros de fumaça com JS, rodando no CI do GitHub (não na máquina de 4 GB).
+- **`prisma.config.ts` / Prisma 7:** junto com o teste do Docker, sem pressa.
+- **Aviso ao convidado:** já sai na caixa de mensagens da ausência (e-mail ou WhatsApp, com link de "Minha grade").
+- **Login pelo SUAP:** segunda fase, depois do sistema em uso (pedir cadastro do app à TI).
 
 ### Feito (referência)
 
@@ -172,6 +189,14 @@ e nas decisões da seção 5.
   os que deixaram de valer; refeição já servida não gera aviso (G13). Quantidade = média da turma; editável (G04), e
   mudar a quantidade pede nova ciência da AE. Acréscimos manuais (`manual = true`, G05) ficam fora do recálculo.
 - **Emergência (< 4h):** exige justificativa na decisão e mostra "ligue para a AE" (G06).
+- **Comunicação semiautomática por e-mail ou WhatsApp:** o sistema funciona sem integração com o WhatsApp. Cada mensagem
+  (`MensagemPronta`, `src/lib/comunicacao/mensagem.ts`) tem Para (e-mail institucional do usuário ou do grupo/setor),
+  assunto, texto editável e campos `{{...}}` para destinatários sem cadastro; a caixa (`src/components/caixa-mensagem.tsx`)
+  copia texto/assunto, cola, substitui campos e abre no e-mail (`mailto:` sem a formatação `*negrito*`) ou no WhatsApp.
+  O registro do envio pede o meio (E-mail, WhatsApp, Outro) e guarda o **texto gerado** (edições na caixa não vão ao banco).
+  Mensagens individuais: convidado, substituto, docente da aula adiantada e docente ausente; CTP recebe aviso de dispensa.
+  Canal **inativo** não gera mensagem. `User.usaWhatsapp = false` (em "Meu contato"): ninguém recebe link para o número
+  da pessoa, e ela própria não vê botões nem a opção WhatsApp.
 - **Mensagens:** sempre regeneradas no servidor; Gestão só recebe dispensa, impacto alimentar ou aula sem cobertura (G08);
   líderes de turma sem nome de docente; AE sem docente nem disciplina.
 - **Diários:** espelho do sistema acadêmico (a Coordenação atualiza); amarelo quando ministradas < esperadas − 10%

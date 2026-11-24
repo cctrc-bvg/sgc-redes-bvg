@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 import { Alerta, AreaTexto, BotaoPrimario, BotaoSecundario, Campo } from '@/components/campo';
+import { SeletorModo } from '@/components/seletor-modo';
 import { atualizarDiario, registrarLembrete, salvarPeriodo, type EstadoDiario, type EstadoLembrete, type EstadoPeriodo } from './actions';
 
 export function FormularioDiario(props: { ofertaId: string; ministradas: number; emDia: boolean; observacao: string; previstas: number }) {
@@ -42,25 +43,18 @@ export function FormularioDiario(props: { ofertaId: string; ministradas: number;
   );
 }
 
-export function FormularioLembrete({ ofertaId, link }: { ofertaId: string; link: string | null }) {
+/** Registro do lembrete enviado (por e-mail, WhatsApp ou outro meio). */
+export function FormularioLembrete({ ofertaId, mostrarWhatsapp }: { ofertaId: string; mostrarWhatsapp: boolean }) {
   const [estado, acao, enviando] = useActionState<EstadoLembrete | undefined, FormData>(registrarLembrete, undefined);
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
-        {link ? (
-          <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
-            Abrir conversa no WhatsApp<span className="sr-only"> (abre em nova aba)</span>
-          </a>
-        ) : (
-          <p className="text-sm text-slate-700">O docente não tem WhatsApp cadastrado. Copie o texto e envie por outro meio.</p>
-        )}
-        <form action={acao}>
-          <input type="hidden" name="ofertaId" value={ofertaId} />
-          <BotaoSecundario type="submit" disabled={enviando}>
-            {enviando ? 'Registrando…' : 'Já enviei: registrar lembrete'}
-          </BotaoSecundario>
-        </form>
-      </div>
+    <div className="space-y-3 border-t border-slate-200 pt-3">
+      <form action={acao} className="flex flex-wrap items-end gap-3">
+        <input type="hidden" name="ofertaId" value={ofertaId} />
+        <SeletorModo id="modo-lembrete" mostrarWhatsapp={mostrarWhatsapp} />
+        <BotaoSecundario type="submit" disabled={enviando}>
+          {enviando ? 'Registrando…' : 'Já enviei: registrar lembrete'}
+        </BotaoSecundario>
+      </form>
       {estado?.mensagem && <Alerta tipo={estado.sucesso ? 'sucesso' : 'erro'}>{estado.mensagem}</Alerta>}
     </div>
   );

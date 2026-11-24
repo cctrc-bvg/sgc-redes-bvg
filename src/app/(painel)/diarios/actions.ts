@@ -7,7 +7,8 @@ import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { validarDataISO } from '@/lib/alimentacao-engine';
 import { dataParaBanco } from '@/lib/ausencias/regras';
-import { DiarioSchema, validarMinistradas } from '@/lib/diarios/regras';
+import { DiarioSchema, lembreteDoDiario, validarMinistradas } from '@/lib/diarios/regras';
+import { lerModoEnvio, NOME_MODO } from '@/lib/comunicacao/mensagem';
 import { lerAnoLetivo } from '@/lib/ofertas/regras';
 import { lerSemestreLetivo } from '@/lib/grade/regras';
 
@@ -58,12 +59,28 @@ export type EstadoLembrete = { mensagem?: string; sucesso?: boolean };
 export async function registrarLembrete(_estado: EstadoLembrete | undefined, formData: FormData): Promise<EstadoLembrete> {
   const { usuario } = await exigirPermissao('diarios:ver-todos');
   const ofertaId = String(formData.get('ofertaId') ?? '');
-  const atual = await prisma.disciplinaOferta.findUnique({ where: { id: ofertaId }, select: { id: true } });
+  const modo = lerModoEnvio(formData.get('modo'));
+  if (!modo) return { mensagem: 'Escolha por onde o lembrete foi enviado.' };
+  const atual = await prisma.disciplinaOferta.findUnique({
+    where: { id: ofertaId },
+    include: {
+      turma: { select: { codigo: true } },
+      disciplina: { select: { nome: true } },
+      professor: { select: { nome: true, email: true, whatsapp: true, usaWhatsapp: true } },
+    },
+  });
   if (!atual) return { mensagem: 'Oferta não encontrada.' };
-  await prisma.disciplinaOferta.update({ where: { id: atual.id }, data: { ultimaCobranca: new Date() } });
-  await registrarAuditoria({ userId: usuario.id, acao: 'COBROU_DIARIO', entidade: 'DisciplinaOferta', entidadeId: atual.id });
+  const m = lembreteDoDiario(atual);
+  await prisma.$transaction([
+    prisma.disciplinaOferta.update({ where: { id: atual.id }, data: { ultimaCobranca: new Date() } }),
+    prisma.logComunicacao.create({
+      data: { canal: null, destino: m.destino, chave: m.chave, assunto: m.assunto, mensagem: m.texto, modoEnvio: modo, sucesso: true, userId: usuario.id },
+    }),
+  ]);
+  await registrarAuditoria({ userId: usuario.id, acao: 'COBROU_DIARIO', entidade: 'DisciplinaOferta', entidadeId: atual.id, detalhes: { modo } });
   revalidatePath('/diarios');
-  return { sucesso: true, mensagem: 'Lembrete registrado.' };
+  revalidatePath('/comunicacao');
+  return { sucesso: true, mensagem: `Lembrete registrado (${NOME_MODO[modo].toLowerCase()}).` };
 }
 
 export type EstadoPeriodo = { mensagem?: string; sucesso?: boolean; erros?: Partial<Record<'inicio' | 'fim', string>> };

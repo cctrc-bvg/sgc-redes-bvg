@@ -25,6 +25,8 @@ model User {
   email         String   @unique
   siape         String?  @unique
   whatsapp      String?
+  // Falso: a pessoa não quer o WhatsApp pessoal no sistema (sem links para o número dela nem botões de WhatsApp).
+  usaWhatsapp   Boolean  @default(true)
   passwordHash  String
   role          Role     @default(PROFESSOR)
   ativo         Boolean  @default(true)
@@ -352,16 +354,25 @@ model ConfiguracaoCanal {
   canal       CanalWhatsapp @unique
   nomeExibicao String
   destinoId   String?       // JID do grupo ou telefone na Evolution API (opcional)
+  email       String?       // e-mail institucional do grupo ou setor (envio semiautomático por e-mail)
+  saudacao    String?       // como chamar os destinatários ("equipe da CAE"); vazio vira campo a preencher
   ativo       Boolean       @default(true)
 }
 
 model LogComunicacao {
   id          String        @id @default(cuid())
-  canal       CanalWhatsapp
+  canal       CanalWhatsapp? // null: mensagem individual (docente) ou avulsa
+  destino     String?       // descrição do destinatário sem nome (ex.: "Docente substituto(a)")
+  chave       String?       // identifica a mensagem dentro da origem (ex.: "canal:CTP")
+  ausenciaId  String?       // origem, quando a mensagem é de uma ausência
+  assunto     String?
   mensagem    String
-  modoEnvio   String        // "WEBHOOK_AUTO" ou "WHATSAPP_WEB_MANUAL"
+  modoEnvio   String        // "EMAIL_MANUAL", "WHATSAPP_WEB_MANUAL", "OUTRO_MANUAL" ou "WEBHOOK_AUTO"
   sucesso     Boolean       @default(true)
+  userId      String?       // quem registrou o envio
   enviadoEm   DateTime      @default(now())
+
+  @@index([ausenciaId])
 }
 
 // ==========================================

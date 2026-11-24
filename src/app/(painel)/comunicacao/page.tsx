@@ -3,42 +3,59 @@ import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { NOME_CANAL } from '@/lib/ausencias/mensagens';
 import { configuracaoEvolution } from '@/lib/comunicacao/evolution';
-import { FormularioCanal } from './formulario-envio';
+import { NOME_MODO } from '@/lib/comunicacao/mensagem';
+import { opcoesDeDestino } from '@/lib/comunicacao/servidor';
+import { FormularioAvulsa, FormularioCanal } from './formulario-envio';
 
 export const metadata: Metadata = { title: 'Comunicação — SGC-Redes' };
-
-const MODO: Record<string, string> = { WHATSAPP_WEB_MANUAL: 'WhatsApp Web (manual)', WEBHOOK_AUTO: 'Automático (API)' };
 
 const dataHora = (d: Date) =>
   new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Fortaleza', dateStyle: 'short', timeStyle: 'short' }).format(d);
 
 export default async function PaginaComunicacao() {
-  await exigirPermissao('comunicacao:enviar');
-  const [canais, historico] = await Promise.all([
+  const { usuario } = await exigirPermissao('comunicacao:enviar');
+  const [canais, historico, destinos] = await Promise.all([
     prisma.configuracaoCanal.findMany({ orderBy: { canal: 'asc' } }),
     prisma.logComunicacao.findMany({ orderBy: { enviadoEm: 'desc' }, take: 50 }),
+    opcoesDeDestino(),
   ]);
   const automatico = configuracaoEvolution() !== null;
+  const mostrarWhatsapp = usuario.usaWhatsapp;
 
   return (
     <>
       <h1 className="text-2xl font-bold text-slate-900">Comunicação</h1>
       <p className="mt-1 text-slate-700">
-        Mensagens padronizadas para os grupos de WhatsApp (RF05). As mensagens de cada ausência ficam na página da ausência.
+        O sistema gera as mensagens e você encaminha pelo <strong>e-mail institucional</strong>
+        {mostrarWhatsapp ? ' ou pelo WhatsApp' : ''} (modo semiautomático, RF05/G07). As mensagens de cada ausência ficam na página da
+        ausência; aqui ficam a mensagem avulsa, o histórico e os contatos dos grupos e setores.
       </p>
       <p className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-800">
-        {automatico ? (
+        {!mostrarWhatsapp ? (
           <>
-            <span aria-hidden="true">✔ </span>Envio automático <strong>ligado</strong> (Evolution API): canais com destino cadastrado mostram
-            &quot;Enviar automaticamente&quot;.
+            <span aria-hidden="true">ℹ </span>Você escolheu <strong>não usar o WhatsApp</strong> no sistema: só aparecem as opções de e-mail e
+            de copiar o texto. Mude em Minha conta → Contato.
+          </>
+        ) : automatico ? (
+          <>
+            <span aria-hidden="true">✔ </span>Envio automático pelo WhatsApp <strong>ligado</strong> (Evolution API) para canais com destino
+            cadastrado. O e-mail e a cópia do texto continuam disponíveis.
           </>
         ) : (
           <>
-            <span aria-hidden="true">ℹ </span>Modo <strong>semiautomático</strong> (G07): o texto abre no WhatsApp Web e o envio é registrado aqui.
-            O envio automático liga quando o servidor tiver EVOLUTION_API_URL, EVOLUTION_API_KEY e EVOLUTION_INSTANCIA.
+            <span aria-hidden="true">ℹ </span>Modo <strong>semiautomático</strong>: abra o texto no e-mail ou no WhatsApp Web (ou copie e cole)
+            e registre o envio. Nenhuma integração com o WhatsApp é necessária.
           </>
         )}
       </p>
+
+      <section aria-labelledby="avulsa" className="mt-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 id="avulsa" className="text-lg font-semibold text-slate-900">Mensagem avulsa</h2>
+        <p className="mb-4 mt-1 text-sm text-slate-700">
+          Para um grupo, setor ou usuário do sistema. O e-mail e a saudação vêm do cadastro; destinatários sem cadastro viram campos a preencher.
+        </p>
+        <FormularioAvulsa canais={destinos.canais} usuarios={destinos.usuarios} mostrarWhatsapp={mostrarWhatsapp} />
+      </section>
 
       <section aria-labelledby="historico" className="mt-8">
         <h2 id="historico" className="text-lg font-semibold text-slate-900">Histórico de envios (últimos 50)</h2>
@@ -49,7 +66,7 @@ export default async function PaginaComunicacao() {
             {historico.map((h) => (
               <li key={h.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="font-semibold text-slate-900">
-                  {NOME_CANAL[h.canal]} · {dataHora(h.enviadoEm)} · {MODO[h.modoEnvio] ?? h.modoEnvio} ·{' '}
+                  {h.canal ? NOME_CANAL[h.canal] : (h.destino ?? 'Mensagem individual')} · {dataHora(h.enviadoEm)} · {NOME_MODO[h.modoEnvio] ?? h.modoEnvio} ·{' '}
                   {h.sucesso ? (
                     <span className="text-if-verde-800">
                       <span aria-hidden="true">✔ </span>enviado
@@ -60,6 +77,7 @@ export default async function PaginaComunicacao() {
                     </span>
                   )}
                 </p>
+                {h.assunto && <p className="mt-1 text-sm text-slate-700">Assunto: {h.assunto}</p>}
                 <details className="mt-2">
                   <summary className="cursor-pointer text-sm text-if-verde-700 underline underline-offset-2">Ver mensagem</summary>
                   <pre className="mt-2 whitespace-pre-wrap rounded-md bg-slate-50 p-3 font-sans text-sm text-slate-800">{h.mensagem}</pre>
@@ -71,12 +89,22 @@ export default async function PaginaComunicacao() {
       </section>
 
       <section aria-labelledby="canais" className="mt-8">
-        <h2 id="canais" className="text-lg font-semibold text-slate-900">Canais</h2>
+        <h2 id="canais" className="text-lg font-semibold text-slate-900">Grupos e setores</h2>
+        <p className="mt-1 text-sm text-slate-700">E-mail institucional e saudação usados nas mensagens prontas.</p>
         <ul className="mt-3 space-y-4">
           {canais.map((c) => (
             <li key={c.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="mb-3 font-semibold text-slate-900">{NOME_CANAL[c.canal]}</h3>
-              <FormularioCanal canalId={c.id} titulo={NOME_CANAL[c.canal]} nomeExibicao={c.nomeExibicao} destinoId={c.destinoId ?? ''} ativo={c.ativo} />
+              <FormularioCanal
+                canalId={c.id}
+                titulo={NOME_CANAL[c.canal]}
+                nomeExibicao={c.nomeExibicao}
+                email={c.email ?? ''}
+                saudacao={c.saudacao ?? ''}
+                destinoId={c.destinoId ?? ''}
+                ativo={c.ativo}
+                comApi={automatico}
+              />
             </li>
           ))}
         </ul>

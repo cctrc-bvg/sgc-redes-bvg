@@ -21,7 +21,8 @@ import {
   type ContextoDia,
   type CoberturaDia,
 } from './regras';
-import { mensagensDaAusencia, type DadosMensagem, type LinhaHorario } from './mensagens';
+import { enderecoDoSistema } from '@/lib/comunicacao/mensagem';
+import { mensagensDaAusencia, type DadosMensagem, type LinhaHorario, type PessoaMensagem } from './mensagens';
 
 type Tx = Prisma.TransactionClient;
 
@@ -213,13 +214,19 @@ export async function carregarAusencia(ausenciaId: string) {
     const c = minhas.get(b);
     const rotulo = descreverBloco(bloco.get(b)!);
     if (!c) return { bloco: rotulo, situacao: 'pendente' };
-    if (c.tipo === 'SUBSTITUICAO') return { bloco: rotulo, situacao: 'substituicao', detalhe: nomeDocente.get(c.substitutoId ?? '') ?? 'docente inativo' };
+    if (c.tipo === 'SUBSTITUICAO')
+      return { bloco: rotulo, situacao: 'substituicao', detalhe: nomeDocente.get(c.substitutoId ?? '') ?? 'docente inativo', substitutoId: c.substitutoId };
     if (c.tipo === 'ADIANTAMENTO') {
       const origem = bloco.get(c.blocoOrigemId ?? '');
+      const disciplinaOrigem = disciplinaDaCelula.get(`${registro.turmaId}|${c.blocoOrigemId}`);
+      const blocoOrigem = origem ? descreverBloco(origem) : undefined;
       return {
         bloco: rotulo,
         situacao: 'adiantamento',
-        detalhe: `${disciplinaDaCelula.get(`${registro.turmaId}|${c.blocoOrigemId}`) ?? 'aula'} (de ${origem ? descreverBloco(origem) : 'outro horário'})`,
+        detalhe: `${disciplinaOrigem ?? 'aula'} (de ${blocoOrigem ?? 'outro horário'})`,
+        professorOrigemId: c.professorOrigemId,
+        disciplinaOrigem,
+        blocoOrigem,
       };
     }
     return { bloco: rotulo, situacao: 'dispensa' };
@@ -237,7 +244,24 @@ export async function carregarAusencia(ausenciaId: string) {
     horarios,
     refeicoes: ativos.map((a) => ({ tipo: a.tipoRefeicao, acao: a.acao, quantidade: a.qtdImpactada, nivel: a.nivelSla })),
   };
-  return { registro, dataISO, dia, ausencia, alertas, horarios, dados, mensagens: mensagensDaAusencia(dados) };
+  // Contatos para as mensagens: grupos/setores (Comunicação) e docentes envolvidos.
+  const [canais, convites] = await Promise.all([
+    prisma.configuracaoCanal.findMany({ select: { canal: true, email: true, saudacao: true, ativo: true } }),
+    prisma.conviteSubstituicao.findMany({ where: { ausenciaId, status: 'PENDENTE' }, orderBy: { criadoEm: 'asc' }, select: { id: true, professorId: true, blocoId: true } }),
+  ]);
+  const ids = new Set<string>([registro.professorAusenteId, ...convites.map((c) => c.professorId)]);
+  for (const h of horarios) for (const id of [h.substitutoId, h.professorOrigemId]) if (id) ids.add(id);
+  const pessoas = new Map<string, PessoaMensagem>(
+    (await prisma.user.findMany({ where: { id: { in: [...ids] } }, select: { id: true, nome: true, email: true, whatsapp: true, usaWhatsapp: true } })).map((u) => [u.id, u]),
+  );
+  const mensagens = mensagensDaAusencia(dados, {
+    canais,
+    pessoas,
+    ausenteId: registro.professorAusenteId,
+    convites: convites.map((c) => ({ id: c.id, professorId: c.professorId, bloco: bloco.get(c.blocoId) ? descreverBloco(bloco.get(c.blocoId)!) : 'horário' })),
+    linkMinhaGrade: enderecoDoSistema('/grade/minha'),
+  });
+  return { registro, dataISO, dia, ausencia, alertas, horarios, dados, mensagens };
 }
 
 export interface MudancaDoProfessor {

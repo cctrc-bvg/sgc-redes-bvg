@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { linkWhatsapp, mensagemAssistencia, mensagemGestao, mensagemLideres, mensagemProfessores, mensagensDaAusencia, type DadosMensagem } from './mensagens';
+import { mensagemAssistencia, mensagemCtp, mensagemGestao, mensagemLideres, mensagemProfessores, mensagensDaAusencia, type DadosMensagem, type ExtrasMensagem, type PessoaMensagem } from './mensagens';
 
 const base: DadosMensagem = {
   turma: 'Redes 2º Ano (Integrado)',
@@ -66,8 +66,95 @@ describe('mensagens da ausência', () => {
     expect(mensagemAssistencia(base)).toBeNull();
   });
 
-  it('lista só as mensagens aplicáveis e gera link do WhatsApp', () => {
-    expect(mensagensDaAusencia(base).map((m) => m.canal)).toEqual(['GRUPO_PROFESSORES', 'GRUPO_GESTAO_DIR_COORD']);
-    expect(linkWhatsapp('Olá *turma*\nok')).toBe('https://wa.me/?text=Ol%C3%A1%20*turma*%0Aok');
+  it('CTP: só quando há dispensa, com a situação da reposição', () => {
+    expect(mensagemCtp(base)).toBeNull();
+    const dispensa = { ...base, status: 'TURMA_DISPENSADA' as const, horarios: [{ bloco: 'Manhã A', situacao: 'dispensa' as const }] };
+    expect(mensagemCtp(dispensa)).toContain('Reposição: a combinar');
+    expect(mensagemCtp({ ...dispensa, status: 'REPOSICAO_AGENDADA' })).toContain('Reposição: já agendada.');
+  });
+});
+
+const pessoa = (id: string, nome: string, extra: Partial<PessoaMensagem> = {}): PessoaMensagem => ({
+  id,
+  nome,
+  email: `${id}@ifce.edu.br`,
+  whatsapp: '5588999990000',
+  usaWhatsapp: true,
+  ...extra,
+});
+
+const extras = (mudar: Partial<ExtrasMensagem> = {}): ExtrasMensagem => ({
+  canais: [
+    { canal: 'GRUPO_PROFESSORES', email: 'professores@ifce.edu.br', saudacao: 'professores(as)', ativo: true },
+    { canal: 'GRUPO_GESTAO_DIR_COORD', email: null, saudacao: null, ativo: true },
+    { canal: 'ASSISTENCIA_ESTUDANTIL', email: 'cae@ifce.edu.br', saudacao: null, ativo: true },
+    { canal: 'CTP', email: null, saudacao: 'equipe da CTP', ativo: false },
+    { canal: 'LIDERES_TURMA', email: null, saudacao: 'líderes de turma', ativo: true },
+  ],
+  pessoas: new Map([
+    ['ana', pessoa('ana', 'Ana Souza')],
+    ['bruno', pessoa('bruno', 'Bruno Lima', { usaWhatsapp: false })],
+    ['carla', pessoa('carla', 'Carla Dias', { whatsapp: null })],
+  ]),
+  ausenteId: 'ana',
+  convites: [],
+  linkMinhaGrade: 'https://sgc.exemplo/grade/minha',
+  ...mudar,
+});
+
+describe('mensagensDaAusencia (e-mail e WhatsApp)', () => {
+  it('grupos: saudação cadastrada, e-mail do canal e assunto com turma e data', () => {
+    const [prof, gestao] = mensagensDaAusencia(base, extras());
+    expect(prof.chave).toBe('canal:GRUPO_PROFESSORES');
+    expect(prof.para).toBe('professores@ifce.edu.br');
+    expect(prof.texto.startsWith('Olá, professores(as)!\n\n*CONVITE')).toBe(true);
+    expect(prof.assunto).toBe('[SGC-Redes] Convite de substituição — REDES-2 — 26/11/2026');
+    expect(gestao.chave).toBe('canal:GRUPO_GESTAO_DIR_COORD');
+    expect(gestao.para).toBeNull();
+    expect(gestao.texto).toContain('Olá, {{destinatários (Gestão)}}!');
+  });
+
+  it('convite individual com link para Minha grade; sem convite, nenhuma mensagem individual pendente', () => {
+    const msgs = mensagensDaAusencia(base, extras({ convites: [{ id: 'c1', professorId: 'carla', bloco: 'Manhã A (07:30–08:30)' }] }));
+    const convite = msgs.find((m) => m.chave === 'convite:c1')!;
+    expect(convite.titulo).toBe('Docente convidado(a): Carla Dias');
+    expect(convite.para).toBe('carla@ifce.edu.br');
+    expect(convite.whatsapp).toBeNull();
+    expect(convite.aceitaWhatsapp).toBe(true);
+    expect(convite.texto).toContain('Olá, Carla!');
+    expect(convite.texto).toContain('https://sgc.exemplo/grade/minha');
+    expect(msgs.some((m) => m.chave.startsWith('ausente:'))).toBe(false);
+  });
+
+  it('substituto, professor da aula adiantada e docente ausente recebem mensagens individuais', () => {
+    const d: DadosMensagem = {
+      ...base,
+      status: 'TURMA_DISPENSADA',
+      horarios: [
+        { bloco: 'Manhã A', situacao: 'substituicao', detalhe: 'Bruno Lima', substitutoId: 'bruno' },
+        { bloco: 'Manhã B', situacao: 'adiantamento', detalhe: 'BD (de Tarde A)', professorOrigemId: 'carla', disciplinaOrigem: 'BD', blocoOrigem: 'Tarde A' },
+        { bloco: 'Tarde B', situacao: 'dispensa' },
+      ],
+    };
+    const msgs = mensagensDaAusencia(d, extras());
+    const chaves = msgs.map((m) => m.chave);
+    expect(chaves).toEqual(['substituto:bruno', 'adiantamento:carla', 'canal:LIDERES_TURMA', 'canal:GRUPO_GESTAO_DIR_COORD', 'ausente:ana']);
+    const sub = msgs[0];
+    expect(sub.aceitaWhatsapp).toBe(false);
+    expect(sub.whatsapp).toBeNull();
+    expect(sub.texto).toContain('- Manhã A (no lugar de Redes de Computadores)');
+    expect(sub.texto).not.toContain('evento');
+    expect(msgs[1].texto).toContain('sua aula de BD (Tarde A) passa para Manhã B.');
+    expect(msgs[4].texto).toContain('Combine com a Coordenação a reposição');
+    expect(msgs[4].whatsapp).toBe('5588999990000');
+  });
+
+  it('canal desativado não gera mensagem; CTP ativa recebe aviso de dispensa', () => {
+    const d = { ...base, status: 'TURMA_DISPENSADA' as const, horarios: [{ bloco: 'Manhã A', situacao: 'dispensa' as const }] };
+    expect(mensagensDaAusencia(d, extras()).some((m) => m.canal === 'CTP')).toBe(false);
+    const ativa = extras();
+    const canais = ativa.canais.map((c) => (c.canal === 'CTP' ? { ...c, ativo: true } : c));
+    const ctp = mensagensDaAusencia(d, { ...ativa, canais }).find((m) => m.canal === 'CTP')!;
+    expect(ctp.texto.startsWith('Olá, equipe da CTP!')).toBe(true);
   });
 });

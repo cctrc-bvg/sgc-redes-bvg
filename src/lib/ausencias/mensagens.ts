@@ -1,8 +1,10 @@
 /**
- * Mensagens de WhatsApp geradas a partir de uma ausência (RF05, G07: modo semiautomático).
+ * Mensagens geradas a partir de uma ausência (RF05, G07: modo semiautomático). O sistema monta o texto e
+ * quem é responsável encaminha por e-mail institucional ou WhatsApp; nada depende da integração com o WhatsApp.
  * Sem dados sensíveis: só o motivo operacional escolhido numa lista fechada (RF02, LGPD).
  */
 import type { CanalWhatsapp, NivelUrgenciaSla, StatusAusencia, TipoRefeicao } from '@prisma/client';
+import { contatoDoUsuario, primeiroNome, saudacao, type MensagemPronta } from '@/lib/comunicacao/mensagem';
 import { deveAvisarGestao, formatarData, NOME_STATUS } from './regras';
 
 export const NOME_REFEICAO_HORARIO: Record<TipoRefeicao, string> = {
@@ -23,6 +25,12 @@ export interface LinhaHorario {
   situacao: 'pendente' | 'substituicao' | 'adiantamento' | 'dispensa';
   /** Substituição: nome do substituto. Adiantamento: "Disciplina (de Tarde A)". */
   detalhe?: string;
+  /** Substituição: quem cobre. */
+  substitutoId?: string | null;
+  /** Adiantamento: dono da aula trazida, a disciplina dela e o horário de onde saiu. */
+  professorOrigemId?: string | null;
+  disciplinaOrigem?: string;
+  blocoOrigem?: string;
 }
 
 export interface DadosMensagem {
@@ -115,21 +123,168 @@ export function mensagemAssistencia(d: DadosMensagem): string | null {
 export const NOME_CANAL: Record<CanalWhatsapp, string> = {
   GRUPO_PROFESSORES: 'Grupo de professores',
   GRUPO_GESTAO_DIR_COORD: 'Gestão (Direção e Coordenações)',
-  ASSISTENCIA_ESTUDANTIL: 'Assistência Estudantil',
-  CTP: 'CTP',
-  LIDERES_TURMA: 'Líderes das turmas',
+  ASSISTENCIA_ESTUDANTIL: 'Assistência Estudantil (CAE)',
+  CTP: 'CTP (Coord. Técnico-Pedagógica)',
+  LIDERES_TURMA: 'Turma (líderes ou grupo da turma)',
 };
 
-/** Mensagens aplicáveis à ausência, na ordem em que costumam ser enviadas. */
-export function mensagensDaAusencia(d: DadosMensagem): { canal: CanalWhatsapp; texto: string }[] {
-  const lista: { canal: CanalWhatsapp; texto: string | null }[] = [
-    { canal: 'GRUPO_PROFESSORES', texto: mensagemProfessores(d) },
-    { canal: 'ASSISTENCIA_ESTUDANTIL', texto: mensagemAssistencia(d) },
-    { canal: 'LIDERES_TURMA', texto: mensagemLideres(d) },
-    { canal: 'GRUPO_GESTAO_DIR_COORD', texto: mensagemGestao(d) },
-  ];
-  return lista.filter((m): m is { canal: CanalWhatsapp; texto: string } => m.texto !== null);
+/** Campo a preencher quando o canal não tem saudação cadastrada. */
+export const CAMPO_SAUDACAO: Record<CanalWhatsapp, string> = {
+  GRUPO_PROFESSORES: 'destinatários (professores)',
+  GRUPO_GESTAO_DIR_COORD: 'destinatários (Gestão)',
+  ASSISTENCIA_ESTUDANTIL: 'destinatário na CAE',
+  CTP: 'destinatário na CTP',
+  LIDERES_TURMA: 'líderes da turma',
+};
+
+/** CTP: turma dispensada em algum horário (acompanhamento pedagógico e reposição). */
+export function mensagemCtp(d: DadosMensagem): string | null {
+  const dispensados = d.horarios.filter((h) => h.situacao === 'dispensa');
+  if (dispensados.length === 0) return null;
+  return [
+    '*INFORME À CTP — COORD. REDES DE COMPUTADORES*',
+    `Turma: *${d.turma}* · ${cabecalhoData(d)}`,
+    `Disciplina: ${d.disciplina}`,
+    'Horários com a turma dispensada:',
+    ...dispensados.map((h) => `- ${h.bloco}`),
+    d.status === 'REPOSICAO_AGENDADA' ? 'Reposição: já agendada.' : 'Reposição: a combinar com a Coordenação.',
+  ].join('\n');
 }
 
-/** Link do WhatsApp com o texto pronto; o usuário escolhe o grupo ao abrir (modo semiautomático). */
-export const linkWhatsapp = (texto: string) => `https://wa.me/?text=${encodeURIComponent(texto)}`;
+/** Configuração de um canal (grupo ou setor) usada nas mensagens. */
+export interface CanalMensagem {
+  canal: CanalWhatsapp;
+  email: string | null;
+  saudacao: string | null;
+  ativo: boolean;
+}
+
+/** Contato de um docente para mensagem individual. */
+export interface PessoaMensagem {
+  id: string;
+  nome: string;
+  email: string;
+  whatsapp: string | null;
+  usaWhatsapp: boolean;
+}
+
+export interface ExtrasMensagem {
+  canais: readonly CanalMensagem[];
+  pessoas: ReadonlyMap<string, PessoaMensagem>;
+  ausenteId: string;
+  /** Convites ainda sem resposta. */
+  convites: readonly { id: string; professorId: string; bloco: string }[];
+  /** Link para "Minha grade", quando APP_URL está configurada. */
+  linkMinhaGrade: string | null;
+}
+
+const ASSUNTO = '[SGC-Redes]';
+const onde = (link: string | null) => (link ? `Detalhes no SGC-Redes, em Minha grade: ${link}` : 'Detalhes no SGC-Redes, em Minha grade.');
+
+function individual(p: PessoaMensagem, chave: string, papel: string, assunto: string, corpo: string[]): MensagemPronta {
+  return {
+    chave,
+    titulo: `${papel}: ${p.nome}`,
+    canal: null,
+    destino: papel,
+    ...contatoDoUsuario(p),
+    assunto,
+    texto: [saudacao(primeiroNome(p.nome), 'nome do docente'), ...corpo].join('\n'),
+  };
+}
+
+/**
+ * Todas as mensagens aplicáveis à ausência, na ordem em que costumam ser enviadas: grupos e setores
+ * (com saudação e e-mail do canal) e mensagens individuais aos docentes envolvidos.
+ * Canais desativados em Comunicação não geram mensagem.
+ */
+export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): MensagemPronta[] {
+  const canal = new Map(x.canais.map((c) => [c.canal, c]));
+  const quando = `${d.codigoTurma} — ${formatarData(d.dataISO)}`;
+  const lista: MensagemPronta[] = [];
+
+  const doCanal = (c: CanalWhatsapp, texto: string | null, assunto: string) => {
+    const cfg = canal.get(c);
+    if (texto === null || (cfg && !cfg.ativo)) return;
+    lista.push({
+      chave: `canal:${c}`,
+      titulo: NOME_CANAL[c],
+      canal: c,
+      destino: NOME_CANAL[c],
+      para: cfg?.email ?? null,
+      whatsapp: null,
+      aceitaWhatsapp: true,
+      assunto: `${ASSUNTO} ${assunto} — ${quando}`,
+      texto: `${saudacao(cfg?.saudacao, CAMPO_SAUDACAO[c])}\n\n${texto}`,
+    });
+  };
+  const pessoa = (id: string | null | undefined) => (id ? x.pessoas.get(id) : undefined);
+
+  doCanal('GRUPO_PROFESSORES', mensagemProfessores(d), 'Convite de substituição');
+
+  for (const c of x.convites) {
+    const p = pessoa(c.professorId);
+    if (!p) continue;
+    lista.push(
+      individual(p, `convite:${c.id}`, 'Docente convidado(a)', `${ASSUNTO} Convite de substituição — ${quando}`, [
+        `A Coordenação de Redes de Computadores convida você para substituir na turma *${d.turma}*:`,
+        `- ${cabecalhoData(d)}, ${c.bloco} (${d.disciplina})`,
+        `Para aceitar ou recusar, acesse o SGC-Redes, em Minha grade${x.linkMinhaGrade ? `: ${x.linkMinhaGrade}` : '.'}`,
+        'Se preferir, responda a esta mensagem.',
+      ]),
+    );
+  }
+
+  const porSubstituto = new Map<string, string[]>();
+  const porOrigem = new Map<string, LinhaHorario[]>();
+  for (const h of d.horarios) {
+    if (h.situacao === 'substituicao' && h.substitutoId) porSubstituto.set(h.substitutoId, [...(porSubstituto.get(h.substitutoId) ?? []), h.bloco]);
+    if (h.situacao === 'adiantamento' && h.professorOrigemId) porOrigem.set(h.professorOrigemId, [...(porOrigem.get(h.professorOrigemId) ?? []), h]);
+  }
+  for (const [id, blocos] of porSubstituto) {
+    const p = pessoa(id);
+    if (!p) continue;
+    lista.push(
+      individual(p, `substituto:${id}`, 'Docente substituto(a)', `${ASSUNTO} Substituição confirmada — ${quando}`, [
+        `Você está escalado(a) para substituir na turma *${d.turma}* em *${cabecalhoData(d)}*:`,
+        ...blocos.map((b) => `- ${b} (no lugar de ${d.disciplina})`),
+        onde(x.linkMinhaGrade),
+        'Obrigado(a)!',
+      ]),
+    );
+  }
+  for (const [id, linhas] of porOrigem) {
+    const p = pessoa(id);
+    if (!p) continue;
+    lista.push(
+      individual(p, `adiantamento:${id}`, 'Docente com aula adiantada', `${ASSUNTO} Aula adiantada — ${quando}`, [
+        `Em *${cabecalhoData(d)}*, na turma *${d.turma}*:`,
+        ...linhas.map((h) => `- sua aula de ${h.disciplinaOrigem ?? 'sua disciplina'} ${h.blocoOrigem ? `(${h.blocoOrigem}) ` : ''}passa para ${h.bloco}.`),
+        'O horário de origem fica vago.',
+        onde(x.linkMinhaGrade),
+      ]),
+    );
+  }
+
+  doCanal('ASSISTENCIA_ESTUDANTIL', mensagemAssistencia(d), 'Replanejamento alimentar');
+  doCanal('LIDERES_TURMA', mensagemLideres(d), 'Aviso à turma');
+  doCanal('CTP', mensagemCtp(d), 'Turma dispensada');
+  doCanal('GRUPO_GESTAO_DIR_COORD', mensagemGestao(d), 'Informe à Gestão');
+
+  const ausente = pessoa(x.ausenteId);
+  const decididos = d.horarios.filter((h) => h.situacao !== 'pendente');
+  if (ausente && decididos.length > 0) {
+    lista.push(
+      individual(ausente, `ausente:${ausente.id}`, 'Docente ausente', `${ASSUNTO} Cobertura das suas aulas — ${quando}`, [
+        `A Coordenação registrou a cobertura das suas aulas de *${d.disciplina}* na turma *${d.turma}* em *${cabecalhoData(d)}*:`,
+        ...d.horarios.map((h) => `- ${h.bloco}: ${textoHorario(h, false)}`),
+        d.horarios.some((h) => h.situacao === 'dispensa')
+          ? d.status === 'REPOSICAO_AGENDADA'
+            ? 'A reposição das aulas dispensadas já está agendada.'
+            : 'Combine com a Coordenação a reposição das aulas dispensadas.'
+          : 'Nenhuma aula ficou sem atendimento.',
+      ]),
+    );
+  }
+  return lista;
+}

@@ -4,22 +4,22 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { formatarData, hojeEmFortaleza } from '@/lib/ausencias/regras';
-import { mensagemLembrete, numeroWhatsapp } from '@/lib/diarios/regras';
+import { lembreteDoDiario } from '@/lib/diarios/regras';
+import { CaixaMensagem } from '@/components/caixa-mensagem';
 import { descreverPeriodoLetivo } from '@/lib/ofertas/regras';
 import { FormularioDiario, FormularioLembrete } from '../formularios';
 
 export const metadata: Metadata = { title: 'Diário — SGC-Redes' };
 
 export default async function PaginaDiario({ params }: { params: Promise<{ id: string }> }) {
-  await exigirPermissao('diarios:ver-todos');
+  const { usuario } = await exigirPermissao('diarios:ver-todos');
   const { id } = await params;
   const o = await prisma.disciplinaOferta.findUnique({
     where: { id },
-    include: { turma: { select: { codigo: true, nome: true } }, disciplina: { select: { nome: true } }, professor: { select: { nome: true, whatsapp: true } } },
+    include: { turma: { select: { codigo: true, nome: true } }, disciplina: { select: { nome: true } }, professor: { select: { nome: true, email: true, whatsapp: true, usaWhatsapp: true } } },
   });
   if (!o) notFound();
-  const texto = mensagemLembrete({ professor: o.professor.nome.split(' ')[0], disciplina: o.disciplina.nome, turma: o.turma.codigo, ministradas: o.aulasMinistradas, previstas: o.aulasPrevistas });
-  const numero = numeroWhatsapp(o.professor.whatsapp);
+  const lembrete = lembreteDoDiario(o);
   const sem = o.semestreLetivo ?? 1;
 
   return (
@@ -44,8 +44,11 @@ export default async function PaginaDiario({ params }: { params: Promise<{ id: s
       <section aria-labelledby="lembrete" className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h2 id="lembrete" className="text-lg font-semibold text-slate-900">Lembrete ao docente</h2>
         {o.ultimaCobranca && <p className="mt-1 text-sm text-slate-700">Último lembrete: {formatarData(hojeEmFortaleza(o.ultimaCobranca))}.</p>}
-        <pre className="my-3 whitespace-pre-wrap rounded-md bg-slate-50 p-3 font-sans text-sm text-slate-800">{texto}</pre>
-        <FormularioLembrete ofertaId={o.id} link={numero ? `https://wa.me/${numero}?text=${encodeURIComponent(texto)}` : null} />
+        <div className="mt-3">
+          <CaixaMensagem mensagem={lembrete} mostrarWhatsapp={usuario.usaWhatsapp}>
+            <FormularioLembrete ofertaId={o.id} mostrarWhatsapp={usuario.usaWhatsapp} />
+          </CaixaMensagem>
+        </div>
       </section>
     </div>
   );
