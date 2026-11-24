@@ -64,6 +64,11 @@ export default async function LayoutPainel({ children }: { children: React.React
                 Ofertas
               </Link>
             )}
+            {temPermissao(usuario.role, 'auditoria:ver') && (
+              <Link href="/auditoria" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
+                Auditoria
+              </Link>
+            )}
             <Link href="/conta/senha" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
               Alterar senha
             </Link>
