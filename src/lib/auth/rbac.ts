@@ -78,8 +78,8 @@ export interface Modulo {
 /** Módulos das Fases 1 e 2 (FSD, seções 3 e 4), na ordem de exibição. */
 export const MODULOS: readonly Modulo[] = [
   { id: 'grade', titulo: 'Grade e substituições', descricao: 'Horários das turmas, janelas livres e remanejamentos.', fase: 1, requer: ['grade:ver'], href: '/grade' },
-  { id: 'alimentacao', titulo: 'Alimentação', descricao: 'Previsão e alterações de refeições por turma.', fase: 1, requer: ['alimentacao:ver'] },
-  { id: 'comunicacao', titulo: 'Comunicação', descricao: 'Mensagens padronizadas para os grupos de WhatsApp.', fase: 1, requer: ['comunicacao:enviar'] },
+  { id: 'alimentacao', titulo: 'Alimentação', descricao: 'Previsão e alterações de refeições por turma.', fase: 1, requer: ['alimentacao:ver'], href: '/alimentacao' },
+  { id: 'comunicacao', titulo: 'Comunicação', descricao: 'Mensagens padronizadas para os grupos de WhatsApp.', fase: 1, requer: ['comunicacao:enviar'], href: '/comunicacao' },
   { id: 'ppe', titulo: 'PPE / PEI', descricao: 'Progressão Parcial de Estudos e Planos de Estudo Individual.', fase: 2, requer: ['ppe:ver'] },
   { id: 'ppi', titulo: 'PPI (40h)', descricao: 'Cálculo e auditoria da Prática Profissional Integrada.', fase: 2, requer: ['ppi:ver'] },
   { id: 'diarios', titulo: 'Diários', descricao: 'Semáforo de carga horária e preenchimento de diários.', fase: 2, requer: ['diarios:ver-proprios', 'diarios:ver-todos'] },

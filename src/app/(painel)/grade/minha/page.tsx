@@ -4,6 +4,8 @@ import { QuadroGrade, SeletorPeriodo, type ConteudoCelula } from '@/components/q
 import { exigirPermissao } from '@/lib/auth/dal';
 import { blocosOrdenados, celulasDoProfessor } from '@/lib/grade/consultas';
 import { anosDoSeletor, chaveCelula, periodoDaUrl } from '@/lib/grade/regras';
+import { formatarData, hojeEmFortaleza, somarDias } from '@/lib/ausencias/regras';
+import { mudancasDoProfessor } from '@/lib/ausencias/servidor';
 import { AvisoSabados } from '../sabados/aviso';
 
 export const metadata: Metadata = { title: 'Minha grade — SGC-Redes' };
@@ -11,7 +13,12 @@ export const metadata: Metadata = { title: 'Minha grade — SGC-Redes' };
 export default async function PaginaMinhaGrade({ searchParams }: { searchParams: Promise<{ ano?: string; sem?: string }> }) {
   const { usuario } = await exigirPermissao('grade:ver');
   const { anoLetivo, semestreLetivo } = periodoDaUrl(await searchParams);
-  const [blocos, celulas] = await Promise.all([blocosOrdenados(), celulasDoProfessor(usuario.id, anoLetivo, semestreLetivo)]);
+  const hoje = hojeEmFortaleza();
+  const [blocos, celulas, mudancas] = await Promise.all([
+    blocosOrdenados(),
+    celulasDoProfessor(usuario.id, anoLetivo, semestreLetivo),
+    mudancasDoProfessor(usuario.id, hoje, somarDias(hoje, 14)),
+  ]);
 
   const conteudo = new Map<string, ConteudoCelula[]>();
   for (const c of celulas) {
@@ -34,6 +41,23 @@ export default async function PaginaMinhaGrade({ searchParams }: { searchParams:
       <p className="mt-1 text-slate-700">
         {celulas.length} aula(s) por semana em {new Set(celulas.map((c) => c.turma.nome)).size} turma(s).
       </p>
+      {mudancas.length > 0 && (
+        <section aria-labelledby="mudancas" className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4">
+          <h2 id="mudancas" className="font-semibold text-slate-900">
+            <span aria-hidden="true">⚠ </span>Mudanças nos próximos 14 dias
+          </h2>
+          <ul className="mt-2 space-y-1 text-slate-800">
+            {mudancas.map((m) => (
+              <li key={`${m.dataISO}-${m.bloco}-${m.tipo}`}>
+                <span className="font-semibold">
+                  {formatarData(m.dataISO)} · {m.bloco} · {m.turma}:
+                </span>{' '}
+                {m.detalhe}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <div className="mt-4">
         <SeletorPeriodo anoLetivo={anoLetivo} semestreLetivo={semestreLetivo} anos={anosDoSeletor(anoLetivo)} />
       </div>

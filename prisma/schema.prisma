@@ -39,6 +39,7 @@ model User {
   disciplinasMinistradas DisciplinaOferta[]
   ausenciasRegistradas   AusenciaDocente[]  @relation("ProfessorAusente")
   substituicoesFeitas    AusenciaDocente[]  @relation("ProfessorSubstituto")
+  coberturasFeitas       CoberturaBloco[]
   peisOrientados         PlanoEstudoIndividual[]
   ppisOrientadas         PpiAtividade[]
   logsAuditoria          AuditLog[]
@@ -171,6 +172,8 @@ model BlocoHorario {
   horaFim    String // ex: "08:20"
 
   grades     GradeHorario[]
+  coberturas CoberturaBloco[] @relation("BlocoCoberto")
+  adiantamentosOrigem CoberturaBloco[] @relation("BlocoOrigemAdiantamento")
 
   @@unique([turno, ordem])
 }
@@ -211,7 +214,7 @@ enum StatusAusencia {
 
 model AusenciaDocente {
   id                  String          @id @default(cuid())
-  dataAula            DateTime        // Data da aula afetada
+  dataAula            DateTime        @db.Date // Data da aula afetada
   turmaId             String
   turma               Turma           @relation(fields: [turmaId], references: [id])
   ofertaId            String
@@ -223,9 +226,38 @@ model AusenciaDocente {
   blocosAfetados      String          // ex: "M1,M2" ou "T3,T4"
   motivoOperacional   String          // Texto curto e não sensível (LGPD)
   status              StatusAusencia  @default(PENDENTE_DECISAO)
+  // Registro obrigatório quando a dispensa gera aviso de emergência à AE (RF04, < 4h)
+  justificativa       String?
+  decididaEm          DateTime?
   createdAt           DateTime        @default(now())
 
   alertasAlimentacao  AlertaAlimentacao[]
+  coberturas          CoberturaBloco[]
+
+  @@unique([dataAula, ofertaId])
+  @@index([dataAula])
+}
+
+enum TipoCobertura {
+  SUBSTITUICAO // outro docente assume a aula no mesmo bloco
+  ADIANTAMENTO // uma aula posterior da turma, no mesmo dia, passa para este bloco; a origem fica vaga
+  DISPENSA     // a turma fica sem aula neste bloco
+}
+
+// Decisão da Coordenação para cada bloco perdido de uma ausência (RF02).
+model CoberturaBloco {
+  id            String          @id @default(cuid())
+  ausenciaId    String
+  ausencia      AusenciaDocente @relation(fields: [ausenciaId], references: [id], onDelete: Cascade)
+  blocoId       String
+  bloco         BlocoHorario    @relation("BlocoCoberto", fields: [blocoId], references: [id])
+  tipo          TipoCobertura
+  substitutoId  String?
+  substituto    User?           @relation(fields: [substitutoId], references: [id])
+  blocoOrigemId String?
+  blocoOrigem   BlocoHorario?   @relation("BlocoOrigemAdiantamento", fields: [blocoOrigemId], references: [id])
+
+  @@unique([ausenciaId, blocoId])
 }
 
 // ==========================================
@@ -258,7 +290,15 @@ model AlertaAlimentacao {
   justificativa   String?
   enviadoEm       DateTime?
   confirmadoAE    Boolean           @default(false) // Assistência Estudantil deu ciente
+  confirmadoEm    DateTime?
+  // Aviso que deixou de valer (ex.: ausência cancelada ou nova cobertura): a AE vê que a refeição volta ao normal
+  canceladoEm     DateTime?
+  // Lançado à mão pela Coordenação (ex.: encontro de PEI no contraturno, G05); o recálculo das ausências não mexe nele
+  manual          Boolean           @default(false)
+  descricao       String?
   createdAt       DateTime          @default(now())
+
+  @@index([dataRefeicao])
 }
 
 enum CanalWhatsapp {

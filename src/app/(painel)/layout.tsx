@@ -29,6 +29,21 @@ export default async function LayoutPainel({ children }: { children: React.React
                 Grade
               </Link>
             )}
+            {temPermissao(usuario.role, 'alimentacao:ver') && (
+              <Link href="/alimentacao" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
+                Alimentação
+              </Link>
+            )}
+            {temPermissao(usuario.role, 'ausencias:registrar') && (
+              <Link href="/ausencias" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
+                Ausências
+              </Link>
+            )}
+            {temPermissao(usuario.role, 'comunicacao:enviar') && (
+              <Link href="/comunicacao" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
+                Comunicação
+              </Link>
+            )}
             {temPermissao(usuario.role, 'usuarios:gerenciar') && (
               <Link href="/usuarios" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
                 Usuários
