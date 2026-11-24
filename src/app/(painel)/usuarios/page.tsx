@@ -25,9 +25,17 @@ export default async function PaginaUsuarios() {
             {ativos} com acesso ativo{usuarios.length > ativos ? ` · ${usuarios.length - ativos} desativado(s)` : ''}.
           </p>
         </div>
-        <Link href="/usuarios/novo" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
-          Cadastrar usuário
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/usuarios/importar"
+            className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100"
+          >
+            Importar planilha
+          </Link>
+          <Link href="/usuarios/novo" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
+            Cadastrar usuário
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">

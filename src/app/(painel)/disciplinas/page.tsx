@@ -48,9 +48,17 @@ export default async function PaginaDisciplinas({ searchParams }: { searchParams
           </p>
         </div>
         {podeGerenciar && (
-          <Link href="/disciplinas/nova" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
-            Cadastrar disciplina
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/disciplinas/importar"
+              className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100"
+            >
+              Importar planilha
+            </Link>
+            <Link href="/disciplinas/nova" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
+              Cadastrar disciplina
+            </Link>
+          </div>
         )}
       </div>
 
