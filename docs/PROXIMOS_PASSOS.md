@@ -10,7 +10,7 @@
 ```bash
 cd ~/projetos/sgc-redes-bvg
 git status && git log --oneline -12         # branch minha-contribuicao, em dia com origin
-./scripts/dev.sh testar                      # esperado: typecheck ok + 220 testes passando
+./scripts/dev.sh testar                      # esperado: typecheck ok + 230 testes passando
 ls .handoff/github .handoff/e2e              # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
@@ -23,7 +23,7 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 **Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
 (somente leitura; contém só o commit inicial com a licença). FSD, README e código existem só no fork.
 
-**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**, 21 commits à frente do upstream:
+**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**, à frente do upstream:
 
 | Commit | Conteúdo |
 | :--- | :--- |
@@ -43,21 +43,23 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 | `ae6face` | Ofertas: distribuição de disciplinas por turma e ano letivo (`/ofertas`, `ofertas:gerenciar`) |
 | `e01c1e1` | Grade horária (RF01): turma, minha grade, edição com trava de choque, janelas, sábados letivos (G14) |
 | `060369d` | Importação em lote (.xlsx/.csv) de disciplinas e usuários, com modelos pré-preenchidos |
-| *(último)* | Este roteiro atualizado para a retomada |
+| `91723c9` | Este roteiro atualizado para a retomada |
+| *(último)* | Cadastro de turmas (`/turmas`, `turmas:gerenciar`): ativos, médias de refeição, ano do curso, ativar/excluir |
 
 **Telas** (todas funcionam sem JavaScript):
 - Acesso: `/login`, `/painel` (cards por perfil; só "Grade" já abre), `/conta/senha`.
 - Coordenação: `/usuarios` (+`/novo`, `/[id]`, `/[id]/senha`, `/importar`), `/disciplinas/nova`, `/disciplinas/importar`,
-  `/ofertas`, `/ofertas/[turmaId]?ano=AAAA`, `/grade/turma/[id]/editar`, cadastro em `/grade/sabados`.
+  `/turmas` (+`/nova`, `/[id]`), `/ofertas`, `/ofertas/[turmaId]?ano=AAAA`, `/grade/turma/[id]/editar`, cadastro em `/grade/sabados`.
 - Consulta (Professor, CTP, Direção conforme permissão): `/disciplinas`, `/disciplinas/[id]`, `/grade`, `/grade/minha`,
   `/grade/turma/[id]`, `/grade/sabados`. Período da grade por `?ano=AAAA&sem=1|2`.
 - Modelos de planilha: `/disciplinas/importar/modelo?formato=xlsx|csv`, `/usuarios/importar/modelo?formato=xlsx|csv`.
 
-**Dados no seed** (idempotente; nunca sobrescreve edições): coordenador inicial, turmas `REDES-1..3` (com `anoCurso`),
+**Dados no seed** (idempotente; nunca sobrescreve edições): coordenador inicial, turmas `REDES-1..3` (com `anoCurso`;
+editáveis em `/turmas`),
 canais WhatsApp, regras PPI, 8 blocos de horário (A–D manhã/tarde, 60 min) e as **47 disciplinas da matriz**.
 
-**Verificado:** 220 testes unitários, typecheck, `next build` e 6 roteiros E2E sem JavaScript contra PostgreSQL real
-(login, usuários, disciplinas 33, ofertas 35, grade 44, importação 42 verificações), todos verdes em 24/11/2026.
+**Verificado:** 230 testes unitários, typecheck, `next build` e 7 roteiros E2E sem JavaScript contra PostgreSQL real
+(login, usuários, disciplinas 33, ofertas 35, grade 44, importação 42, turmas 35 verificações), todos verdes em 24/11/2026.
 As migrações que convertem dados (ofertas e grade) foram testadas com linhas no formato antigo.
 
 **Nunca verificado:** `docker compose up --build` (stack completa em contêiner).
@@ -75,10 +77,9 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
 - [ ] **Decidir a publicação no `cctrc-bvg`:** issue + PR, ou primeiro um PR dentro do fork. Textos prontos e
       atualizados em `.handoff/github/` (o PR tem o item "Docker" a marcar após o teste e um `#<número>` da issue).
       **Confirmar com o usuário antes de criar issue/PR** no repositório da organização.
-- [ ] **Responder G02–G13** (`.handoff/github/issue-decisoes-g01-g13.md`; também no FSD, seção 5) ou autorizar os padrões
-      sugeridos no FSD. G01 e G14 já resolvidas.
-- [ ] (Não bloqueia) A grade 2026 diverge da matriz em aulas/semana de algumas anuais (ex.: Geografia II 2 aulas vs.
-      40h): confirmar se há PPC mais novo. A tela da grade já aponta "⚠ difere" nesses casos.
+- [x] ~~Responder G02–G13~~ — **padrões do FSD aceitos em 24/11/2026** (FSD, seção 5). Todas as decisões G01–G14 fechadas.
+- [x] ~~Grade 2026 × matriz~~ — o usuário confirmou (24/11/2026) que a turma de 2026 tem as aulas normais e que Geografia
+      é anual: a grade 2026 vale como está; a marca "⚠ difere" é só informativa.
 
 ---
 
@@ -86,20 +87,18 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
 
 ### P1 — não depende de decisões pendentes
 
-1. **Turmas** (tela) — hoje só via seed. Editar nome, `anoCurso`, `qtdAlunosAtivos` e médias de refeição (`qtdMedia*`,
-   usadas nos avisos à Assistência Estudantil); ativar/desativar.
-2. **Importação em lote de ofertas e sábados letivos** — mesmo padrão de `src/lib/importacao/` (o usuário pediu lote
+1. **Importação em lote de ofertas e sábados letivos** — mesmo padrão de `src/lib/importacao/` (o usuário pediu lote
    "seja de disciplinas, de usuários"; ofertas e calendário são os próximos candidatos naturais).
-3. **Tela de auditoria** (`auditoria:ver`, só Coordenação) — filtrar `AuditLog` por ação, usuário e data.
-4. **Limpeza de sessões expiradas** — apagar `Sessao` vencidas no login (barato) ou por rotina periódica.
-5. **Semáforo de diários (RF08)** — não depende de decisões: ofertas já têm `aulasPrevistas`/`aulasMinistradas`.
+2. **Tela de auditoria** (`auditoria:ver`, só Coordenação) — filtrar `AuditLog` por ação, usuário e data.
+3. **Limpeza de sessões expiradas** — apagar `Sessao` vencidas no login (barato) ou por rotina periódica.
+4. **Semáforo de diários (RF08)** — não depende de decisões: ofertas já têm `aulasPrevistas`/`aulasMinistradas`.
    Incluir aqui a visão do professor das **próprias ofertas**.
-6. **Kanban SEI (RF09)** — não depende de decisões.
-7. **Testes E2E versionados** — migrar `.handoff/e2e/` (Python, sem JS) para Playwright no projeto, + um com JS.
-8. **`prisma.config.ts`** — o Prisma avisa que `package.json#prisma` (seed) será removido no Prisma 7.
-9. **CI (GitHub Actions)** — typecheck + testes + build em PRs.
+5. **Kanban SEI (RF09)** — não depende de decisões.
+6. **Testes E2E versionados** — migrar `.handoff/e2e/` (Python, sem JS) para Playwright no projeto, + um com JS.
+7. **`prisma.config.ts`** — o Prisma avisa que `package.json#prisma` (seed) será removido no Prisma 7.
+8. **CI (GitHub Actions)** — typecheck + testes + build em PRs.
 
-### P2 — depende das decisões
+### P2 — decisões fechadas (G02–G13 aceitas com os padrões)
 
 | Módulo (FSD) | Requisito | Decisões |
 | :--- | :--- | :--- |
@@ -114,7 +113,7 @@ Ordem sugerida: Ausências → Alimentação → Comunicação (núcleo da Fase 
 
 ### Feito nesta fase (referência)
 
-Catálogo + matriz, consulta ao catálogo, ofertas, grade (RF01) com sábados letivos, importação em lote. Detalhes nos
+Catálogo + matriz, consulta ao catálogo, ofertas, grade (RF01) com sábados letivos, importação em lote, turmas. Detalhes nos
 commits da seção 2 e nas decisões da seção 5.
 
 ---
@@ -136,6 +135,9 @@ commits da seção 2 e nas decisões da seção 5.
   (vago em turno com aula), não gravadas. Choque de professor entre turmas é recusado no servidor.
 - **Acesso:** professores veem a grade de todas as turmas e a própria grade; Professor, CTP e Direção consultam o
   catálogo; só a Coordenação edita catálogo, ofertas, grade e sábados. Coordenação também leciona (recebe ofertas).
+- **Turmas** valem para todos os anos letivos (as disciplinas de cada ano ficam nas ofertas). `Turma.anoLetivo` é legado:
+  recebe o ano da criação e não aparece na tela. Médias de refeição ≤ estudantes ativos (≤ 80). Com ofertas lançadas, o
+  ano do curso fica travado; turma usada (ofertas, grade, ausências, avisos) só é desativada, nunca excluída.
 - **Importação em lote** por .xlsx ou .csv com modelo pré-preenchido para baixar, editar e enviar; prévia antes de gravar.
 
 **Técnicas:**
@@ -187,7 +189,7 @@ commits da seção 2 e nas decisões da seção 5.
 ## 7. Ambiente local e armadilhas conhecidas
 
 - Máquina com **4 GB de RAM e HDD**: tudo com `nice -n 15 ionice -c 2 -n 7`, um processo pesado por vez. O build leva
-  ~1–2 min; a bateria completa de E2E (6 roteiros, cada um com banco recriado) passa de 10 min — rode em segundo plano.
+  ~1–2 min; a bateria completa de E2E (7 roteiros, cada um com banco recriado) passa de 10 min — rode em segundo plano.
 - **npm 9.2 do Ubuntu** falha com `reading 'edgesOut'`: use `npx -y npm@10 install` (o `dev.sh` faz isso).
 - **Postgres de teste sem Docker:** `npx prisma dev -n sgc-teste -d`. Exige `&connection_limit=1&pgbouncer=true` na
   `DATABASE_URL`, senão `42P05 prepared statement already exists`.
@@ -212,7 +214,7 @@ commits da seção 2 e nas decisões da seção 5.
 ./scripts/dev.sh testar                                         # typecheck + testes unitários
 NEXT_TELEMETRY_DISABLED=1 nice -n 15 ionice -c 2 -n 7 npx next build
 # Se mexeu em telas/ações: E2E sem JavaScript, CADA roteiro num banco recriado (eles alteram senhas e dados)
-for s in e2e_login e2e_usuarios e2e_disciplinas e2e_ofertas e2e_grade e2e_importacao; do
+for s in e2e_login e2e_usuarios e2e_disciplinas e2e_ofertas e2e_grade e2e_importacao e2e_turmas; do
   bash .handoff/e2e/e2e_ambiente.sh >/dev/null 2>&1          # recria banco, migra, seed, sobe servidor na 3123
   echo "$s: $(python3 -I .handoff/e2e/$s.py 2>&1 | grep -E 'FALHA|TUDO CERTO' | tr '\n' ' ')"
 done
