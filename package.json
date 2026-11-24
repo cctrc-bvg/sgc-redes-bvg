@@ -24,9 +24,6 @@
     "manual": "tsx scripts/gerar-manual.ts",
     "e2e": "playwright test"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
