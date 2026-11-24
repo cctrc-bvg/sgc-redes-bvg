@@ -77,7 +77,14 @@ export default async function PaginaPpeDetalhe({ params, searchParams }: { param
 
       {ppe.modalidade === 'PEI' && (
         <section aria-labelledby="pei" className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 id="pei" className="text-lg font-semibold text-slate-900">Plano de Estudo Individual</h2>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="pei" className="text-lg font-semibold text-slate-900">Plano de Estudo Individual</h2>
+            {ppe.pei && (
+              <Link href={`/ppe/${ppe.id}/imprimir`} className="text-sm text-if-verde-700 underline underline-offset-2">
+                Versão para impressão
+              </Link>
+            )}
+          </div>
           {ppe.pei && (
             <p className="mb-3 mt-1 text-sm text-slate-700">
               Docente: {ppe.pei.docente.nome}
