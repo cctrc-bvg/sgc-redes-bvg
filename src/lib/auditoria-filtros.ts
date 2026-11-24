@@ -107,6 +107,12 @@ export const NOME_ACAO: Record<string, string> = {
   ATUALIZOU_DIARIO: 'Atualizou situação de diário',
   COBROU_DIARIO: 'Enviou lembrete de diário',
   DEFINIU_PERIODO_LETIVO: 'Definiu calendário do semestre',
+  CRIOU_SOLICITACAO_PPI: 'Criou solicitação de PPI',
+  LANCOU_ATIVIDADE_PPI: 'Lançou atividade de PPI',
+  REMOVEU_ATIVIDADE_PPI: 'Removeu atividade de PPI',
+  APROVOU_ATIVIDADE_PPI: 'Aprovou atividade de PPI',
+  GLOSOU_ATIVIDADE_PPI: 'Glosou atividade de PPI',
+  DECIDIU_PPI: 'Decidiu solicitação de PPI',
 };
 
 export function descreverAcao(acao: string): string {
