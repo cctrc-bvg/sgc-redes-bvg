@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { LinkExportar, LinkImpressao } from '@/components/barra-impressao';
 import { SeletorPeriodo } from '@/components/quadro-grade';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
@@ -52,11 +53,13 @@ export default async function PaginaGrade({ searchParams }: { searchParams: Prom
         ))}
       </ul>
 
-      <p className="mt-6">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <LinkImpressao href={`/grade/imprimir${periodo}`}>Imprimir / PDF de todas as turmas</LinkImpressao>
+        <LinkExportar href={`/exportar/grade${periodo}`}>Exportar planilha</LinkExportar>
         <Link href={`/grade/sabados${periodo}`} className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2">
           Sábados letivos
         </Link>
-      </p>
+      </div>
     </>
   );
 }

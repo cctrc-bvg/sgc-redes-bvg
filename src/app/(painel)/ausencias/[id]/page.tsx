@@ -19,6 +19,7 @@ import {
 import { ETIQUETA_SLA, NOME_REFEICAO_HORARIO } from '@/lib/ausencias/mensagens';
 import { NOME_MODO } from '@/lib/comunicacao/mensagem';
 import { CaixaMensagem } from '@/components/caixa-mensagem';
+import { carregarModelos } from '@/lib/comunicacao/servidor';
 import { carregarAusencia, contextoDaAusencia, impactoDaTurma } from '@/lib/ausencias/servidor';
 import { configuracaoEvolution, destinoValido } from '@/lib/comunicacao/evolution';
 import { prisma } from '@/lib/db';
@@ -46,6 +47,7 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
   // Envio automático só com a API configurada e destino válido no canal (G07).
   const comApi = podeComunicar && configuracaoEvolution() !== null;
   const mostrarWhatsapp = usuario.usaWhatsapp;
+  const modelos = podeComunicar ? await carregarModelos() : [];
   const enviados = podeComunicar
     ? await prisma.logComunicacao.findMany({
         where: { ausenciaId: id, sucesso: true },
@@ -243,7 +245,7 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
                 const ultimo = ultimoEnvio.get(m.chave);
                 return (
                   <li key={m.chave}>
-                    <CaixaMensagem mensagem={m} mostrarWhatsapp={mostrarWhatsapp}>
+                    <CaixaMensagem mensagem={m} mostrarWhatsapp={mostrarWhatsapp} modelos={modelos}>
                       {ultimo && (
                         <p className="text-sm text-if-verde-800">
                           <span aria-hidden="true">✔ </span>Envio registrado ({NOME_MODO[ultimo.modoEnvio] ?? ultimo.modoEnvio},{' '}

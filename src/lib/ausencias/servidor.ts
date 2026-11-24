@@ -22,6 +22,8 @@ import {
   type CoberturaDia,
 } from './regras';
 import { enderecoDoSistema } from '@/lib/comunicacao/mensagem';
+import { suspensaoDoDia } from '@/lib/calendario/servidor';
+import { NOME_TIPO_EVENTO } from '@/lib/calendario/regras';
 import { mensagensDaAusencia, type DadosMensagem, type LinhaHorario, type PessoaMensagem } from './mensagens';
 
 type Tx = Prisma.TransactionClient;
@@ -34,9 +36,10 @@ export interface AulaDetalhada extends AulaDia {
 
 /** Grade que vale na data (G14), ausências registradas e coberturas decididas. */
 export async function carregarDia(dataISO: string, db: Tx | typeof prisma = prisma) {
-  const sabado = await db.sabadoLetivo.findUnique({ where: { data: dataParaBanco(dataISO) } });
+  const [sabado, suspensao] = await Promise.all([db.sabadoLetivo.findUnique({ where: { data: dataParaBanco(dataISO) } }), suspensaoDoDia(dataISO, db)]);
   const sabados = new Map(sabado ? [[dataISO, sabado.diaSemanaReferente]] : []);
-  const diaSemana = diaDaGradeNaData(dataISO, sabados);
+  // Feriado, ponto facultativo ou suspensão no calendário acadêmico: sem grade no dia.
+  const diaSemana = suspensao ? null : diaDaGradeNaData(dataISO, sabados);
   const { anoLetivo, semestreLetivo } = periodoDaData(dataISO);
 
   const [blocos, celulas, ausencias, docentes] = await Promise.all([
@@ -101,6 +104,8 @@ export async function carregarDia(dataISO: string, db: Tx | typeof prisma = pris
     dataISO,
     diaSemana,
     sabadoLetivo: sabado,
+    /** Evento do calendário que suspende aulas na data (feriado, ponto facultativo, força maior). */
+    suspensao: suspensao ? { tipo: suspensao.tipo, descricao: suspensao.descricao ?? NOME_TIPO_EVENTO[suspensao.tipo] } : null,
     blocos: blocos as BlocoDia[],
     aulasDoDia,
     ausencias: ausencias.map((a) => ({ ...a, blocoIds: blocosDaAusencia(a.blocosAfetados) })),

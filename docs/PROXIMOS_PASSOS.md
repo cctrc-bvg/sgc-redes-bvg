@@ -63,7 +63,9 @@ no GitHub. Novos `git push` continuam pedindo confirmação:
 | `f4b53a4` | Cabeçalho da Coordenação com menus "Operação" e "Cadastros" (`<details>`, sem JS) |
 | `124b677`, `a1c5672` | Pendências nos cards do painel; este roteiro |
 | `d3bb879` | **Comunicação sem depender do WhatsApp:** mensagens prontas com e-mail institucional, campos `{{...}}`, cópia; "Meu contato" |
-| *(último)* | Textos-padrão por tipo de interação; modelo de ofertas com a matriz de cada turma |
+| `352024c` | Textos-padrão; nutricionista; máscara de telefone; CSV com tabulação; menus; seed no Docker |
+| *(penúltimo)* | Textos-padrão editáveis; avulsa com vários destinatários, grupos de docentes e campos; comunicar alterações da Alimentação |
+| *(último)* | Calendário acadêmico (etapas N1–N4, eventos, contagem de dias letivos); impressão/PDF; exportação em planilha |
 
 **Telas** (todas funcionam sem JavaScript):
 - Acesso: `/login`, `/painel` (cards por perfil; **todos os módulos já abrem**), `/conta/senha`, `/conta/contato`
@@ -90,7 +92,8 @@ grupos e setores de comunicação (saudação padrão só para professores e lí
 real, todos verdes em 24/11/2026: login, usuários, disciplinas, ofertas, grade, importação, turmas, ausências (inclui comunicação, auditoria e relatórios), alimentação, processos, diários, PPI, PPE e importação de ofertas/sábados.
 As migrações que convertem dados (ofertas e grade) foram testadas com linhas no formato antigo.
 
-**Nunca verificado:** `docker compose up --build` (stack completa em contêiner).
+**Docker:** `./scripts/dev.sh docker` testado pelo usuário em 24/11/2026: build ok; o seed falhava no contêiner de migração
+(faltavam arquivos de `src/lib`), corrigido no Dockerfile; app respondeu em :3000. ExcelJS no `standalone` ainda não conferido.
 
 ---
 
@@ -136,11 +139,13 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
 5. ~~G05 integrado ao PEI~~ — decidido manter manual (ver decisões abaixo).
 6. ~~Convite de substituição~~ feito, com mensagem pronta ao convidado (e-mail ou WhatsApp).
 7. ~~Cabeçalho agrupado~~ feito. Os menus `<details>` ficam abertos ao navegar no cliente; fechar com JS se incomodar.
-8. **Mensagens prontas em outros módulos:** acréscimo de refeição (`/alimentacao/adicionar`) e decisões de PPI/PPE ainda
-   não geram caixa de mensagem; usar a mensagem avulsa de `/comunicacao` enquanto isso.
-9. **Textos-padrão editáveis pela Coordenação** (hoje fixos em `modelos.ts`): tabela no banco + tela em Comunicação.
+8. **Mensagens prontas em outros módulos:** Alimentação já leva a comunicar (acréscimo, ajuste, ciência); decisões de PPI/PPE
+   e mudanças no calendário ainda não geram caixa de mensagem (usar a mensagem avulsa de `/comunicacao`).
+9. ~~Textos-padrão editáveis~~ feito (`/comunicacao/modelos`, tabela `ModeloMensagem`; os de `modelos.ts` são o conjunto inicial).
 10. **Importação da grade horária por planilha** (hoje só pela tela); o PDF do aSc virou referência em
     `.handoff/planilhas-exemplo/2-ofertas-2026-exemplo.xlsx`, aba "Grade do PDF".
+11. **Importação do calendário por planilha** e "duplicar o calendário do ano anterior".
+12. **Relatórios em PDF/planilha** (hoje só tela) e exportação do histórico de comunicação.
 
 ### Decisões de 24/11/2026 (sugestões aceitas pelo usuário)
 
@@ -205,7 +210,27 @@ e nas decisões da seção 5.
   Mensagens individuais: convidado, substituto, docente da aula adiantada e docente ausente; CTP recebe aviso de dispensa.
   Canal **inativo** não gera mensagem. `User.usaWhatsapp = false` (em "Meu contato"): ninguém recebe link para o número
   da pessoa, e ela própria não vê botões nem a opção WhatsApp.
-- **Textos-padrão** (`src/lib/comunicacao/modelos.ts`): modelos fixos no código por tipo de interação (convite, substituição,
+- **Mensagem avulsa:** vários destinatários (grupos/setores, grupos de docentes `docentes:todos|turma:X|ano:N` montados pelas
+  ofertas do ano, pessoas); uma caixa por destinatário. Escolher um texto-padrão marca os destinatários sugeridos dele
+  (`ModeloMensagem.destinos`). Campos `{{...}}` viram controles: turma e disciplina com lista dos cadastrados (`datalist`),
+  `{{data...}}` com seletor de data (sai dd/mm/aaaa e preenche `{{dia}}`), `{{horário...}}` com seletor de hora,
+  `{{horarios}}` com os blocos cadastrados. `{{nome}}`/`{{destinatarios}}` são preenchidos por destinatário.
+- **Alimentação → comunicar:** dar ciência, ajustar quantidade ou acrescentar refeição leva quem tem `comunicacao:enviar`
+  a `/alimentacao/comunicar?data=…&motivo=…`, com mensagens do dia para CAE, nutricionista, Gestão e turmas (turmas sem
+  quantidade nem urgência). Registrar o envio à CAE marca os avisos do dia como enviados.
+- **Calendário acadêmico** (`/calendario`, `src/lib/calendario/`): eventos (`EventoCalendario`, tipos fixos: férias docentes,
+  matrícula, encontro pedagógico, avaliações finais/entrega de diários, feriado, ponto facultativo, acolhida, PITs/RITs,
+  reunião, suspensão por força maior com motivo de lista fechada, outro), etapas `EtapaLetiva` N1–N4 e semestres
+  (`PeriodoLetivo`, o mesmo dos diários). Sábados letivos continuam em `SabadoLetivo` (com o dia da grade). Dia letivo =
+  seg–sex ou sábado letivo, dentro das etapas (ou semestres), fora de evento com `suspendeAulas`. Meta 200/ano, 50/etapa.
+  `imprevisto` marca dias "a repor". Evento que suspende aulas zera a grade do dia em `carregarDia` (ausências e refeições).
+  Professor, CTP, Direção e AE veem; só a Coordenação edita.
+- **Impressão/PDF:** páginas `/calendario/imprimir` e `/grade/imprimir` (todas as turmas ou `?turma=`), PDF pelo "Salvar
+  como PDF" do navegador (sem biblioteca); o cabeçalho do sistema some na impressão (`print:hidden`).
+- **Exportação:** `/exportar/<listagem>?formato=xlsx|csv` (usuários, turmas, disciplinas, ofertas, grade, calendário,
+  ausências), com a permissão de cada listagem; as que têm dados pessoais registram `EXPORTOU_LISTAGEM` na auditoria.
+- **Nutricionista:** canal `NUTRICIONISTA`, recebe as mesmas alterações de refeição que a CAE (ausência e Alimentação).
+- **Textos-padrão** (conjunto inicial em `src/lib/comunicacao/modelos.ts`): modelos por tipo de interação (convite, substituição,
   adiantamento, turma, CAE, CTP, Gestão, docente ausente, diário, reunião, comunicado, PPI, PPE, processo SEI), com variáveis
   `{{turma}}`, `{{data}}`, `{{horarios}}`, `{{nome}}` etc. Cada mensagem gerada traz `tipo` e `variaveis`; o select
   "Texto-padrão" da caixa troca assunto e texto, e o que o sistema não sabe vira campo a preencher. Na mensagem avulsa

@@ -32,17 +32,19 @@ export const PERMISSOES = [
   'ofertas:gerenciar', // Art. 22, XXIV — distribuição de disciplinas aos docentes
   'turmas:gerenciar', // cadastro das turmas, estudantes ativos e médias de refeição
   'auditoria:ver',
+  'calendario:ver', // calendário acadêmico: dias letivos, etapas e eventos
+  'calendario:gerenciar',
 ] as const;
 
 export type Permissao = (typeof PERMISSOES)[number];
 
 const PERMISSOES_POR_PERFIL: Record<Role, readonly Permissao[]> = {
   COORDENADOR: PERMISSOES,
-  PROFESSOR: ['grade:ver', 'substituicao:responder', 'ppe:ver', 'ppe:definir', 'diarios:ver-proprios', 'disciplinas:ver'],
-  CTP: ['ppe:ver', 'kanban:ver', 'relatorios:ver', 'disciplinas:ver'],
-  DIRECAO: ['relatorios:ver', 'disciplinas:ver'],
+  PROFESSOR: ['grade:ver', 'substituicao:responder', 'ppe:ver', 'ppe:definir', 'diarios:ver-proprios', 'disciplinas:ver', 'calendario:ver'],
+  CTP: ['ppe:ver', 'kanban:ver', 'relatorios:ver', 'disciplinas:ver', 'calendario:ver'],
+  DIRECAO: ['relatorios:ver', 'disciplinas:ver', 'calendario:ver'],
   // Minimização de dados (LGPD): apenas refeições, sem notas, PPI, PPE, processos ou motivos.
-  ASSISTENCIA_ESTUDANTIL: ['alimentacao:ver', 'alimentacao:confirmar'],
+  ASSISTENCIA_ESTUDANTIL: ['alimentacao:ver', 'alimentacao:confirmar', 'calendario:ver'],
 };
 
 export function permissoesDoPerfil(perfil: Role): readonly Permissao[] {
@@ -77,9 +79,10 @@ export interface Modulo {
 
 /** Módulos das Fases 1 e 2 (FSD, seções 3 e 4), na ordem de exibição. */
 export const MODULOS: readonly Modulo[] = [
+  { id: 'calendario', titulo: 'Calendário acadêmico', descricao: 'Dias letivos, etapas N1–N4, sábados letivos, feriados e eventos.', fase: 1, requer: ['calendario:ver'], href: '/calendario' },
   { id: 'grade', titulo: 'Grade e substituições', descricao: 'Horários das turmas, janelas livres e remanejamentos.', fase: 1, requer: ['grade:ver'], href: '/grade' },
   { id: 'alimentacao', titulo: 'Alimentação', descricao: 'Previsão e alterações de refeições por turma.', fase: 1, requer: ['alimentacao:ver'], href: '/alimentacao' },
-  { id: 'comunicacao', titulo: 'Comunicação', descricao: 'Mensagens padronizadas para os grupos de WhatsApp.', fase: 1, requer: ['comunicacao:enviar'], href: '/comunicacao' },
+  { id: 'comunicacao', titulo: 'Comunicação', descricao: 'Mensagens prontas por e-mail ou WhatsApp, textos-padrão e histórico.', fase: 1, requer: ['comunicacao:enviar'], href: '/comunicacao' },
   { id: 'ppe', titulo: 'PPE / PEI', descricao: 'Progressão Parcial de Estudos e Planos de Estudo Individual.', fase: 2, requer: ['ppe:ver'], href: '/ppe' },
   { id: 'ppi', titulo: 'PPI (40h)', descricao: 'Cálculo e auditoria da Prática Profissional Integrada.', fase: 2, requer: ['ppi:ver'], href: '/ppi' },
   { id: 'diarios', titulo: 'Diários', descricao: 'Semáforo de carga horária e preenchimento de diários.', fase: 2, requer: ['diarios:ver-proprios', 'diarios:ver-todos'], href: '/diarios' },

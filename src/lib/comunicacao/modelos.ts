@@ -1,5 +1,9 @@
+import type { CanalWhatsapp } from '@prisma/client';
+import * as z from 'zod';
+
 /**
- * Textos-padrão por tipo de interação. Quem envia escolhe um modelo na caixa da mensagem (ou na mensagem
+ * Textos-padrão por tipo de interação. Ficam no banco (ModeloMensagem), editáveis em Comunicação ›
+ * Textos-padrão; a lista abaixo é o conjunto inicial (gravado quando a tabela está vazia). Quem envia escolhe um modelo na caixa da mensagem (ou na mensagem
  * avulsa) e o sistema preenche as variáveis `{{...}}` que conhece; as que faltarem ficam como campos a
  * preencher. Sem dados sensíveis: nada de motivo pessoal, saúde ou dados de estudantes.
  */
@@ -63,14 +67,36 @@ export interface ModeloTexto {
   rotulo: string;
   assunto: string;
   texto: string;
+  /** Grupos/setores sugeridos como destinatários na mensagem avulsa. */
+  destinos: CanalWhatsapp[];
 }
 
-const m = (tipo: TipoInteracao, id: string, rotulo: string, assunto: string, linhas: string[]): ModeloTexto => ({
+/** Destinatários sugeridos por tipo (os individuais ficam vazios: escolhe-se a pessoa). */
+export const DESTINOS_SUGERIDOS: Record<TipoInteracao, CanalWhatsapp[]> = {
+  convite_grupo: ['GRUPO_PROFESSORES'],
+  convite_individual: [],
+  substituicao: [],
+  adiantamento: [],
+  aviso_turma: ['LIDERES_TURMA'],
+  alimentacao: ['ASSISTENCIA_ESTUDANTIL', 'NUTRICIONISTA'],
+  ctp: ['CTP'],
+  gestao: ['GRUPO_GESTAO_DIR_COORD'],
+  docente_ausente: [],
+  lembrete_diario: [],
+  reuniao: ['GRUPO_PROFESSORES'],
+  comunicado: ['GRUPO_PROFESSORES'],
+  ppi: [],
+  ppe: [],
+  processo: ['GRUPO_GESTAO_DIR_COORD'],
+};
+
+const m = (tipo: TipoInteracao, id: string, rotulo: string, assunto: string, linhas: string[], destinos = DESTINOS_SUGERIDOS[tipo]): ModeloTexto => ({
   id: `${tipo}:${id}`,
   tipo,
   rotulo,
   assunto: `[SGC-Redes] ${assunto}`,
   texto: linhas.join('\n'),
+  destinos: [...destinos],
 });
 
 export const MODELOS_TEXTO: readonly ModeloTexto[] = [
@@ -240,7 +266,7 @@ export const MODELOS_TEXTO: readonly ModeloTexto[] = [
     'Data: {{data da reunião}} · Horário: {{horário}} · Local: {{local}}',
     '',
     'Por favor, repassem o convite. Coordenação do Curso.',
-  ]),
+  ], ['LIDERES_TURMA']),
 
   m('comunicado', 'geral', 'Comunicado geral', '{{assunto do comunicado}}', [
     'Prezados(as) {{destinatarios}},',
@@ -294,5 +320,86 @@ export const MODELOS_TEXTO: readonly ModeloTexto[] = [
   ]),
 ];
 
-export const modelosDoTipo = (tipo: TipoInteracao) => MODELOS_TEXTO.filter((x) => x.tipo === tipo);
-export const modeloPorId = (id: string) => MODELOS_TEXTO.find((x) => x.id === id);
+export const modelosDoTipo = (tipo: TipoInteracao, lista: readonly ModeloTexto[] = MODELOS_TEXTO) => lista.filter((x) => x.tipo === tipo);
+export const modeloPorId = (id: string, lista: readonly ModeloTexto[] = MODELOS_TEXTO) => lista.find((x) => x.id === id);
+
+export const lerTipoInteracao = (v: unknown): TipoInteracao | null =>
+  (TIPOS_INTERACAO as readonly string[]).includes(String(v)) ? (String(v) as TipoInteracao) : null;
+
+/** Campos que o sistema preenche sozinho na mensagem avulsa (por destinatário ou a partir da data). */
+export const CAMPOS_AUTOMATICOS = ['nome', 'destinatarios', 'dia', 'link'] as const;
+
+export type TipoCampo = 'turma' | 'disciplina' | 'data' | 'hora' | 'horarios' | 'texto';
+
+/** Controle de tela para cada campo: lista de turmas/disciplinas cadastradas, data, hora ou texto livre. */
+export function tipoDoCampo(nome: string): TipoCampo {
+  const n = nome.trim().toLowerCase();
+  if (n === 'turma' || n === 'codigo da turma' || n === 'código da turma') return 'turma';
+  if (n === 'disciplina') return 'disciplina';
+  if (n === 'horarios' || n === 'horários') return 'horarios';
+  if (/^data\b/.test(n)) return 'data';
+  if (/^(horário|horario|hora)\b/.test(n)) return 'hora';
+  return 'texto';
+}
+
+const DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+
+/** Valor digitado no controle → texto da mensagem (datas em dd/mm/aaaa, horas em 14h30). */
+export function formatarValorDoCampo(tipo: TipoCampo, bruto: string): string {
+  const v = bruto.trim();
+  if (tipo === 'data') {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : v;
+  }
+  if (tipo === 'hora') {
+    const m = /^(\d{2}):(\d{2})$/.exec(v);
+    return m ? (m[2] === '00' ? `${Number(m[1])}h` : `${Number(m[1])}h${m[2]}`) : v;
+  }
+  return v;
+}
+
+/** Dia da semana de uma data "aaaa-mm-dd" (para o campo {{dia}}). */
+export function diaDaSemana(iso: string): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return Number.isNaN(d.getTime()) ? null : DIAS[d.getUTCDay()];
+}
+
+/**
+ * Valores dos campos preenchidos na tela, já formatados. O {{dia}} sai da primeira data
+ * preenchida quando não foi informado.
+ */
+export function valoresDosCampos(brutos: Readonly<Record<string, string>>): Record<string, string> {
+  const valores: Record<string, string> = {};
+  let primeiraData: string | null = null;
+  for (const [nome, bruto] of Object.entries(brutos)) {
+    if (!bruto.trim()) continue;
+    const tipo = tipoDoCampo(nome);
+    if (tipo === 'data' && !primeiraData) primeiraData = bruto;
+    valores[nome] = formatarValorDoCampo(tipo, bruto);
+  }
+  if (!valores.dia && primeiraData) {
+    const dia = diaDaSemana(primeiraData);
+    if (dia) valores.dia = dia;
+  }
+  return valores;
+}
+
+const CANAIS = ['GRUPO_PROFESSORES', 'GRUPO_GESTAO_DIR_COORD', 'ASSISTENCIA_ESTUDANTIL', 'CTP', 'LIDERES_TURMA', 'NUTRICIONISTA'] as const;
+
+/** Formulário de texto-padrão (criar e editar). */
+export const ModeloSchema = z
+  .object({
+    tipo: z.enum(TIPOS_INTERACAO, { error: 'Escolha o tipo de interação.' }),
+    rotulo: z.string().trim().min(3, { error: 'Use de 3 a 60 caracteres.' }).max(60, { error: 'Use de 3 a 60 caracteres.' }),
+    assunto: z.string().trim().min(3, { error: 'Use de 3 a 150 caracteres.' }).max(150, { error: 'Use de 3 a 150 caracteres.' }),
+    texto: z.string().trim().min(3, { error: 'Use de 3 a 4.000 caracteres.' }).max(4000, { error: 'Use de 3 a 4.000 caracteres.' }),
+    destinos: z.array(z.enum(CANAIS)).max(CANAIS.length),
+  })
+  .superRefine((v, ctx) => {
+    for (const campo of ['assunto', 'texto'] as const) {
+      const sobra = v[campo].replace(/\{\{[^{}\n]{1,60}\}\}/g, '');
+      if (/\{\{|\}\}/.test(sobra)) ctx.addIssue({ code: 'custom', path: [campo], message: 'Feche cada campo com {{ e }} (ex.: {{data}}), com até 60 caracteres.' });
+    }
+  });

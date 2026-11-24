@@ -9,6 +9,12 @@ import { exigirPermissao } from '@/lib/auth/dal';
 import { AcrescimoSchema, planejarAcrescimo } from '@/lib/alimentacao/acrescimo';
 import { lerQuantidade } from '@/lib/alimentacao/previsao';
 import { ALUNOS_MAXIMO } from '@/lib/turmas/regras';
+import { hojeEmFortaleza } from '@/lib/ausencias/regras';
+import { temPermissao } from '@/lib/auth/rbac';
+
+/** Quem pode comunicar vai direto para as mensagens prontas do dia (CAE, nutricionista, Gestão, turmas). */
+const paginaComunicar = (dataRefeicao: Date, motivo: 'acrescimo' | 'ajuste' | 'ciencia') =>
+  `/alimentacao/comunicar?data=${hojeEmFortaleza(dataRefeicao)}&motivo=${motivo}`;
 
 export type EstadoAviso = { mensagem?: string; sucesso?: boolean };
 
@@ -16,7 +22,7 @@ export type EstadoAviso = { mensagem?: string; sucesso?: boolean };
 export async function darCiencia(_estado: EstadoAviso | undefined, formData: FormData): Promise<EstadoAviso> {
   const { usuario } = await exigirPermissao('alimentacao:confirmar');
   const alertaId = String(formData.get('alertaId') ?? '');
-  const alvo = await prisma.alertaAlimentacao.findUnique({ where: { id: alertaId }, select: { id: true, canceladoEm: true, confirmadoAE: true } });
+  const alvo = await prisma.alertaAlimentacao.findUnique({ where: { id: alertaId }, select: { id: true, canceladoEm: true, confirmadoAE: true, dataRefeicao: true } });
   if (!alvo) return { mensagem: 'Aviso não encontrado.' };
   if (alvo.canceladoEm) return { mensagem: 'Este aviso foi cancelado pela Coordenação: a refeição volta ao normal.' };
   if (alvo.confirmadoAE) return { sucesso: true, mensagem: 'Ciência já registrada.' };
@@ -24,6 +30,7 @@ export async function darCiencia(_estado: EstadoAviso | undefined, formData: For
   await registrarAuditoria({ userId: usuario.id, acao: 'DEU_CIENCIA_ALIMENTACAO', entidade: 'AlertaAlimentacao', entidadeId: alvo.id });
   revalidatePath('/alimentacao');
   revalidatePath('/ausencias');
+  if (temPermissao(usuario.role, 'comunicacao:enviar')) redirect(paginaComunicar(alvo.dataRefeicao, 'ciencia'));
   return { sucesso: true, mensagem: 'Ciência registrada.' };
 }
 
@@ -33,7 +40,7 @@ export async function ajustarQuantidade(_estado: EstadoAviso | undefined, formDa
   const alertaId = String(formData.get('alertaId') ?? '');
   const qtd = lerQuantidade(formData.get('qtdImpactada'), ALUNOS_MAXIMO);
   if (qtd === null) return { mensagem: `Informe um número de 0 a ${ALUNOS_MAXIMO}.` };
-  const alvo = await prisma.alertaAlimentacao.findUnique({ where: { id: alertaId }, select: { id: true, canceladoEm: true, qtdImpactada: true } });
+  const alvo = await prisma.alertaAlimentacao.findUnique({ where: { id: alertaId }, select: { id: true, canceladoEm: true, qtdImpactada: true, dataRefeicao: true } });
   if (!alvo || alvo.canceladoEm) return { mensagem: 'Aviso não encontrado ou cancelado.' };
   if (alvo.qtdImpactada === qtd) return { sucesso: true, mensagem: 'Nenhuma alteração.' };
   // Mudou a quantidade: a AE precisa dar ciência de novo.
@@ -47,6 +54,7 @@ export async function ajustarQuantidade(_estado: EstadoAviso | undefined, formDa
   });
   revalidatePath('/alimentacao');
   revalidatePath('/ausencias');
+  if (temPermissao(usuario.role, 'comunicacao:enviar')) redirect(paginaComunicar(alvo.dataRefeicao, 'ajuste'));
   return { sucesso: true, mensagem: 'Quantidade ajustada. A Assistência Estudantil precisa dar ciência de novo.' };
 }
 
@@ -96,6 +104,7 @@ export async function criarAcrescimo(_estado: EstadoAcrescimo | undefined, formD
     await registrarAuditoria({ userId: usuario.id, acao: 'ADICIONOU_REFEICAO', entidade: 'AlertaAlimentacao', entidadeId: id, detalhes: { quantidade: d.quantidade } });
   }
   revalidatePath('/alimentacao');
+  if (temPermissao(usuario.role, 'comunicacao:enviar')) redirect(`/alimentacao/comunicar?data=${d.data}&motivo=acrescimo`);
   redirect(`/alimentacao?data=${d.data}&aviso=acrescimo`);
 }
 

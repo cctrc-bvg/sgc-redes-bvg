@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { LinkExportar } from '@/components/barra-impressao';
 import { Alerta } from '@/components/campo';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
@@ -49,6 +50,7 @@ export default async function PaginaDisciplinas({ searchParams }: { searchParams
         </div>
         {podeGerenciar && (
           <div className="flex flex-wrap gap-3">
+            <LinkExportar href="/exportar/disciplinas" />
             <Link
               href="/disciplinas/importar"
               className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100"

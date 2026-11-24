@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { camposPendentes, linkEmail, linkWhatsapp, preencherCampos, textoParaEmail, type MensagemPronta } from '@/lib/comunicacao/mensagem';
-import { MODELOS_TEXTO, modeloPorId, modelosDoTipo, NOME_TIPO_INTERACAO, TIPOS_INTERACAO } from '@/lib/comunicacao/modelos';
+import { modeloPorId, modelosDoTipo, NOME_TIPO_INTERACAO, TIPOS_INTERACAO, type ModeloTexto } from '@/lib/comunicacao/modelos';
 
 const botao =
   'inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-3 text-sm font-semibold text-slate-800 hover:bg-slate-100';
@@ -40,7 +40,18 @@ async function copiar(texto: string): Promise<boolean> {
  * campos `{{...}}` (destinatários sem cadastro) podem ser preenchidos e substituídos de uma vez.
  * Sem JavaScript, os campos e os links continuam funcionando com o texto original.
  */
-export function CaixaMensagem({ mensagem, mostrarWhatsapp, children }: { mensagem: MensagemPronta; mostrarWhatsapp: boolean; children?: ReactNode }) {
+export function CaixaMensagem({
+  mensagem,
+  mostrarWhatsapp,
+  modelos = [],
+  children,
+}: {
+  mensagem: MensagemPronta;
+  mostrarWhatsapp: boolean;
+  /** Textos-padrão cadastrados (Comunicação › Textos-padrão). */
+  modelos?: readonly ModeloTexto[];
+  children?: ReactNode;
+}) {
   const base = useId();
   const id = (s: string) => `${base}-${s}`;
   const [montado, setMontado] = useState(false);
@@ -55,11 +66,11 @@ export function CaixaMensagem({ mensagem, mostrarWhatsapp, children }: { mensage
   useEffect(() => setMontado(true), []);
 
   const campos = camposPendentes(texto, assunto);
-  const opcoesModelo = mensagem.tipo ? modelosDoTipo(mensagem.tipo) : MODELOS_TEXTO;
+  const opcoesModelo = mensagem.tipo ? modelosDoTipo(mensagem.tipo, modelos) : modelos;
 
   const aplicarModelo = (id: string) => {
     setModelo(id);
-    const escolhido = modeloPorId(id);
+    const escolhido = modeloPorId(id, modelos);
     if (!escolhido) {
       setTexto(mensagem.texto);
       setAssunto(mensagem.assunto);
@@ -129,9 +140,9 @@ export function CaixaMensagem({ mensagem, mostrarWhatsapp, children }: { mensage
                     {o.rotulo}
                   </option>
                 ))
-              : TIPOS_INTERACAO.map((t) => (
+              : TIPOS_INTERACAO.filter((t) => modelosDoTipo(t, modelos).length > 0).map((t) => (
                   <optgroup key={t} label={NOME_TIPO_INTERACAO[t]}>
-                    {modelosDoTipo(t).map((o) => (
+                    {modelosDoTipo(t, modelos).map((o) => (
                       <option key={o.id} value={o.id}>
                         {o.rotulo}
                       </option>

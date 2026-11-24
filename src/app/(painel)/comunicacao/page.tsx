@@ -4,8 +4,9 @@ import { exigirPermissao } from '@/lib/auth/dal';
 import { NOME_CANAL } from '@/lib/ausencias/mensagens';
 import { configuracaoEvolution } from '@/lib/comunicacao/evolution';
 import { NOME_MODO } from '@/lib/comunicacao/mensagem';
-import { opcoesDeDestino } from '@/lib/comunicacao/servidor';
-import { FormularioAvulsa, FormularioCanal } from './formulario-envio';
+import { carregarModelos, opcoesDeDestino, opcoesDosCampos } from '@/lib/comunicacao/servidor';
+import { FormularioAvulsa } from './formulario-avulsa';
+import { FormularioCanal } from './formulario-envio';
 
 export const metadata: Metadata = { title: 'Comunicação — SGC-Redes' };
 
@@ -19,6 +20,7 @@ export default async function PaginaComunicacao() {
     prisma.logComunicacao.findMany({ orderBy: { enviadoEm: 'desc' }, take: 50 }),
     opcoesDeDestino(),
   ]);
+  const [modelos, opcoesCampos] = await Promise.all([carregarModelos(), opcoesDosCampos()]);
   const automatico = configuracaoEvolution() !== null;
   const mostrarWhatsapp = usuario.usaWhatsapp;
 
@@ -52,9 +54,17 @@ export default async function PaginaComunicacao() {
       <section aria-labelledby="avulsa" className="mt-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h2 id="avulsa" className="text-lg font-semibold text-slate-900">Mensagem avulsa</h2>
         <p className="mb-4 mt-1 text-sm text-slate-700">
-          Para um grupo, setor ou usuário do sistema. O e-mail e a saudação vêm do cadastro; destinatários sem cadastro viram campos a preencher.
+          Para grupos, setores, grupos de docentes (todos, por turma ou por ano) ou pessoas. Gera uma mensagem por destinatário, com o
+          e-mail e a saudação do cadastro. <a href="/comunicacao/modelos" className="text-if-verde-700 underline underline-offset-2">Editar textos-padrão</a>.
         </p>
-        <FormularioAvulsa canais={destinos.canais} usuarios={destinos.usuarios} mostrarWhatsapp={mostrarWhatsapp} />
+        <FormularioAvulsa
+          modelos={modelos}
+          canais={destinos.canais}
+          docentes={destinos.docentes}
+          usuarios={destinos.usuarios}
+          opcoes={opcoesCampos}
+          mostrarWhatsapp={mostrarWhatsapp}
+        />
       </section>
 
       <section aria-labelledby="historico" className="mt-8">
@@ -90,7 +100,10 @@ export default async function PaginaComunicacao() {
 
       <section aria-labelledby="canais" className="mt-8">
         <h2 id="canais" className="text-lg font-semibold text-slate-900">Grupos e setores</h2>
-        <p className="mt-1 text-sm text-slate-700">E-mail institucional e saudação usados nas mensagens prontas.</p>
+        <p className="mt-1 text-sm text-slate-700">
+          E-mail institucional e saudação usados nas mensagens prontas. Os grupos de docentes (todos, por turma e por ano) são montados
+          sozinhos pelas ofertas do ano e aparecem na mensagem avulsa.
+        </p>
         <ul className="mt-3 space-y-4">
           {canais.map((c) => (
             <li key={c.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">

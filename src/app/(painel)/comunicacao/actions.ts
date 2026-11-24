@@ -6,9 +6,9 @@ import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { carregarAusencia, intervaloDoDia } from '@/lib/ausencias/servidor';
 import { configuracaoEvolution, destinoValido, enviarPorEvolution } from '@/lib/comunicacao/evolution';
-import { emailsValidos, lerModoEnvio, NOME_MODO, type MensagemPronta, type ModoEnvioManual } from '@/lib/comunicacao/mensagem';
+import { emailsValidos, lerModoEnvio, preencherCampos, NOME_MODO, type MensagemPronta, type ModoEnvioManual } from '@/lib/comunicacao/mensagem';
 import { mensagemAvulsa } from '@/lib/comunicacao/servidor';
-import { modeloPorId } from '@/lib/comunicacao/modelos';
+import { valoresDosCampos } from '@/lib/comunicacao/modelos';
 
 export type EstadoEnvio = { mensagem?: string; sucesso?: boolean };
 
@@ -118,40 +118,75 @@ export async function enviarAutomatico(_estado: EstadoEnvio | undefined, formDat
     : { mensagem: 'A API do WhatsApp não confirmou o envio (registrado no histórico como falha). Use o e-mail ou o WhatsApp Web.' };
 }
 
+export interface ValoresAvulsa {
+  destinos: string[];
+  assunto: string;
+  texto: string;
+  modelo: string;
+  /** Campos {{...}} preenchidos na tela (valor bruto: datas em aaaa-mm-dd, horas em hh:mm). */
+  campos: Record<string, string>;
+}
+
 export type EstadoAvulsa = {
   mensagem?: string;
   sucesso?: boolean;
   erros?: Partial<Record<'destino' | 'assunto' | 'texto' | 'modo', string>>;
-  valores?: { destino: string; assunto: string; texto: string; modelo: string };
-  pronta?: MensagemPronta;
+  valores?: ValoresAvulsa;
+  prontas?: MensagemPronta[];
+  /** Destinos sem ninguém (ex.: turma sem ofertas no ano). */
+  vazios?: string[];
 };
 
+const MAX_DESTINOS = 30;
+
 /**
- * Mensagem avulsa: escolhe um grupo/setor ou um usuário, escreve assunto e texto e recebe a caixa pronta
- * (e-mail do destinatário, saudação e links). "registrar" grava o envio no histórico.
+ * Mensagem avulsa: um ou vários destinatários (grupos/setores, grupos de docentes ou pessoas), assunto e texto,
+ * com os campos {{...}} preenchidos na tela. Gera uma caixa pronta por destinatário; "registrar" grava no
+ * histórico o envio de uma delas (identificada pela chave).
  */
 export async function prepararAvulsa(_estado: EstadoAvulsa | undefined, formData: FormData): Promise<EstadoAvulsa> {
   const { usuario } = await exigirPermissao('comunicacao:enviar');
-  const destino = String(formData.get('destino') ?? '');
-  // Sem JavaScript, o texto-padrão escolhido entra quando o texto (ou o assunto) vem vazio.
-  const modelo = modeloPorId(String(formData.get('modelo') ?? ''));
+  const idModelo = String(formData.get('modelo') ?? '');
+  const modelo = idModelo ? await prisma.modeloMensagem.findFirst({ where: { id: idModelo, ativo: true } }) : null;
+  // Sem JavaScript, o texto-padrão entra quando o texto (ou o assunto) vem vazio, e sugere os destinatários.
+  let destinos = [...new Set(formData.getAll('destino').map(String).filter(Boolean))];
+  if (destinos.length === 0 && modelo && !String(formData.get('texto') ?? '').trim()) destinos = modelo.destinos.map((c) => `canal:${c}`);
   const assunto = String(formData.get('assunto') ?? '').trim() || (modelo?.assunto ?? '');
   const texto = String(formData.get('texto') ?? '').trim() || (modelo?.texto ?? '');
-  const valores = { destino, assunto, texto, modelo: modelo?.id ?? '' };
+  const campos: Record<string, string> = {};
+  for (const [nome, valor] of formData.entries()) {
+    if (nome.startsWith('campo:') && typeof valor === 'string' && nome.length <= 66) campos[nome.slice(6)] = valor.slice(0, 500);
+  }
+  const valores: ValoresAvulsa = { destinos, assunto, texto, modelo: modelo?.id ?? '', campos };
   const erros: EstadoAvulsa['erros'] = {};
   if (assunto.length < 3 || assunto.length > 150) erros.assunto = 'Use de 3 a 150 caracteres.';
   if (texto.length < 3 || texto.length > 4000) erros.texto = 'Use de 3 a 4.000 caracteres.';
-  const pronta = await mensagemAvulsa(destino, assunto, texto);
-  if (!pronta) erros.destino = 'Escolha o destinatário.';
-  if (Object.keys(erros).length > 0 || !pronta) return { erros, valores };
+  if (destinos.length === 0) erros.destino = 'Escolha ao menos um destinatário.';
+  if (destinos.length > MAX_DESTINOS) erros.destino = `Escolha até ${MAX_DESTINOS} destinatários (use um grupo de docentes).`;
+  if (Object.keys(erros).length > 0) return { erros, valores };
 
-  if (formData.get('registrar') === '1') {
-    const modo = lerModoEnvio(formData.get('modo'));
-    if (!modo) return { erros: { modo: 'Escolha por onde a mensagem foi enviada.' }, valores, pronta };
-    await gravarEnvio({ userId: usuario.id, ausenciaId: null, mensagem: pronta, modo, sucesso: true });
-    return { sucesso: true, mensagem: 'Envio registrado no histórico.', valores, pronta };
+  const preenchidos = valoresDosCampos(campos);
+  const assuntoFinal = preencherCampos(assunto, preenchidos);
+  const textoFinal = preencherCampos(texto, preenchidos);
+  const prontas: MensagemPronta[] = [];
+  const vazios: string[] = [];
+  for (const d of destinos) {
+    const m = await mensagemAvulsa(d, assuntoFinal, textoFinal);
+    if (m) prontas.push(m);
+    else vazios.push(d);
   }
-  return { valores, pronta };
+  if (prontas.length === 0) return { erros: { destino: 'Nenhum dos destinatários escolhidos tem pessoas ou cadastro ativo.' }, valores };
+
+  const chave = String(formData.get('registrar') ?? '');
+  if (chave) {
+    const pronta = prontas.find((p) => p.chave === chave);
+    if (!pronta) return { mensagem: 'Esta mensagem não está mais entre as geradas. Gere de novo.', valores, prontas, vazios };
+    const modo = lerModoEnvio(formData.get('modo'));
+    if (!modo) return { erros: { modo: 'Escolha por onde a mensagem foi enviada.' }, valores, prontas, vazios };
+    await gravarEnvio({ userId: usuario.id, ausenciaId: null, mensagem: pronta, modo, sucesso: true });
+    return { sucesso: true, mensagem: `Envio para ${pronta.titulo} registrado no histórico.`, valores, prontas, vazios };
+  }
+  return { valores, prontas, vazios };
 }
 
 export type EstadoCanal = { mensagem?: string; sucesso?: boolean; erros?: Partial<Record<'nomeExibicao' | 'destinoId' | 'email' | 'saudacao', string>> };

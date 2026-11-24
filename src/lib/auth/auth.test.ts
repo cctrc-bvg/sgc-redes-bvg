@@ -18,9 +18,9 @@ describe('RBAC — matriz de perfis (FSD, seção 2)', () => {
     }
   });
 
-  it('Assistência Estudantil vê apenas alimentação (minimização LGPD)', () => {
-    expect([...permissoesDoPerfil('ASSISTENCIA_ESTUDANTIL')].every((p) => p.startsWith('alimentacao:'))).toBe(true);
-    expect(modulosDoPerfil('ASSISTENCIA_ESTUDANTIL').map((m) => m.id)).toEqual(['alimentacao']);
+  it('Assistência Estudantil vê apenas alimentação e o calendário, sem dados pessoais (minimização LGPD)', () => {
+    expect([...permissoesDoPerfil('ASSISTENCIA_ESTUDANTIL')].every((p) => p.startsWith('alimentacao:') || p === 'calendario:ver')).toBe(true);
+    expect(modulosDoPerfil('ASSISTENCIA_ESTUDANTIL').map((m) => m.id)).toEqual(['calendario', 'alimentacao']);
   });
 
   it('Assistência Estudantil é bloqueada em notas, PPI, PPE e processos', () => {

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { LinkExportar } from '@/components/barra-impressao';
 import { Alerta } from '@/components/campo';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
@@ -80,9 +81,12 @@ export default async function PaginaAusencias({ searchParams }: { searchParams: 
             Registro de ausência docente, sugestão de substituto ou adiantamento e aviso automático de refeições (RF02–RF04).
           </p>
         </div>
-        <Link href="/ausencias/nova" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
-          Registrar ausência
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <LinkExportar href="/exportar/ausencias" />
+          <Link href="/ausencias/nova" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
+            Registrar ausência
+          </Link>
+        </div>
       </div>
 
       {aviso && AVISOS[aviso] && (

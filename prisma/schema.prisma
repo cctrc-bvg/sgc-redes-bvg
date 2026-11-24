@@ -210,6 +210,48 @@ model PeriodoLetivo {
   @@unique([anoLetivo, semestreLetivo])
 }
 
+// Calendário acadêmico: eventos do ano letivo. suspendeAulas tira os dias da contagem de dias letivos
+// e da grade do dia (ausências, alimentação). imprevisto: alteração fora do calendário aprovado (dias a repor).
+enum TipoEventoCalendario {
+  FERIAS_DOCENTES
+  MATRICULA
+  ENCONTRO_PEDAGOGICO
+  AVALIACOES_FINAIS
+  FERIADO
+  PONTO_FACULTATIVO
+  ACOLHIDA
+  PITS_RITS
+  REUNIAO
+  SUSPENSAO_AULAS
+  OUTRO
+}
+
+model EventoCalendario {
+  id            String               @id @default(cuid())
+  tipo          TipoEventoCalendario
+  inicio        DateTime             @db.Date
+  fim           DateTime             @db.Date
+  descricao     String?
+  suspendeAulas Boolean              @default(false)
+  imprevisto    Boolean              @default(false)
+  motivo        String?              // suspensão: motivo de uma lista fechada (sem dados pessoais)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([inicio, fim])
+}
+
+// Etapas do ano letivo (N1 a N4; meta de 50 dias letivos cada).
+model EtapaLetiva {
+  id        String   @id @default(cuid())
+  anoLetivo Int
+  numero    Int      // 1 a 4
+  inicio    DateTime @db.Date
+  fim       DateTime @db.Date
+
+  @@unique([anoLetivo, numero])
+}
+
 // Sábado letivo (G01/G14): varia com o calendário civil e segue a grade de um dia da semana.
 model SabadoLetivo {
   id                 String   @id @default(cuid())
@@ -358,6 +400,22 @@ model ConfiguracaoCanal {
   email       String?       // e-mail institucional do grupo ou setor (envio semiautomático por e-mail)
   saudacao    String?       // como chamar os destinatários ("equipe da CAE"); vazio vira campo a preencher
   ativo       Boolean       @default(true)
+}
+
+// Textos-padrão das mensagens (editáveis em Comunicação › Textos-padrão). Variáveis entre {{ }}.
+model ModeloMensagem {
+  id            String          @id @default(cuid())
+  tipo          String          // tipo de interação (src/lib/comunicacao/modelos.ts, TIPOS_INTERACAO)
+  rotulo        String
+  assunto       String
+  texto         String
+  destinos      CanalWhatsapp[] // destinatários sugeridos na mensagem avulsa
+  ordem         Int             @default(0)
+  ativo         Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([tipo, ordem])
 }
 
 model LogComunicacao {

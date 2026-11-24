@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { LinkExportar } from '@/components/barra-impressao';
 import { Alerta } from '@/components/campo';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
@@ -36,9 +37,12 @@ export default async function PaginaTurmas({ searchParams }: { searchParams: Pro
               `${ativas} ativa(s)${turmas.length > ativas ? ` · ${turmas.length - ativas} desativada(s)` : ''}.`}
           </p>
         </div>
-        <Link href="/turmas/nova" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
-          Cadastrar turma
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <LinkExportar href="/exportar/turmas" />
+          <Link href="/turmas/nova" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
+            Cadastrar turma
+          </Link>
+        </div>
       </div>
 
       {aviso === 'excluida' && (

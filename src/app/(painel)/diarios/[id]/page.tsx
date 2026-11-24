@@ -6,6 +6,7 @@ import { exigirPermissao } from '@/lib/auth/dal';
 import { formatarData, hojeEmFortaleza } from '@/lib/ausencias/regras';
 import { lembreteDoDiario } from '@/lib/diarios/regras';
 import { CaixaMensagem } from '@/components/caixa-mensagem';
+import { carregarModelos } from '@/lib/comunicacao/servidor';
 import { descreverPeriodoLetivo } from '@/lib/ofertas/regras';
 import { FormularioDiario, FormularioLembrete } from '../formularios';
 
@@ -20,6 +21,7 @@ export default async function PaginaDiario({ params }: { params: Promise<{ id: s
   });
   if (!o) notFound();
   const lembrete = lembreteDoDiario(o);
+  const modelos = await carregarModelos();
   const sem = o.semestreLetivo ?? 1;
 
   return (
@@ -45,7 +47,7 @@ export default async function PaginaDiario({ params }: { params: Promise<{ id: s
         <h2 id="lembrete" className="text-lg font-semibold text-slate-900">Lembrete ao docente</h2>
         {o.ultimaCobranca && <p className="mt-1 text-sm text-slate-700">Último lembrete: {formatarData(hojeEmFortaleza(o.ultimaCobranca))}.</p>}
         <div className="mt-3">
-          <CaixaMensagem mensagem={lembrete} mostrarWhatsapp={usuario.usaWhatsapp}>
+          <CaixaMensagem mensagem={lembrete} mostrarWhatsapp={usuario.usaWhatsapp} modelos={modelos}>
             <FormularioLembrete ofertaId={o.id} mostrarWhatsapp={usuario.usaWhatsapp} />
           </CaixaMensagem>
         </div>

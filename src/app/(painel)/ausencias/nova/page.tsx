@@ -74,7 +74,11 @@ export default async function PaginaNovaAusencia({ searchParams }: { searchParam
             </p>
           )}
           {dia.diaSemana === null ? (
-            <Alerta tipo="info">Não há aula nesta data: é fim de semana e não há sábado letivo cadastrado.</Alerta>
+            <Alerta tipo="info">
+              {dia.suspensao
+                ? `Não há aula nesta data pelo calendário acadêmico: ${dia.suspensao.descricao}.`
+                : 'Não há aula nesta data: é fim de semana e não há sábado letivo cadastrado.'}
+            </Alerta>
           ) : aulas.length === 0 ? (
             <Alerta tipo="info">Este docente não tem aula na grade deste dia. Confira a data ou a grade do período.</Alerta>
           ) : aulas.every((a) => a.jaRegistrada) ? (

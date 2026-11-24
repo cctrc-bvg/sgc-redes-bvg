@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { LinkImpressao } from '@/components/barra-impressao';
 import { QuadroGrade, SeletorPeriodo, type ConteudoCelula } from '@/components/quadro-grade';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
@@ -52,6 +53,8 @@ export default async function PaginaGradeTurma({
         <h1 className="text-2xl font-bold text-slate-900">
           {turma.nome} — {anoLetivo}.{semestreLetivo}
         </h1>
+        <div className="flex flex-wrap gap-3">
+        <LinkImpressao href={`/grade/imprimir${periodo}&turma=${turma.id}`} />
         {temPermissao(usuario.role, 'grade:editar') && (
           <Link
             href={`/grade/turma/${turma.id}/editar${periodo}`}
@@ -60,6 +63,7 @@ export default async function PaginaGradeTurma({
             Editar grade
           </Link>
         )}
+        </div>
       </div>
       <div className="mt-4">
         <SeletorPeriodo anoLetivo={anoLetivo} semestreLetivo={semestreLetivo} anos={anosDoSeletor(anoLetivo)} />

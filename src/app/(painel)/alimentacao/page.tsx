@@ -39,6 +39,7 @@ export default async function PaginaAlimentacao({ searchParams }: { searchParams
   const { usuario } = await exigirPermissao('alimentacao:ver');
   const podeConfirmar = temPermissao(usuario.role, 'alimentacao:confirmar');
   const podeAjustar = temPermissao(usuario.role, 'alimentacao:gerenciar');
+  const podeComunicar = temPermissao(usuario.role, 'comunicacao:enviar');
   const hoje = hojeEmFortaleza();
   const { data: dataUrl, aviso } = await searchParams;
   const data = validarDataOuNull(dataUrl) ?? hoje;
@@ -174,7 +175,11 @@ export default async function PaginaAlimentacao({ searchParams }: { searchParams
         </p>
         {dia.diaSemana === null ? (
           <div className="mt-3">
-            <Alerta tipo="info">Sem aula nesta data (fim de semana sem sábado letivo cadastrado).</Alerta>
+            <Alerta tipo="info">
+              {dia.suspensao
+                ? `Sem aula nesta data pelo calendário acadêmico: ${dia.suspensao.descricao}.`
+                : 'Sem aula nesta data (fim de semana sem sábado letivo cadastrado).'}
+            </Alerta>
           </div>
         ) : (
           <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -229,7 +234,17 @@ export default async function PaginaAlimentacao({ searchParams }: { searchParams
       </section>
 
       <section aria-labelledby="avisos-dia" className="mt-8">
-        <h2 id="avisos-dia" className="text-lg font-semibold text-slate-900">Avisos de {formatarData(data)}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="avisos-dia" className="text-lg font-semibold text-slate-900">Avisos de {formatarData(data)}</h2>
+          {podeComunicar && avisosDoDia.some((a) => !a.canceladoEm) && (
+            <Link
+              href={`/alimentacao/comunicar?data=${data}`}
+              className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800"
+            >
+              Comunicar alterações do dia
+            </Link>
+          )}
+        </div>
         {avisosDoDia.length === 0 ? (
           <p className="mt-2 text-slate-700">Nenhum aviso para esta data.</p>
         ) : (

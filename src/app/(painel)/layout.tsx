@@ -13,6 +13,7 @@ export default async function LayoutPainel({ children }: { children: React.React
   const { usuario } = await exigirUsuario({ permitirSenhaProvisoria: true });
   // Links do cabeçalho por permissão. Com muitos (Coordenação), agrupa em menus <details>, que funcionam sem JavaScript.
   const LINKS: { href: string; rotulo: string; permissao: Permissao; grupo: 'Operação' | 'Cadastros' }[] = [
+    { href: '/calendario', rotulo: 'Calendário', permissao: 'calendario:ver', grupo: 'Operação' },
     { href: '/grade', rotulo: 'Grade', permissao: 'grade:ver', grupo: 'Operação' },
     { href: '/ausencias', rotulo: 'Ausências', permissao: 'ausencias:registrar', grupo: 'Operação' },
     { href: '/alimentacao', rotulo: 'Alimentação', permissao: 'alimentacao:ver', grupo: 'Operação' },
@@ -32,7 +33,7 @@ export default async function LayoutPainel({ children }: { children: React.React
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
-      <header className="border-b-4 border-if-verde bg-white">
+      <header className="border-b-4 border-if-verde bg-white print:hidden">
         <FecharMenus />
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link href="/painel" className="rounded-sm">
@@ -86,7 +87,7 @@ export default async function LayoutPainel({ children }: { children: React.React
           </nav>
         </div>
       </header>
-      <main id="conteudo" className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+      <main id="conteudo" className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 print:max-w-none print:p-0">
         {children}
       </main>
     </div>
