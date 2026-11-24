@@ -217,7 +217,10 @@ npm run e2e                            # sobe o servidor standalone na porta 312
 Os roteiros são **de fumaça**: login e sessão, menus do cabeçalho, acesso por perfil, mensagem avulsa e caixa de
 mensagem (copiar, e-mail, registrar), importação com prévia, páginas principais de cada perfil sem erro, PPI/PPE,
 exportação de planilhas (.xlsx/.csv) e modelos, cadastro de turma (erro de validação, edição, exclusão), máscara de
-telefone em Meu contato e suspensão de aulas no calendário (formulário dinâmico, mensagens prontas, remoção). Cubra
+telefone em Meu contato, suspensão de aulas no calendário (formulário dinâmico, mensagens prontas, remoção),
+ausência com convite de substituição aceito pelo docente em Minha grade, acréscimo de refeição com ciência da
+Assistência Estudantil e diário com lembrete ao docente. Roteiros que gravam dados usam datas futuras e textos únicos
+por execução e desfazem o que criaram, para rodarem de novo no mesmo banco. Cubra
 regras com Vitest; um roteiro novo só quando o comportamento depende do navegador (JS, área de transferência, menus).
 Ao mudar textos de botões ou rótulos usados nos roteiros, ajuste-os também (eles localizam pelo nome acessível).
 
