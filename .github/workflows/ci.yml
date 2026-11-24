@@ -39,7 +39,8 @@ jobs:
 
   # Testes de fumaça com navegador (Playwright) sobre os dados de demonstração.
   e2e:
-    runs-on: ubuntu-latest
+    # Fixo no 24.04: o Playwright 1.56 não instala o Chromium no ubuntu-latest (26.04).
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
       postgres:
