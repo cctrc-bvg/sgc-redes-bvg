@@ -1,0 +1,38 @@
+# Verificação em cada push e pull request: typecheck, testes unitários e build de produção.
+# Não precisa de banco: os testes cobrem as regras puras e o build não consulta o PostgreSQL.
+name: CI
+
+on:
+  push:
+    branches: [main, minha-contribuicao]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      # Só para o Prisma gerar o cliente e o build passar; nenhuma conexão é aberta.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Testes unitários
+        run: npm test
+      - name: Build de produção
+        run: npm run build
