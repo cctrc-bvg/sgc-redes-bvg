@@ -25,16 +25,20 @@ export function LinkImpressao({ href, children = 'Imprimir / PDF' }: { href: str
   );
 }
 
-/** Baixa a listagem em planilha (.xlsx; o .csv fica em ?formato=csv). Link comum: funciona sem JavaScript. */
+/**
+ * Baixa a listagem em planilha: dois botões do mesmo peso, .xlsx (Excel/LibreOffice) e .csv (texto, para outros
+ * sistemas). Links comuns estilizados como botão: funcionam sem JavaScript.
+ */
 export function LinkExportar({ href, children = 'Exportar planilha' }: { href: string; children?: React.ReactNode }) {
   const csv = `${href}${href.includes('?') ? '&' : '?'}formato=csv`;
+  const classe = 'inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100';
   return (
-    <span className="inline-flex flex-wrap items-center gap-2">
-      <a href={href} className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
+    <span role="group" aria-label="Formatos de exportação" className="inline-flex flex-wrap items-center gap-2">
+      <a href={href} className={classe}>
         {children} (.xlsx)
       </a>
-      <a href={csv} className="text-sm text-if-verde-700 underline underline-offset-2">
-        .csv
+      <a href={csv} className={classe}>
+        {children} (.csv)
       </a>
     </span>
   );

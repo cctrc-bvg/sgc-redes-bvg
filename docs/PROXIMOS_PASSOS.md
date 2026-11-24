@@ -1,7 +1,7 @@
 # Próximos Passos — Retomada do Desenvolvimento
 
-> Atualizado em **24/11/2026** (Fase 1 e 2 completas; comunicação por e-mail institucional sem depender do WhatsApp). Leia este arquivo inteiro antes de continuar. Ele resume o estado do projeto, o que
-> depende do usuário, o que fazer em seguida e as armadilhas já encontradas (para não redescobri-las).
+> Atualizado em **24/11/2026**, ao abrir o **primeiro pull request** no repositório original. Leia este arquivo inteiro
+> antes de continuar: estado do projeto, o que depende do usuário, o backlog e as armadilhas já encontradas.
 
 ---
 
@@ -9,147 +9,107 @@
 
 ```bash
 cd ~/projetos/sgc-redes-bvg
-git status && git log --oneline -20         # branch minha-contribuicao; enviada ao fork em 24/11/2026 (pergunte antes de novos push)
-./scripts/dev.sh testar                      # esperado: typecheck ok + 373 testes passando
-ls .handoff/github .handoff/e2e              # rascunhos de issue/PR e roteiros E2E (local, fora do git)
+git status && git log --oneline -8          # branch minha-contribuicao, sincronizada com o fork
+gh pr view __PR__ -R cctrc-bvg/sgc-redes-bvg # situação do PR (comentários da revisão)
+./scripts/dev.sh testar                     # esperado: typecheck ok + 380 testes passando
 ```
 
-Depois, confira a seção 3 (o que depende do usuário) antes de escolher a próxima tarefa na seção 4.
+Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolvimento com
+`npm run db:demo -- --confirmo` (usuários `@exemplo.edu.br`, senha `Demonstracao2026`). Regras e arquitetura:
+[CONTRIBUTING.md](../CONTRIBUTING.md) e [Guia do contribuidor](desenvolvimento/GUIA_DO_CONTRIBUIDOR.md).
 
 ---
 
 ## 2. Estado atual
 
-**Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
-(somente leitura; contém só o commit inicial com a licença). FSD, README e código existem só no fork.
+**Repositórios:**
+- `origin` = fork `isaacmiranda/sgc-redes-bvg` (público, admin), branch `minha-contribuicao`, CI verde.
+- `cctrc-bvg/sgc-redes-bvg` = original (usuário só tem leitura). Contém só o commit inicial.
+- **PR __PR__** (`minha-contribuicao` → `main`): versão inicial completa, 48 commits. O texto está em
+  `.handoff/github/pr-minha-contribuicao.md`.
+- **Novos commits no branch entram automaticamente no PR.** Por isso, peça confirmação antes de cada push.
 
-**Branch `minha-contribuicao`** — **sem PR aberto**. Enviada ao fork em 24/11/2026 com autorização do usuário; CI verde
-no GitHub. Novos `git push` continuam pedindo confirmação:
+**Pronto (Fases 1 e 2 do FSD + extras):**
+- Base: login/sessões, RBAC (5 perfis), auditoria, painel com pendências, Meu contato.
+- Cadastros: usuários, turmas, disciplinas (matriz do PPC), ofertas.
+- Operação:
+  - calendário acadêmico;
+  - grade (RF01) e sábados letivos;
+  - ausências e convites (RF02);
+  - alimentação (RF03/04);
+  - comunicação semiautomática por e-mail ou WhatsApp (RF05): textos-padrão, mensagem avulsa, grupos de docentes,
+    nutricionista, comunicar alterações da alimentação e do calendário.
+- Gestão: PPE/PEI (RF06), PPI (RF07), diários (RF08), processos SEI (RF09), relatórios.
+- Planilhas e PDF:
+  - importação com prévia: usuários, disciplinas, ofertas, grade, calendário, sábados;
+  - exportação .xlsx/.csv de todas as listagens;
+  - PDF do calendário, das grades, dos relatórios, do PEI e da ficha de PPI.
+- Documentação:
+  - Ajuda no sistema (`/ajuda`, 14 tópicos com capturas);
+  - `docs/MANUAL_DO_USUARIO.md` (gerado);
+  - CONTRIBUTING, guia do contribuidor, modelos de issue/PR;
+  - dados de demonstração (`prisma/demo.ts`).
 
-| Commit | Conteúdo |
-| :--- | :--- |
-| `8ebdce6` | Projeto executável: Next 16, React 19, Prisma 6, Tailwind 4, Vitest; Dockerfile multi-stage; migração inicial |
-| `63a28c9` | `docs/IDENTIDADE_VISUAL_UX.md` (Marca IF, contraste, Nielsen, WCAG/eMAG) + tokens de cor e Open Sans |
-| `1217372` | Correção: progresso da PPI mostrava 100% com 39,9h |
-| `1be36a8` | Testes das regras de alimentação/SLA/PEI/PPI; tabela PPI em `src/lib/ppi-regras-2022.ts` |
-| `605ec1c` | `scripts/dev.sh` (setup, testar, banco nativo/docker, dev, studio, docker, tudo) |
-| `fd88bb4` | Login, sessões no banco, RBAC do FSD, troca obrigatória de senha, auditoria; seed sem senha fixa |
-| `b62b737` | Cadastro/gestão de usuários pela Coordenação (`/usuarios`) |
-| `2389278`, `a8d3a5f` | Este roteiro; `AGENTS.md` versionado |
-| `d3cb489` | Correção: motor de alimentação valida a data (formato e calendário) |
-| `126dc21` | Catálogo de Disciplinas (`/disciplinas`), `disciplinas:gerenciar`, `Disciplina.ativa` |
-| `9dc1367` | Consulta ao catálogo (Professor, CTP, Direção: `disciplinas:ver`); matriz do PPC e blocos (G01) no seed |
-| `5afbbb0` | Núcleo, ano e semestre da disciplina (técnicas semestrais, 50% prática) |
-| `888653b` | Matriz do 3º ano corrigida: siglas SEGR, EB, PRD, RSF; Projeto de Redes 80h |
-| `ae6face` | Ofertas: distribuição de disciplinas por turma e ano letivo (`/ofertas`, `ofertas:gerenciar`) |
-| `e01c1e1` | Grade horária (RF01): turma, minha grade, edição com trava de choque, janelas, sábados letivos (G14) |
-| `060369d` | Importação em lote (.xlsx/.csv) de disciplinas e usuários, com modelos pré-preenchidos |
-| `91723c9` | Este roteiro atualizado para a retomada |
-| `0368890` | Cadastro de turmas (`/turmas`, `turmas:gerenciar`): ativos, médias de refeição, ano do curso, ativar/excluir |
-| `239604c` | Decisões G02–G13 registradas (padrões do FSD aceitos pelo usuário) |
-| `4ad4be3` | Sessões vencidas apagadas a cada login |
-| `0f79565` | **Fase 1:** ausências e coberturas (RF02), avisos de refeição e painel da AE (RF03/RF04, G02–G06, G13), comunicação semiautomática (RF05, G07/G08) |
-| `8805b79` | Tela de auditoria (`/auditoria`) |
-| `3ac54fe` | Kanban de processos SEI (RF09, `/processos`) com sigilo só para a Coordenação |
-| `48320ba` | Semáforo de diários (RF08, `/diarios`) + calendário do semestre (`PeriodoLetivo`) |
-| `e89d496` | PPI 40h (RF07, `/ppi`): tetos acumulados por categoria, certificado único, ficha para assinatura |
-| `79b0026` | PPE/PEI (RF06, `/ppe`): Art. 115, travas dos Arts. 117/121, cronograma, cópia de cronograma (G09) |
-| `6dc096e` | Relatórios consolidados (`/relatorios`), sem dados pessoais |
-| `de5ec21` | Importação em lote de ofertas e sábados letivos |
-| `d6bfb6a` | Este roteiro atualizado (madrugada) |
-| `525ef78` | CI no GitHub Actions: typecheck, testes e build (`.github/workflows/ci.yml`) |
-| `8b2562c` | PEI para impressão (`/ppe/[id]/imprimir`) |
-| `2f022d2` | Convite de substituição: Coordenação convida, docente aceita/recusa em "Minha grade" |
-| `f4b53a4` | Cabeçalho da Coordenação com menus "Operação" e "Cadastros" (`<details>`, sem JS) |
-| `124b677`, `a1c5672` | Pendências nos cards do painel; este roteiro |
-| `d3bb879` | **Comunicação sem depender do WhatsApp:** mensagens prontas com e-mail institucional, campos `{{...}}`, cópia; "Meu contato" |
-| `352024c` | Textos-padrão; nutricionista; máscara de telefone; CSV com tabulação; menus; seed no Docker |
-| *(penúltimo)* | Textos-padrão editáveis; avulsa com vários destinatários, grupos de docentes e campos; comunicar alterações da Alimentação |
-| *(último)* | Calendário acadêmico (etapas N1–N4, eventos, contagem de dias letivos); impressão/PDF; exportação em planilha |
-
-**Telas** (todas funcionam sem JavaScript):
-- Acesso: `/login`, `/painel` (cards por perfil; **todos os módulos já abrem**), `/conta/senha`, `/conta/contato`
-  (cada pessoa decide se o WhatsApp dela é usado; desligado = só e-mail).
-- Coordenação: `/usuarios` (+`/novo`, `/[id]`, `/[id]/senha`, `/importar`), `/disciplinas/nova`, `/disciplinas/importar`,
-  `/turmas` (+`/nova`, `/[id]`), `/ofertas` (+`/importar`), `/ofertas/[turmaId]?ano=AAAA`, `/grade/turma/[id]/editar`,
-  cadastro em `/grade/sabados` (+`/importar`), `/ausencias` (+`/nova`, `/[id]`), `/comunicacao`, `/auditoria`,
-  `/processos` (+`/novo`, `/[id]`), `/diarios` (+`/[ofertaId]`), `/ppi` (+`/nova`, `/[id]`, `/[id]/ficha`), `/ppe/nova`.
-- Assistência Estudantil: só `/alimentacao` (previsão por turma, avisos, ciência). Coordenação também lança acréscimos
-  (`/alimentacao/adicionar`, G05) e ajusta quantidades (G04).
-- Professor: `/grade/minha` mostra substituições/adiantamentos dos próximos 14 dias; `/diarios` (só os próprios);
-  `/ppe` e `/ppe/[id]` das disciplinas que leciona no ano (define modalidade, preenche o PEI, encerra).
-- CTP: `/ppe` (leitura, Art. 127), `/processos` (leitura, sem sigilosos), `/relatorios`. Direção: `/relatorios`.
-- Consulta (Professor, CTP, Direção conforme permissão): `/disciplinas`, `/disciplinas/[id]`, `/grade`, `/grade/minha`,
-  `/grade/turma/[id]`, `/grade/sabados`. Período da grade por `?ano=AAAA&sem=1|2`.
-- Modelos de planilha (`?formato=xlsx|csv`): `/disciplinas/importar/modelo`, `/usuarios/importar/modelo`,
-  `/ofertas/importar/modelo` (`&ano=AAAA`), `/grade/sabados/importar/modelo`.
-
-**Dados no seed** (idempotente; nunca sobrescreve edições): coordenador inicial, turmas `REDES-1..3` (com `anoCurso`;
-editáveis em `/turmas`),
-grupos e setores de comunicação (saudação padrão só para professores e líderes), regras PPI, 8 blocos de horário (A–D manhã/tarde, 60 min) e as **47 disciplinas da matriz**.
-
-**Verificado:** 322 testes unitários, typecheck, `next build` e 14 roteiros E2E sem JavaScript contra PostgreSQL
-real, todos verdes em 24/11/2026: login, usuários, disciplinas, ofertas, grade, importação, turmas, ausências (inclui comunicação, auditoria e relatórios), alimentação, processos, diários, PPI, PPE e importação de ofertas/sábados.
-As migrações que convertem dados (ofertas e grade) foram testadas com linhas no formato antigo.
-
-**Docker:** `./scripts/dev.sh docker` testado pelo usuário em 24/11/2026: build ok; o seed falhava no contêiner de migração
-(faltavam arquivos de `src/lib`), corrigido no Dockerfile; app respondeu em :3000. ExcelJS no `standalone` ainda não conferido.
+**Verificado em 24/11/2026:**
+- 380 testes unitários, typecheck e build;
+- roteiros E2E sem JS (16 roteiros em `.handoff/e2e`, local);
+- `docker compose up --build` com migração incremental sobre banco existente;
+- teste manual no navegador com JS, feito pelo usuário;
+- histórico do git sem dados reais: o branch foi reescrito em 24/11 para remover um telefone real dos testes.
 
 ---
 
 ## 3. Pendências que dependem do usuário
 
-- [ ] **Atualizar o banco Docker de desenvolvimento** (`sgc_dev_db`, já rodando): `./scripts/dev.sh banco docker` aplica
-      as migrações novas e o seed; depois `./scripts/dev.sh dev` e testar no navegador. Se esse banco recebeu a matriz
-      numa versão anterior, Projeto de Redes pode estar com 40h (o seed não sobrescreve CH): corrigir pela tela.
-      Obs.: o usuário já está no grupo `docker`; uma sessão de terminal antiga precisa de `sg docker -c "..."`.
-- [ ] **Testar a stack Docker completa:** `./scripts/dev.sh docker` (senha inicial em `docker compose logs migrate`).
-      Riscos: Prisma no Alpine (openssl/musl), motor do Prisma e **ExcelJS** no `standalone`. É pesado para 4 GB de RAM.
-- [x] ~~Enviar os commits da madrugada ao fork~~ — enviados em 24/11/2026; primeira execução do CI no GitHub passou.
-- [ ] **Testar no navegador com JavaScript** os módulos novos (os E2E são sem JS). Em especial a página da ausência
-      (caixas de mensagem: copiar, colar, substituir campos, abrir no e-mail) e a Alimentação vista pela AE.
-- [ ] **Cadastrar em `/comunicacao`** o e-mail institucional e a saudação de cada grupo/setor (CAE, CTP, Gestão,
-      professores, turmas). Sem isso as mensagens saem com "Para" vazio e um campo `{{...}}` na saudação.
-- [ ] **Testar as planilhas de exemplo** (local, fora do git, têm nomes reais da grade 2026):
-      `.handoff/planilhas-exemplo/1-usuarios-professores-exemplo.xlsx` (Usuários › Importar) e depois
-      `2-ofertas-2026-exemplo.xlsx` (Ofertas › Importar). E-mails fictícios `@exemplo.com`. Artes II (REDES-1 e 3) e
-      Servidores (REDES-3) ficaram de fora por não serem da matriz do ano da turma.
-- [ ] **Configurar `APP_URL`** no servidor de produção: as mensagens aos docentes trazem o link de "Minha grade".
-- [x] ~~Envio automático (Evolution API)~~ — **decidido em 24/11/2026: continuar semiautomático** (e-mail ou WhatsApp Web
-      com o texto pronto). O código da Evolution fica, desligado, para o futuro.
-- [ ] **Publicação no `cctrc-bvg`** — **decidido: depois do teste no navegador, issue + PR a partir do fork.** Textos em
-      `.handoff/github/` (o PR tem o item "Docker" a marcar após o teste e um `#<número>` da issue).
-      **Confirmar com o usuário antes de criar issue/PR** no repositório da organização.
-- [x] ~~Responder G02–G13~~ — **padrões do FSD aceitos em 24/11/2026** (FSD, seção 5). Todas as decisões G01–G14 fechadas.
-- [x] ~~Grade 2026 × matriz~~ — o usuário confirmou (24/11/2026) que a turma de 2026 tem as aulas normais e que Geografia
-      é anual: a grade 2026 vale como está; a marca "⚠ difere" é só informativa.
+- [ ] **Acompanhar a revisão do PR __PR__** e responder aos comentários. Correções viram commits novos no mesmo branch,
+      sem reescrever o histórico durante a revisão.
+- [ ] **Antes de reiniciar a máquina:** `sudo TMPDIR=/var/tmp dpkg --configure -a`. O pacote do kernel 7.0.0-44 ficou
+      meio configurado porque o `/tmp` (tmpfs de 512 MB) encheu.
+- [ ] **Cadastrar em Comunicação** o e-mail institucional e a saudação de cada grupo/setor, incluindo a nutricionista.
+- [ ] **Configurar `APP_URL`** (https) no servidor de produção.
+- [ ] **VM de produção no Proxmox** (Docker Compose), com backups do PostgreSQL e HTTPS (proxy reverso).
+- [ ] Testar as planilhas de exemplo com dados reais (`.handoff/planilhas-exemplo/`, fora do git).
 
 ---
 
 ## 4. Backlog priorizado
 
-### P1 — próximos passos
+### P1 — próximos passos (em ordem)
 
-1. **Testes E2E versionados** — migrar `.handoff/e2e/` (Python, sem JS) para Playwright no projeto, + roteiros com JS.
-2. ~~CI~~ feito e verde no GitHub (actions na v5, sem o aviso de Node 20).
-3. **`prisma.config.ts`** — o Prisma avisa que `package.json#prisma` (seed) será removido no Prisma 7. **Cuidado:** com o
-   arquivo de configuração o Prisma 6 deixa de carregar o `.env` sozinho (precisa de `import 'dotenv/config'`), o que afeta
-   `scripts/dev.sh` e o Dockerfile (`npx prisma db seed`). Fazer junto com o teste da stack Docker.
-4. ~~Impressão do PEI~~ feito (`/ppe/[id]/imprimir`); conferir com o modelo em papel do campus.
-5. ~~G05 integrado ao PEI~~ — decidido manter manual (ver decisões abaixo).
-6. ~~Convite de substituição~~ feito, com mensagem pronta ao convidado (e-mail ou WhatsApp).
-7. ~~Cabeçalho agrupado~~ feito. Os menus `<details>` ficam abertos ao navegar no cliente; fechar com JS se incomodar.
-8. **Mensagens prontas em outros módulos:** Alimentação (acréscimo, ajuste, ciência) e calendário (alteração imprevista ou
-   suspensão → `/calendario/eventos/[id]/comunicar`) já levam a comunicar; decisões de PPI/PPE ainda não geram caixa de
-   mensagem (usar a mensagem avulsa de `/comunicacao`).
-9. ~~Textos-padrão editáveis~~ feito (`/comunicacao/modelos`, tabela `ModeloMensagem`; os de `modelos.ts` são o conjunto inicial).
-10. ~~Importação da grade horária por planilha~~ feito (`/grade/importar`, modos completar/substituir, confere choques
-    de horário; o modelo de uma grade vazia traz uma linha por aula semanal prevista). O PDF do aSc segue como referência
-    em `.handoff/planilhas-exemplo/2-ofertas-2026-exemplo.xlsx`, aba "Grade do PDF".
-11. ~~Importação do calendário por planilha~~ feito (`/calendario/importar`): mesmo formato da exportação; para copiar
-    um ano, exportar, trocar as datas e importar no novo ano.
-12. ~~Relatórios em PDF/planilha e exportação do histórico de comunicação~~ feito (`/relatorios/imprimir`,
-    `/exportar/relatorios`, `/exportar/comunicacao`).
+1. **Revisão do PR:** responder aos comentários do repositório original. É prioridade sobre funcionalidade nova.
+2. **Testes E2E versionados com Playwright:**
+   - migrar os roteiros de `.handoff/e2e/` (Python, sem JS, fora do git) para `e2e/` no projeto;
+   - incluir roteiros com JS: caixas de mensagem, formulário de mensagem avulsa, menus;
+   - rodar no CI com PostgreSQL de serviço e `db:demo`.
+   - O Playwright já está instalado (`@playwright/test` 1.56.1). Nesta máquina (Ubuntu 26.04) é preciso
+     `PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64` e `TMPDIR=~/.cache/sgc-tmp`.
+   - Decisão de 24/11: só smoke tests no CI.
+3. **`prisma.config.ts`** (o Prisma 7 remove `package.json#prisma`):
+   - com o arquivo de configuração, o Prisma 6 deixa de carregar o `.env` sozinho (`import 'dotenv/config'`), o que
+     afeta `scripts/dev.sh`, o Dockerfile (`npx prisma db seed`) e o `db:demo`;
+   - testar com `./scripts/dev.sh docker`.
+4. **Mensagens prontas nas decisões de PPI e PPE:** deferimento, modalidade definida, PEI pronto.
+   - Seguir o padrão de `src/lib/calendario/mensagens.ts` e `/calendario/eventos/[id]/comunicar`.
+   - Criar tópico na Ajuda.
+5. **Implantação em produção:**
+   - VM no Proxmox com Docker Compose, HTTPS (proxy reverso) e `APP_URL`;
+   - backup diário do PostgreSQL (`pg_dump`) com retenção;
+   - documentar em `docs/IMPLANTACAO.md`.
+6. **Conferir o PEI impresso** com o modelo em papel do campus.
+
+### P2 — depois
+
+- Integração com o SUAP (decidido: depois).
+- Envio automático pela Evolution API: o código existe, desligado (decidido: semiautomático).
+- Fase 3 (FSD): laboratórios, estoque/DAP, atas e eventos.
+- Menus `<details>` do cabeçalho: já fecham com JS (`FecharMenus`); sem JS continuam abertos ao navegar.
+
+### Concluídos em 24/11/2026
+
+Calendário acadêmico e importação por planilha; grade por planilha; relatórios em PDF e planilha; exportação de todas
+as listagens (.xlsx e .csv, com botões); textos-padrão editáveis; mensagem avulsa com vários destinatários e grupos de
+docentes; nutricionista; comunicar alterações da alimentação e do calendário; Ajuda, manual e guia do contribuidor;
+dados de demonstração; impressão do PEI; convites de substituição; CI.
 
 ### Decisões de 24/11/2026 (sugestões aceitas pelo usuário)
 
