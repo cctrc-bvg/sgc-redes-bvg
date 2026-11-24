@@ -23,6 +23,9 @@ function cookieSeguro(): boolean {
 export async function criarSessao(userId: string): Promise<void> {
   const token = gerarTokenSessao();
   const h = await headers();
+  // Limpeza barata das sessões vencidas de todos os usuários (índice em expiraEm): a tabela não cresce
+  // sem limite e não é preciso rotina periódica. Logins são poucos por dia.
+  await prisma.sessao.deleteMany({ where: { expiraEm: { lt: new Date() } } });
   await prisma.sessao.create({
     data: {
       id: hashToken(token),
