@@ -1,6 +1,6 @@
 # Próximos Passos — Retomada do Desenvolvimento
 
-> Atualizado em **24/11/2026**. Leia este arquivo inteiro antes de continuar. Ele resume o estado do projeto, o que
+> Atualizado em **24/11/2026** (madrugada: Fase 1 completa e módulos da Fase 2). Leia este arquivo inteiro antes de continuar. Ele resume o estado do projeto, o que
 > depende do usuário, o que fazer em seguida e as armadilhas já encontradas (para não redescobri-las).
 
 ---
@@ -9,8 +9,8 @@
 
 ```bash
 cd ~/projetos/sgc-redes-bvg
-git status && git log --oneline -12         # branch minha-contribuicao, em dia com origin
-./scripts/dev.sh testar                      # esperado: typecheck ok + 230 testes passando
+git status && git log --oneline -20         # branch minha-contribuicao; commits da madrugada AINDA NÃO enviados ao fork
+./scripts/dev.sh testar                      # esperado: typecheck ok + 302 testes passando
 ls .handoff/github .handoff/e2e              # rascunhos de issue/PR e roteiros E2E (local, fora do git)
 ```
 
@@ -23,7 +23,8 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 **Repositórios:** `origin` = fork `isaacmiranda/sgc-redes-bvg` (admin); `upstream` = `cctrc-bvg/sgc-redes-bvg`
 (somente leitura; contém só o commit inicial com a licença). FSD, README e código existem só no fork.
 
-**Branch `minha-contribuicao`** — enviada ao fork, **sem PR aberto**, à frente do upstream:
+**Branch `minha-contribuicao`** — **sem PR aberto**. Até `91723c9` está no fork; os commits seguintes são locais
+(o usuário não autorizou `git push` nesta sessão):
 
 | Commit | Conteúdo |
 | :--- | :--- |
@@ -44,22 +45,41 @@ Depois, confira a seção 3 (o que depende do usuário) antes de escolher a pró
 | `e01c1e1` | Grade horária (RF01): turma, minha grade, edição com trava de choque, janelas, sábados letivos (G14) |
 | `060369d` | Importação em lote (.xlsx/.csv) de disciplinas e usuários, com modelos pré-preenchidos |
 | `91723c9` | Este roteiro atualizado para a retomada |
-| *(último)* | Cadastro de turmas (`/turmas`, `turmas:gerenciar`): ativos, médias de refeição, ano do curso, ativar/excluir |
+| `0368890` | Cadastro de turmas (`/turmas`, `turmas:gerenciar`): ativos, médias de refeição, ano do curso, ativar/excluir |
+| `239604c` | Decisões G02–G13 registradas (padrões do FSD aceitos pelo usuário) |
+| `4ad4be3` | Sessões vencidas apagadas a cada login |
+| `0f79565` | **Fase 1:** ausências e coberturas (RF02), avisos de refeição e painel da AE (RF03/RF04, G02–G06, G13), comunicação semiautomática (RF05, G07/G08) |
+| `8805b79` | Tela de auditoria (`/auditoria`) |
+| `3ac54fe` | Kanban de processos SEI (RF09, `/processos`) com sigilo só para a Coordenação |
+| `48320ba` | Semáforo de diários (RF08, `/diarios`) + calendário do semestre (`PeriodoLetivo`) |
+| `e89d496` | PPI 40h (RF07, `/ppi`): tetos acumulados por categoria, certificado único, ficha para assinatura |
+| `79b0026` | PPE/PEI (RF06, `/ppe`): Art. 115, travas dos Arts. 117/121, cronograma, cópia de cronograma (G09) |
+| `6dc096e` | Relatórios consolidados (`/relatorios`), sem dados pessoais |
+| `de5ec21` | Importação em lote de ofertas e sábados letivos |
+| *(último)* | Este roteiro atualizado |
 
 **Telas** (todas funcionam sem JavaScript):
-- Acesso: `/login`, `/painel` (cards por perfil; só "Grade" já abre), `/conta/senha`.
+- Acesso: `/login`, `/painel` (cards por perfil; **todos os módulos já abrem**), `/conta/senha`.
 - Coordenação: `/usuarios` (+`/novo`, `/[id]`, `/[id]/senha`, `/importar`), `/disciplinas/nova`, `/disciplinas/importar`,
-  `/turmas` (+`/nova`, `/[id]`), `/ofertas`, `/ofertas/[turmaId]?ano=AAAA`, `/grade/turma/[id]/editar`, cadastro em `/grade/sabados`.
+  `/turmas` (+`/nova`, `/[id]`), `/ofertas` (+`/importar`), `/ofertas/[turmaId]?ano=AAAA`, `/grade/turma/[id]/editar`,
+  cadastro em `/grade/sabados` (+`/importar`), `/ausencias` (+`/nova`, `/[id]`), `/comunicacao`, `/auditoria`,
+  `/processos` (+`/novo`, `/[id]`), `/diarios` (+`/[ofertaId]`), `/ppi` (+`/nova`, `/[id]`, `/[id]/ficha`), `/ppe/nova`.
+- Assistência Estudantil: só `/alimentacao` (previsão por turma, avisos, ciência). Coordenação também lança acréscimos
+  (`/alimentacao/adicionar`, G05) e ajusta quantidades (G04).
+- Professor: `/grade/minha` mostra substituições/adiantamentos dos próximos 14 dias; `/diarios` (só os próprios);
+  `/ppe` e `/ppe/[id]` das disciplinas que leciona no ano (define modalidade, preenche o PEI, encerra).
+- CTP: `/ppe` (leitura, Art. 127), `/processos` (leitura, sem sigilosos), `/relatorios`. Direção: `/relatorios`.
 - Consulta (Professor, CTP, Direção conforme permissão): `/disciplinas`, `/disciplinas/[id]`, `/grade`, `/grade/minha`,
   `/grade/turma/[id]`, `/grade/sabados`. Período da grade por `?ano=AAAA&sem=1|2`.
-- Modelos de planilha: `/disciplinas/importar/modelo?formato=xlsx|csv`, `/usuarios/importar/modelo?formato=xlsx|csv`.
+- Modelos de planilha (`?formato=xlsx|csv`): `/disciplinas/importar/modelo`, `/usuarios/importar/modelo`,
+  `/ofertas/importar/modelo` (`&ano=AAAA`), `/grade/sabados/importar/modelo`.
 
 **Dados no seed** (idempotente; nunca sobrescreve edições): coordenador inicial, turmas `REDES-1..3` (com `anoCurso`;
 editáveis em `/turmas`),
 canais WhatsApp, regras PPI, 8 blocos de horário (A–D manhã/tarde, 60 min) e as **47 disciplinas da matriz**.
 
-**Verificado:** 230 testes unitários, typecheck, `next build` e 7 roteiros E2E sem JavaScript contra PostgreSQL real
-(login, usuários, disciplinas 33, ofertas 35, grade 44, importação 42, turmas 35 verificações), todos verdes em 24/11/2026.
+**Verificado:** 302 testes unitários, typecheck, `next build` e 14 roteiros E2E sem JavaScript contra PostgreSQL
+real, todos verdes em 24/11/2026: login, usuários, disciplinas, ofertas, grade, importação, turmas, ausências (inclui comunicação, auditoria e relatórios), alimentação, processos, diários, PPI, PPE e importação de ofertas/sábados.
 As migrações que convertem dados (ofertas e grade) foram testadas com linhas no formato antigo.
 
 **Nunca verificado:** `docker compose up --build` (stack completa em contêiner).
@@ -74,6 +94,11 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
       Obs.: o usuário já está no grupo `docker`; uma sessão de terminal antiga precisa de `sg docker -c "..."`.
 - [ ] **Testar a stack Docker completa:** `./scripts/dev.sh docker` (senha inicial em `docker compose logs migrate`).
       Riscos: Prisma no Alpine (openssl/musl), motor do Prisma e **ExcelJS** no `standalone`. É pesado para 4 GB de RAM.
+- [ ] **Enviar os commits da madrugada ao fork** (`git push origin minha-contribuicao`) depois de revisar.
+- [ ] **Testar no navegador com JavaScript** os módulos novos (os E2E são sem JS). Em especial a página da ausência
+      (vários formulários) e a Alimentação vista pela AE.
+- [ ] **Configurar a Evolution API** se quiserem envio automático (G07): `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`,
+      `EVOLUTION_INSTANCIA` no `.env` e o JID de cada grupo em `/comunicacao`. Sem isso, fica no modo semiautomático.
 - [ ] **Decidir a publicação no `cctrc-bvg`:** issue + PR, ou primeiro um PR dentro do fork. Textos prontos e
       atualizados em `.handoff/github/` (o PR tem o item "Docker" a marcar após o teste e um `#<número>` da issue).
       **Confirmar com o usuário antes de criar issue/PR** no repositório da organização.
@@ -85,36 +110,26 @@ As migrações que convertem dados (ofertas e grade) foram testadas com linhas n
 
 ## 4. Backlog priorizado
 
-### P1 — não depende de decisões pendentes
+### P1 — próximos passos
 
-1. **Importação em lote de ofertas e sábados letivos** — mesmo padrão de `src/lib/importacao/` (o usuário pediu lote
-   "seja de disciplinas, de usuários"; ofertas e calendário são os próximos candidatos naturais).
-2. **Tela de auditoria** (`auditoria:ver`, só Coordenação) — filtrar `AuditLog` por ação, usuário e data.
-3. **Limpeza de sessões expiradas** — apagar `Sessao` vencidas no login (barato) ou por rotina periódica.
-4. **Semáforo de diários (RF08)** — não depende de decisões: ofertas já têm `aulasPrevistas`/`aulasMinistradas`.
-   Incluir aqui a visão do professor das **próprias ofertas**.
-5. **Kanban SEI (RF09)** — não depende de decisões.
-6. **Testes E2E versionados** — migrar `.handoff/e2e/` (Python, sem JS) para Playwright no projeto, + um com JS.
-7. **`prisma.config.ts`** — o Prisma avisa que `package.json#prisma` (seed) será removido no Prisma 7.
-8. **CI (GitHub Actions)** — typecheck + testes + build em PRs.
+1. **Testes E2E versionados** — migrar `.handoff/e2e/` (Python, sem JS) para Playwright no projeto, + roteiros com JS.
+2. **CI (GitHub Actions)** — typecheck + testes + build em PRs.
+3. **`prisma.config.ts`** — o Prisma avisa que `package.json#prisma` (seed) será removido no Prisma 7. **Cuidado:** com o
+   arquivo de configuração o Prisma 6 deixa de carregar o `.env` sozinho (precisa de `import 'dotenv/config'`), o que afeta
+   `scripts/dev.sh` e o Dockerfile (`npx prisma db seed`). Fazer junto com o teste da stack Docker.
+4. **Impressão do PEI** no modelo oficial do campus (a PPI já tem `/ppi/[id]/ficha`).
+5. **G05 integrado ao PEI:** ao agendar encontro de PEI no contraturno, oferecer a caixa "gerar aviso de refeição"
+   (hoje o acréscimo é lançado à mão em `/alimentacao/adicionar`).
+6. **Convite de substituição com resposta do professor** (`substituicao:responder`): hoje a Coordenação escolhe o
+   substituto depois de combinar; o professor só vê a substituição em "Minha grade".
+7. **Cabeçalho:** a Coordenação já tem 9 links; considerar um menu agrupado (Cadastros, Operação, Acadêmico).
 
-### P2 — decisões fechadas (G02–G13 aceitas com os padrões)
+### Feito (referência)
 
-| Módulo (FSD) | Requisito | Decisões |
-| :--- | :--- | :--- |
-| Ausências e substituição | RF02 | G03 (G01/G14 ok; usar `diaDaGradeNaData()`) |
-| Painel de alimentação (AE) | RF03, RF04 | G02, G04, G05, G06, G13 |
-| Hub de comunicação WhatsApp | RF05 | G07, G08 |
-| PPE / PEI | RF06 | G09, G10 |
-| PPI (40h) | RF07 | G11 |
-| Relatórios | — | depende dos módulos acima |
-
-Ordem sugerida: Ausências → Alimentação → Comunicação (núcleo da Fase 1).
-
-### Feito nesta fase (referência)
-
-Catálogo + matriz, consulta ao catálogo, ofertas, grade (RF01) com sábados letivos, importação em lote, turmas. Detalhes nos
-commits da seção 2 e nas decisões da seção 5.
+Catálogo + matriz, consulta ao catálogo, ofertas, grade (RF01) com sábados letivos, importação em lote (disciplinas,
+usuários, ofertas, sábados), turmas, ausências (RF02), alimentação (RF03/RF04), comunicação (RF05), PPE/PEI (RF06),
+PPI (RF07), diários (RF08), Kanban SEI (RF09), relatórios, auditoria, limpeza de sessões. Detalhes nos commits da seção 2
+e nas decisões da seção 5.
 
 ---
 
@@ -139,6 +154,29 @@ commits da seção 2 e nas decisões da seção 5.
   recebe o ano da criação e não aparece na tela. Médias de refeição ≤ estudantes ativos (≤ 80). Com ofertas lançadas, o
   ano do curso fica travado; turma usada (ofertas, grade, ausências, avisos) só é desativada, nunca excluída.
 - **Importação em lote** por .xlsx ou .csv com modelo pré-preenchido para baixar, editar e enviar; prévia antes de gravar.
+  Ofertas: chave ano + turma + disciplina, só cria ou troca professor (nunca remove). Sábados: dia da grade por extenso
+  (números recusados: "2" seria 2ª-feira ou terça?).
+
+**Implementação da Fase 1 e 2 (madrugada de 24/11/2026; revisar com a Coordenação se algo não bater com a prática):**
+- **Ausência:** uma por oferta e dia (`@@unique([dataAula, ofertaId])`); decisão **por horário** em `CoberturaBloco`
+  (substituição, adiantamento ou dispensa). Professor com aulas em 2 turmas no dia gera 2 registros.
+- **Adiantamento:** traz uma aula **posterior** da mesma turma, no mesmo dia (inclusive do outro turno), de professor livre
+  no horário vago; a origem fica vaga. Sugestões e validação consideram as coberturas das outras ausências do dia.
+- **Motivo operacional** só de lista fechada (`MOTIVOS_OPERACIONAIS`); nada de texto livre (LGPD).
+- **Refeições:** presença por turno = há pelo menos uma aula no turno (RN01; isso já atende G02). Avisos são
+  recalculados por turma e dia a cada decisão (`recalcularAlertasDaTurma`): cria os que faltam, cancela (`canceladoEm`)
+  os que deixaram de valer; refeição já servida não gera aviso (G13). Quantidade = média da turma; editável (G04), e
+  mudar a quantidade pede nova ciência da AE. Acréscimos manuais (`manual = true`, G05) ficam fora do recálculo.
+- **Emergência (< 4h):** exige justificativa na decisão e mostra "ligue para a AE" (G06).
+- **Mensagens:** sempre regeneradas no servidor; Gestão só recebe dispensa, impacto alimentar ou aula sem cobertura (G08);
+  líderes de turma sem nome de docente; AE sem docente nem disciplina.
+- **Diários:** espelho do sistema acadêmico (a Coordenação atualiza); amarelo quando ministradas < esperadas − 10%
+  (mín. 2), com esperadas proporcionais ao tempo decorrido do semestre (`PeriodoLetivo`; anuais usam os dois semestres).
+- **PPI:** tetos de quantidade e de horas **acumulados por categoria** (as atividades mais antigas consomem primeiro);
+  deferir exige 40h; indeferir exige motivo; deferida trava lançamentos.
+- **PPE:** o docente que define é quem tem oferta da disciplina no ano do semestre; CTP só lê; lançamento no sistema
+  acadêmico (Art. 125) só pela Coordenação; prorrogação só para PEI preenchido.
+- **Kanban:** item sigiloso não existe para quem não tem `kanban:ver-sigiloso` (404, nem aparece no payload).
 
 **Técnicas:**
 - **Prisma 6.x**, não 7 (schema usa `url = env(...)`).
@@ -189,7 +227,7 @@ commits da seção 2 e nas decisões da seção 5.
 ## 7. Ambiente local e armadilhas conhecidas
 
 - Máquina com **4 GB de RAM e HDD**: tudo com `nice -n 15 ionice -c 2 -n 7`, um processo pesado por vez. O build leva
-  ~1–2 min; a bateria completa de E2E (7 roteiros, cada um com banco recriado) passa de 10 min — rode em segundo plano.
+  ~1–2 min; a bateria completa de E2E (14 roteiros, cada um com banco recriado) leva ~40 min — rode em segundo plano.
 - **npm 9.2 do Ubuntu** falha com `reading 'edgesOut'`: use `npx -y npm@10 install` (o `dev.sh` faz isso).
 - **Postgres de teste sem Docker:** `npx prisma dev -n sgc-teste -d`. Exige `&connection_limit=1&pgbouncer=true` na
   `DATABASE_URL`, senão `42P05 prepared statement already exists`.
@@ -197,7 +235,10 @@ commits da seção 2 e nas decisões da seção 5.
 - **Servidor standalone de teste:** copie `.next/static` para `.next/standalone/.next/static`; localize o processo pela
   porta (`ss -ltnp | grep :3123`). Evite `pkill -f <texto>` (pode matar o próprio shell).
 - **Processo a 100% de CPU:** `kill -USR1 <pid>` e `node .handoff/e2e/inspecionar-cpu.mjs` mostram a pilha.
-- **Roteiros E2E (Python, sem JS):**
+- **Roteiros E2E (Python, sem JS):** `e2e_alimentacao.py`, `e2e_processos.py`, `e2e_diarios.py`, `e2e_ppi.py` e `e2e_ppe.py`
+  reaproveitam os utilitários de `e2e_ausencias.py` (cortado em `# --- Data alvo`); `e2e_importacao2.py` reaproveita
+  `e2e_importacao.py`. O parser de formulários **ignora `<select>`** e só envia campos ocultos: passe selects e
+  checkboxes em `valores` (ou `enviar_multi` para campos repetidos). Dados de teste entram por SQL (`sql()`).
   - o 1º formulário com Server Action em toda página logada é o **"Sair"** do cabeçalho — escolha o formulário pelo
     campo (`form_com(pag, "campo")`); na grade do 2º semestre há dois formulários com os mesmos campos ocultos;
   - o React separa textos adjacentes com `<!-- -->` (troque por "" antes de comparar) e o `<strong>` vira espaço;
@@ -214,7 +255,8 @@ commits da seção 2 e nas decisões da seção 5.
 ./scripts/dev.sh testar                                         # typecheck + testes unitários
 NEXT_TELEMETRY_DISABLED=1 nice -n 15 ionice -c 2 -n 7 npx next build
 # Se mexeu em telas/ações: E2E sem JavaScript, CADA roteiro num banco recriado (eles alteram senhas e dados)
-for s in e2e_login e2e_usuarios e2e_disciplinas e2e_ofertas e2e_grade e2e_importacao e2e_turmas; do
+for s in e2e_login e2e_usuarios e2e_disciplinas e2e_ofertas e2e_grade e2e_importacao e2e_turmas \
+         e2e_ausencias e2e_alimentacao e2e_processos e2e_diarios e2e_ppi e2e_ppe e2e_importacao2; do
   bash .handoff/e2e/e2e_ambiente.sh >/dev/null 2>&1          # recria banco, migra, seed, sobe servidor na 3123
   echo "$s: $(python3 -I .handoff/e2e/$s.py 2>&1 | grep -E 'FALHA|TUDO CERTO' | tr '\n' ' ')"
 done
