@@ -21,7 +21,19 @@ const classeLinkModelo =
  * Fluxo de importação em 3 passos, sem depender de JavaScript: baixar o modelo, enviar a planilha
  * (o servidor analisa e mostra a prévia, sem gravar) e confirmar (o servidor valida de novo e grava).
  */
-export function ImportadorPlanilha({ acao, modeloBase, itens }: { acao: Acao; modeloBase: string; itens: string }) {
+export function ImportadorPlanilha({
+  acao,
+  modeloBase,
+  itens,
+  ocultos = {},
+}: {
+  acao: Acao;
+  modeloBase: string;
+  itens: string;
+  /** Contexto da importação (ex.: ano, semestre), enviado nos dois passos. Nunca use acao.bind: sem JS, re-renderiza sem fim. */
+  ocultos?: Record<string, string>;
+}) {
+  const camposOcultos = Object.entries(ocultos).map(([nome, valor]) => <input key={nome} type="hidden" name={nome} value={valor} />);
   const [estado, enviar, enviando] = useActionState<EstadoImportacao | undefined, FormData>(acao, undefined);
   const linhas = estado?.linhas ?? [];
   const contagem = (s: LinhaResultado['situacao']) => linhas.filter((l) => l.situacao === s).length;
@@ -48,6 +60,7 @@ export function ImportadorPlanilha({ acao, modeloBase, itens }: { acao: Acao; mo
         <h2 id="passo2" className="text-lg font-semibold text-slate-900">2. Envie a planilha</h2>
         <p className="mt-1 text-sm text-slate-700">Nada é gravado agora: você verá uma prévia para conferir antes de confirmar.</p>
         <form action={enviar} className="mt-4 space-y-4">
+          {camposOcultos}
           <div>
             <label htmlFor="arquivo" className="block text-sm font-semibold text-slate-800">
               Arquivo (.xlsx ou .csv, até 1 MB)
@@ -159,6 +172,7 @@ export function ImportadorPlanilha({ acao, modeloBase, itens }: { acao: Acao; mo
           {estado?.dados && !temErros && (
             <form action={enviar} className="mt-4 sm:max-w-xs">
               <input type="hidden" name="etapa" value="confirmar" />
+              {camposOcultos}
               <input type="hidden" name="dados" value={estado.dados} />
               <BotaoPrimario carregando={enviando}>{enviando ? 'Gravando…' : 'Confirmar importação'}</BotaoPrimario>
             </form>

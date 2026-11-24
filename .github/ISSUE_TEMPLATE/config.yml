@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Falha de segurança ou vazamento de dados
+    url: https://github.com/cctrc-bvg
+    about: Não abra issue pública. Escreva para o e-mail institucional da Coordenação do curso (veja CONTRIBUTING.md).

@@ -34,9 +34,14 @@ Sistema web gratuito, de código aberto e auto-hospedado para apoiar a rotina op
 
 ## Documentação
 
-- [Especificação Funcional (FSD) e Checklist `/grill-me`](docs/FSD.md)
-- [Arquitetura, Segurança e Conformidade LGPD](docs/ARQUITETURA_LGPD.md)
-- [Identidade Visual, Usabilidade (Nielsen) e Acessibilidade (WCAG/eMAG)](docs/IDENTIDADE_VISUAL_UX.md)
+| Para quem | Documento |
+| :--- | :--- |
+| Usuários do sistema | **Ajuda** dentro do sistema (`/ajuda`, com PDF em `/ajuda/manual`) e o [Manual do usuário](docs/MANUAL_DO_USUARIO.md) |
+| Quem quer contribuir | [Como contribuir](CONTRIBUTING.md) e o [Guia do contribuidor](docs/desenvolvimento/GUIA_DO_CONTRIBUIDOR.md) |
+| Regras de negócio | [Especificação Funcional (FSD)](docs/FSD.md) |
+| Segurança e LGPD | [Arquitetura, Segurança e Conformidade LGPD](docs/ARQUITETURA_LGPD.md) |
+| Interface | [Identidade Visual, Usabilidade (Nielsen) e Acessibilidade (WCAG/eMAG)](docs/IDENTIDADE_VISUAL_UX.md) |
+| Andamento | [Próximos passos e backlog](docs/PROXIMOS_PASSOS.md) |
 
 ---
 
@@ -61,6 +66,7 @@ O jeito mais rápido é usar o script de apoio, que roda os passos com baixa pri
 ./scripts/dev.sh tudo     # instala, cria .env com senhas aleatórias, testa e prepara o banco
 ./scripts/dev.sh dev      # http://localhost:3000  (use --rede para acessar de outro computador)
 ./scripts/dev.sh studio   # http://localhost:5555 — dados do seed (turmas, canais, regras PPI)
+npm run db:demo -- --confirmo   # opcional: dados FICTÍCIOS de demonstração (senha Demonstracao2026)
 ./scripts/dev.sh ajuda    # todos os comandos (setup, testar, banco, docker...)
 ```
 
@@ -81,6 +87,9 @@ npm run dev               # http://localhost:3000
 | `npm run build` | Build de produção (Next.js standalone) |
 | `npm run db:migrate` | Cria uma nova migração após alterar `prisma/schema.prisma` |
 | `npm run db:studio` | Interface do Prisma para inspecionar o banco |
+| `npm run db:demo -- --confirmo` | Dados fictícios de demonstração (nunca em produção) |
+| `npm run manual` | Gera `docs/MANUAL_DO_USUARIO.md` a partir do conteúdo da Ajuda |
+| `npm run capturas` | Gera as capturas de tela da Ajuda (Playwright; servidor com dados de demonstração) |
 
 ---
 

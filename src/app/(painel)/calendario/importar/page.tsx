@@ -43,7 +43,7 @@ export default async function PaginaImportarCalendario({ searchParams }: { searc
         Para montar outro ano a partir deste, baixe a planilha de {ano}, troque as datas e envie escolhendo o novo ano.
       </p>
       <div className="mt-6">
-        <ImportadorPlanilha acao={importarCalendario.bind(null, String(ano))} modeloBase={`/calendario/importar/modelo?ano=${ano}`} itens="itens do calendário" />
+        <ImportadorPlanilha acao={importarCalendario} ocultos={{ anoLetivo: String(ano) }} modeloBase={`/calendario/importar/modelo?ano=${ano}`} itens="itens do calendário" />
       </div>
     </div>
   );

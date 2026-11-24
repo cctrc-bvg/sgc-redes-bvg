@@ -18,7 +18,6 @@ export default async function PaginaImportarGrade({ searchParams }: { searchPara
   const { anoLetivo, semestreLetivo } = periodoDaUrl(sp);
   const modo = sp.modo === 'substituir' ? 'substituir' : 'completar';
   const periodo = `ano=${anoLetivo}&sem=${semestreLetivo}`;
-  const acao = importarGrade.bind(null, { ano: String(anoLetivo), sem: String(semestreLetivo), modo });
   const link = 'text-if-verde-700 underline underline-offset-2';
   return (
     <div className="max-w-4xl">
@@ -67,7 +66,7 @@ export default async function PaginaImportarGrade({ searchParams }: { searchPara
         </ul>
       </fieldset>
       <div className="mt-6">
-        <ImportadorPlanilha acao={acao} modeloBase={`/grade/importar/modelo?${periodo}`} itens="aulas da grade" />
+        <ImportadorPlanilha acao={importarGrade} ocultos={{ anoLetivo: String(anoLetivo), semestreLetivo: String(semestreLetivo), modo }} modeloBase={`/grade/importar/modelo?${periodo}`} itens="aulas da grade" />
       </div>
     </div>
   );

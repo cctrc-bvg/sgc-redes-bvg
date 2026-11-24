@@ -12,20 +12,13 @@ import { dadosDaGrade } from '@/lib/importacao/grade-servidor';
 import { avisoColunasDesconhecidas, lerEntrada, serializarDados } from '@/lib/importacao/servidor';
 import { lerAnoLetivo } from '@/lib/ofertas/regras';
 
-/**
- * Importa a grade de um semestre. Ano, semestre e modo vêm ligados pela página (não são segredo e são
- * validados de novo aqui); a permissão é conferida a cada envio.
- */
-export async function importarGrade(
-  periodo: { ano: string; sem: string; modo: string },
-  _estado: EstadoImportacao | undefined,
-  formData: FormData,
-): Promise<EstadoImportacao> {
+/** Importa a grade de um semestre. Ano, semestre e modo vêm em campos ocultos e são validados aqui. */
+export async function importarGrade(_estado: EstadoImportacao | undefined, formData: FormData): Promise<EstadoImportacao> {
   const { usuario } = await exigirPermissao('grade:editar');
-  const anoLetivo = lerAnoLetivo(periodo.ano);
-  const semestreLetivo = lerSemestreLetivo(periodo.sem);
+  const anoLetivo = lerAnoLetivo(formData.get('anoLetivo'));
+  const semestreLetivo = lerSemestreLetivo(formData.get('semestreLetivo'));
   if (!anoLetivo || !semestreLetivo) return { mensagem: 'Período inválido. Recarregue a página.' };
-  const substituir = periodo.modo === 'substituir';
+  const substituir = formData.get('modo') === 'substituir';
   const entrada = await lerEntrada(formData, COLUNAS_GRADE);
   if ('erro' in entrada) return { mensagem: entrada.erro };
   const dados = await dadosDaGrade(anoLetivo, semestreLetivo);

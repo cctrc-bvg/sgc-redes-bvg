@@ -12,10 +12,10 @@ import type { EstadoImportacao } from '@/lib/importacao/estado';
 import { avisoColunasDesconhecidas, lerEntrada, serializarDados } from '@/lib/importacao/servidor';
 import { lerAnoLetivo } from '@/lib/ofertas/regras';
 
-/** Importa o calendário de um ano (etapas, semestres, eventos e sábados letivos). O ano vem ligado pela página. */
-export async function importarCalendario(anoBruto: string, _estado: EstadoImportacao | undefined, formData: FormData): Promise<EstadoImportacao> {
+/** Importa o calendário de um ano (etapas, semestres, eventos e sábados letivos). O ano vem em campo oculto. */
+export async function importarCalendario(_estado: EstadoImportacao | undefined, formData: FormData): Promise<EstadoImportacao> {
   const { usuario } = await exigirPermissao('calendario:gerenciar');
-  const ano = lerAnoLetivo(anoBruto);
+  const ano = lerAnoLetivo(formData.get('anoLetivo'));
   if (!ano) return { mensagem: 'Ano inválido. Recarregue a página.' };
   const entrada = await lerEntrada(formData, COLUNAS_CALENDARIO);
   if ('erro' in entrada) return { mensagem: entrada.erro };

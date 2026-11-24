@@ -35,8 +35,8 @@ RUN addgroup -S -g 1001 nodejs && adduser -S -u 1001 -G nodejs nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-# public/ é opcional; descomente quando existir:
-# COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# Imagens do módulo Ajuda e outros arquivos estáticos.
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 EXPOSE 3000

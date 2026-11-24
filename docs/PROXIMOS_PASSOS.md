@@ -169,6 +169,13 @@ usuários, ofertas, sábados), turmas, ausências (RF02), alimentação (RF03/RF
 PPI (RF07), diários (RF08), Kanban SEI (RF09), relatórios, auditoria, limpeza de sessões. Detalhes nos commits da seção 2
 e nas decisões da seção 5.
 
+**Documentação (24/11/2026):** módulo **Ajuda** no sistema (`/ajuda`, tópicos por perfil com capacidades, fluxograma,
+passo a passo, capturas e dúvidas; manual para PDF em `/ajuda/manual`), fonte única em `src/lib/ajuda/topicos.ts`,
+`docs/MANUAL_DO_USUARIO.md` gerado por `npm run manual`, capturas por `npm run capturas` (Playwright) sobre dados
+fictícios de `npm run db:demo -- --confirmo`. Para contribuidores: `CONTRIBUTING.md`,
+`docs/desenvolvimento/GUIA_DO_CONTRIBUIDOR.md` e modelos de issue/PR em `.github/`. O teste da Ajuda falha se um módulo
+do painel ficar sem tópico, se faltar imagem ou se o manual estiver desatualizado.
+
 ---
 
 ## 5. Decisões já tomadas (não rediscutir sem motivo novo)
@@ -266,33 +273,10 @@ e nas decisões da seção 5.
 
 ## 6. Convenções do código
 
-- **Acesso:** toda página, Server Action e Route Handler protegido começa com `exigirUsuario()` ou
-  `exigirPermissao('...')` (`src/lib/auth/dal.ts`). O `src/proxy.ts` só faz checagem otimista. Novas permissões em
-  `src/lib/auth/rbac.ts` (com teste em `auth.test.ts`). Módulo pronto no painel: preencha `href` em `MODULOS`.
-- **Nunca** use `acao.bind(null, id)` com `useActionState`: sem JS o React re-renderiza sem fim (CPU 100%). Passe ids
-  por `<input type="hidden">`. Arquivo `'use server'` só exporta funções assíncronas (constantes vão para `src/lib`).
-- **Formulários:** `Campo`, `Selecao`, `AreaTexto`, `BotaoPrimario`, `BotaoSecundario`, `Alerta` (`src/components/campo.tsx`);
-  zod no servidor (`z.flattenError(...).fieldErrors`); `noValidate`; devolver os valores digitados no estado.
-- **Formulários de lote** (distribuição, grade): o servidor monta a lista de itens a partir do banco e lê só esses
-  campos do `FormData`; campo ausente = "não mexer"; planejamento puro (`planejar*`) + gravação em transação, tudo ou nada.
-- **Código só de servidor** importa `'server-only'`. Componentes cliente não importam módulos com `node:crypto`, Prisma
-  ou ExcelJS — recebem dados prontos por props (ex.: nomes de campo da grade).
-- **Regras de negócio puras** em `src/lib/**` com `*.test.ts` ao lado; o alias `@/` funciona no Vitest.
-- **Auditoria:** `registrarAuditoria()` com ação, ids e campos alterados; **nunca** nomes, e-mails ou senhas.
-- **Importação em lote:** colunas/regras em `src/lib/importacao/<entidade>.ts` (puro, reaproveita o zod do formulário);
-  planilhas em `planilha.ts`; entrada/confirmação em `servidor.ts`; tela em `src/components/importador-planilha.tsx`.
-- **Alterar o schema:** edite só as linhas necessárias (não rode `prisma format`). Gere a migração sem banco:
-  ```bash
-  git show HEAD:prisma/schema.prisma > /tmp/schema_antigo.prisma
-  mkdir -p prisma/migrations/AAAAMMDDHHMMSS_nome
-  DATABASE_URL=postgresql://x:x@localhost:5432/x npx prisma migrate diff \
-    --from-schema-datamodel /tmp/schema_antigo.prisma --to-schema-datamodel prisma/schema.prisma \
-    --script > prisma/migrations/AAAAMMDDHHMMSS_nome/migration.sql
-  npx prisma generate
-  ```
-  **Revise o SQL:** troca de coluna gera `DROP` + `ADD ... NOT NULL`, que perde dados ou falha com linhas existentes.
-  Reescreva convertendo (veja `20261124150000_ofertas_ano_letivo`) e teste com linhas no formato antigo.
-- **Commits** pequenos e temáticos, em português; correções de bugs em commit separado.
+Movidas para o **[Guia do contribuidor](desenvolvimento/GUIA_DO_CONTRIBUIDOR.md)** (seções 4 a 10): acesso e auditoria,
+campos ocultos em vez de `acao.bind`, formulários, lote/importação, migrações, testes e a receita de módulo novo. Regras
+de contribuição em [CONTRIBUTING.md](../CONTRIBUTING.md). Funcionalidade nova exige tópico na Ajuda
+(`src/lib/ajuda/topicos.ts` + `npm run manual`).
 
 ---
 

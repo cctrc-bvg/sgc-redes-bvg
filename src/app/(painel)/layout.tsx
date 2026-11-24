@@ -70,6 +70,9 @@ export default async function LayoutPainel({ children }: { children: React.React
                 </Link>
               ))
             )}
+            <Link href="/ajuda" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
+              Ajuda
+            </Link>
             <Link href="/conta/contato" className="inline-flex min-h-11 items-center text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
               Meu contato
             </Link>

@@ -17,3 +17,7 @@ npm-debug.log*
 
 # cobertura de testes
 coverage/
+
+# Playwright (capturas da Ajuda)
+/test-results/
+/playwright-report/
