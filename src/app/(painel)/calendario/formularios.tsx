@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import type { TipoEventoCalendario } from '@prisma/client';
 import { Alerta, BotaoPrimario } from '@/components/campo';
+import { useVersaoDoEstado } from '@/components/versao-do-estado';
 import { MOTIVOS_SUSPENSAO, NOME_TIPO_EVENTO, SUSPENDE_POR_PADRAO, TIPOS_EVENTO, nomeEtapa } from '@/lib/calendario/regras';
 import { atualizarEvento, criarEvento, removerEvento, salvarEtapas, type EstadoEtapas, type EstadoEvento, type EstadoSimples } from './actions';
 
@@ -28,9 +29,10 @@ export function FormularioEvento({ inicial }: { inicial: DadosEvento }) {
   const [tipo, setTipo] = useState(v?.tipo ?? inicial.tipo);
   const [suspende, setSuspende] = useState(v ? v.suspendeAulas === 'on' : inicial.suspendeAulas);
   const [imprevisto, setImprevisto] = useState(v ? v.imprevisto === 'on' : inicial.imprevisto);
+  const versao = useVersaoDoEstado(estado);
 
   return (
-    <form action={acao} className="space-y-5" noValidate>
+    <form key={versao} action={acao} className="space-y-5" noValidate>
       {estado?.mensagem && <Alerta tipo={estado.sucesso ? 'sucesso' : 'erro'}>{estado.mensagem}</Alerta>}
       {inicial.id && <input type="hidden" name="eventoId" value={inicial.id} />}
       <div>

@@ -98,6 +98,9 @@ export function Selecao({ id, rotulo, opcoes, dica, erros, className, ...props }
         </p>
       )}
       <select
+        // Recria o campo quando o valor devolvido pela ação muda: o React 19 limpa o formulário depois da ação e
+        // um <select> não controlado voltaria à opção da primeira renderização.
+        key={String(props.defaultValue ?? '')}
         id={id}
         name={id}
         aria-invalid={temErro || undefined}

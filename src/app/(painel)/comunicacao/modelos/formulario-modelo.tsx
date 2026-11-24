@@ -62,7 +62,7 @@ export function FormularioModelo({ inicial }: { inicial: DadosModelo }) {
           <label htmlFor="tipo" className="block text-sm font-semibold text-slate-800">
             Tipo de interação
           </label>
-          <select id="tipo" name="tipo" defaultValue={String(v?.tipo ?? inicial.tipo)} className={entrada}>
+          <select key={String(v?.tipo ?? inicial.tipo)} id="tipo" name="tipo" defaultValue={String(v?.tipo ?? inicial.tipo)} className={entrada}>
             {TIPOS_INTERACAO.map((t) => (
               <option key={t} value={t}>
                 {NOME_TIPO_INTERACAO[t]}
