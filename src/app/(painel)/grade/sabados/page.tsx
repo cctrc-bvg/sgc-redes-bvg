@@ -32,6 +32,13 @@ export default async function PaginaSabados({ searchParams }: { searchParams: Pr
       <p className="mt-1 text-slate-700">
         Os sábados letivos variam com o calendário acadêmico. Em cada um, vale a grade do dia da semana indicado.
       </p>
+      {podeEditar && (
+        <p className="mt-3">
+          <Link href="/grade/sabados/importar" className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
+            Importar planilha
+          </Link>
+        </p>
+      )}
 
       <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
         {sabados.length === 0 ? (

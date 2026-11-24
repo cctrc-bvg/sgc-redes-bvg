@@ -119,6 +119,8 @@ export const NOME_ACAO: Record<string, string> = {
   CLONOU_CRONOGRAMA_PEI: 'Copiou cronograma de PEI',
   MUDOU_SITUACAO_PPE: 'Mudou situação de PPE',
   EXCLUIU_PPE: 'Excluiu PPE',
+  IMPORTOU_OFERTAS: 'Importou ofertas por planilha',
+  IMPORTOU_SABADOS_LETIVOS: 'Importou sábados letivos por planilha',
 };
 
 export function descreverAcao(acao: string): string {

@@ -44,8 +44,15 @@ export default async function PaginaOfertas({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-slate-900">Ofertas de disciplinas</h1>
-      <p className="mt-1 text-slate-700">Distribuição das disciplinas aos professores por turma e ano letivo (Art. 22, XXIV).</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Ofertas de disciplinas</h1>
+          <p className="mt-1 text-slate-700">Distribuição das disciplinas aos professores por turma e ano letivo (Art. 22, XXIV).</p>
+        </div>
+        <Link href="/ofertas/importar" className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
+          Importar planilha
+        </Link>
+      </div>
 
       <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
         <div>
