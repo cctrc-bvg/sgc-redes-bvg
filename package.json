@@ -21,7 +21,8 @@
     "db:demo": "tsx prisma/demo.ts",
     "db:studio": "prisma studio",
     "capturas": "tsx scripts/capturar-telas.ts",
-    "manual": "tsx scripts/gerar-manual.ts"
+    "manual": "tsx scripts/gerar-manual.ts",
+    "e2e": "playwright test"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

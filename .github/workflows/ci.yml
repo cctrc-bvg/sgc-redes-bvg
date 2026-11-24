@@ -1,5 +1,5 @@
-# Verificação em cada push e pull request: typecheck, testes unitários e build de produção.
-# Não precisa de banco: os testes cobrem as regras puras e o build não consulta o PostgreSQL.
+# Verificação em cada push e pull request: typecheck, testes unitários, build de produção e E2E (Playwright).
+# O job "verificar" não precisa de banco; o job "e2e" usa um PostgreSQL de serviço com os dados de demonstração.
 name: CI
 
 on:
@@ -36,3 +36,50 @@ jobs:
         run: npm test
       - name: Build de produção
         run: npm run build
+
+  # Testes de fumaça com navegador (Playwright) sobre os dados de demonstração.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sgc
+          POSTGRES_PASSWORD: sgc
+          POSTGRES_DB: sgc
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U sgc" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      DATABASE_URL: postgresql://sgc:sgc@localhost:5432/sgc
+      SEED_COORDENADOR_SENHA: SenhaProvisoria1
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Banco com dados de demonstração
+        run: |
+          npx prisma migrate deploy
+          npx prisma db seed
+          npm run db:demo -- --confirmo
+      - name: Build de produção
+        run: npm run build
+      - name: Instalar o Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Testes E2E
+        run: npm run e2e
+      - name: Relatório do Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

@@ -43,10 +43,11 @@ do código, testes e a receita para criar um módulo novo.
    ./scripts/dev.sh testar                       # typecheck + testes unitários
    NEXT_TELEMETRY_DISABLED=1 npm run build       # build de produção
    npm run manual                                # se mexeu na Ajuda
+   npm run e2e                                   # se mexeu em telas (banco com db:demo; veja o guia, seção 9)
    ```
    Se mexeu em telas ou ações, teste no navegador **com e sem JavaScript** e descreva o que testou no PR.
 6. **Abra o pull request** para `main` preenchendo o modelo: o que muda, por quê, como testar, capturas (com dados
-   fictícios) e o checklist. O CI (typecheck, testes e build) precisa passar.
+   fictícios) e o checklist. O CI (typecheck, testes, build e E2E) precisa passar.
 7. **Revisão:** pelo menos uma pessoa mantenedora revisa. Responda aos comentários com novos commits (não reescreva o
    histórico durante a revisão). A fusão é feita pela Coordenação.
 
