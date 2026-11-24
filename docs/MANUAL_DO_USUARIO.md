@@ -401,7 +401,7 @@ flowchart LR
 
 **Cadastrar o e-mail de um setor** (Coordenação)
 
-1. Em Comunicação, na seção de grupos e setores, informe o e-mail institucional e a saudação ("equipe da CAE").
+1. Em Comunicação, na seção de grupos e setores, informe o e-mail institucional e a saudação ("prezados(as) colegas da Assistência Estudantil").
 2. As próximas mensagens já saem com o destinatário e a saudação.
 
 ### Telas

@@ -26,8 +26,9 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 - `origin` = fork `isaacmiranda/sgc-redes-bvg` (público, admin). `upstream` = `cctrc-bvg/sgc-redes-bvg` (original, só leitura).
 - **PR #1** (`minha-contribuicao` → `main`, versão inicial completa) foi **mesclado em 24/11/2026**, sem comentários.
   `minha-contribuicao` está encerrado: trabalho novo sai de `upstream/main` num branch novo.
-- **Branch `e2e-playwright`** (local, ainda sem push): E2E com Playwright no CI, `prisma.config.ts` e mensagens prontas de
-  PPI/PPE. Vira o PR #2; texto em `.handoff/github/pr-e2e-playwright.md`.
+- **PR #2** (`e2e-playwright` → `main`, aberto em 24/11/2026): E2E com Playwright no CI, `prisma.config.ts`, mensagens
+  prontas de PPI/PPE, guia de implantação, backup e saudações padrão. CI verde (`verificar` + `e2e` 18/18 no
+  `ubuntu-24.04`); aguarda revisão. Texto em `.handoff/github/pr-e2e-playwright.md`.
 - **Peça confirmação antes de cada push** (commits novos num branch com PR aberto entram no PR).
 
 **Pronto (Fases 1 e 2 do FSD + extras):**
@@ -71,9 +72,9 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 
 ## 3. Pendências que dependem do usuário
 
-- [ ] **Autorizar o push do branch `e2e-playwright`** e a abertura do PR #2; depois, acompanhar o CI (job `e2e` roda pela
-      primeira vez no GitHub) e a revisão.
-- [ ] **Cadastrar em Comunicação** o e-mail institucional e a saudação de cada grupo/setor, incluindo a nutricionista.
+- [ ] **Acompanhar a revisão do PR #2** (o commit das saudações ainda precisa de push, com confirmação).
+- [ ] **Cadastrar em Comunicação** o e-mail institucional de cada grupo/setor, incluindo a nutricionista. Saudações
+      padrão (seed, só bancos novos): "prezados(as) …" no plural e "prezado(a) …" no singular.
 - [ ] **Configurar `APP_URL`** (https) no servidor de produção — ainda sem endereço definido (decisão de 24/11: fica para depois).
 - [ ] **VM de produção no Proxmox** (Docker Compose), com backups do PostgreSQL e HTTPS (proxy reverso).
 - [ ] Testar as planilhas de exemplo com dados reais (`.handoff/planilhas-exemplo/`, fora do git).
@@ -84,7 +85,7 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 
 ### P1 — próximos passos (em ordem)
 
-1. **PR #2 (`e2e-playwright`):** push e abertura com confirmação; acompanhar o CI e a revisão.
+1. **PR #2 (`e2e-playwright`):** CI verde; acompanhar a revisão e corrigir em commits novos (push com confirmação).
 2. **Implantação em produção** (falta só o endereço): seguir `docs/IMPLANTACAO.md` — VM no Proxmox, Docker Compose,
    proxy reverso com HTTPS, `APP_URL`, backup diário (`scripts/backup-banco.sh`) e teste de restauração.
 3. **Ampliar o E2E aos poucos:** os roteiros Python de `.handoff/e2e/` (sem JS, fora do git) cobrem mais regras que os

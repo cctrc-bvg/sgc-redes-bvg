@@ -482,7 +482,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       {
         titulo: 'Cadastrar o e-mail de um setor',
         quem: 'Coordenação',
-        passos: ['Em Comunicação, na seção de grupos e setores, informe o e-mail institucional e a saudação ("equipe da CAE").', 'As próximas mensagens já saem com o destinatário e a saudação.'],
+        passos: ['Em Comunicação, na seção de grupos e setores, informe o e-mail institucional e a saudação ("prezados(as) colegas da Assistência Estudantil").', 'As próximas mensagens já saem com o destinatário e a saudação.'],
       },
     ],
     imagens: [
