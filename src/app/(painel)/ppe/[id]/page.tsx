@@ -8,9 +8,18 @@ import { dataDoBanco, formatarData } from '@/lib/ausencias/regras';
 import { calcularTetoPei } from '@/lib/ppi-ppe-engines';
 import { LINHAS_EXTRAS_CRONOGRAMA, MODALIDADES_DEFINIVEIS, NOME_MODALIDADE, NOME_STATUS_PPE, TRANSICOES } from '@/lib/ppe/regras';
 import { acessoAoPpe } from '@/lib/ppe/servidor';
+import { situacaoDaPpe, type SituacaoPpe } from '@/lib/ppe/mensagens';
+import { temPermissao } from '@/lib/auth/rbac';
 import { FormularioClonar, FormularioExclusaoPpe, FormularioModalidade, FormularioPei, FormularioSituacao } from '../formularios';
 
 export const metadata: Metadata = { title: 'PPE — SGC-Redes' };
+
+const COMUNICAR: Record<SituacaoPpe, string> = {
+  definir: 'Peça ao docente da disciplina que defina a modalidade.',
+  modalidade: 'Modalidade definida: avise o estudante e a CTP.',
+  pei: 'PEI pronto: envie o cronograma ao estudante e à CTP.',
+  resultado: 'Avise o estudante e a CTP do resultado.',
+};
 
 export default async function PaginaPpeDetalhe({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ aviso?: string }> }) {
   const { usuario } = await exigirPermissao('ppe:ver');
@@ -36,6 +45,8 @@ export default async function PaginaPpeDetalhe({ params, searchParams }: { param
   const teto = calcularTetoPei(ppe.disciplina.cargaHoraria);
   const editavel = acesso.definir && ['EM_ANDAMENTO', 'PRORROGADO'].includes(ppe.status);
   const proximas = TRANSICOES[ppe.status].filter((s) => acesso.gerenciar || s !== 'LANCADO_ACADEMICO');
+  const podeComunicar = temPermissao(usuario.role, 'comunicacao:enviar');
+  const situacao = situacaoDaPpe({ modalidade: ppe.modalidade, status: ppe.status, pei: ppe.pei });
 
   return (
     <div className="max-w-3xl">
@@ -54,6 +65,16 @@ export default async function PaginaPpeDetalhe({ params, searchParams }: { param
         <strong>{NOME_STATUS_PPE[ppe.status]}</strong>
         {ppe.notaFinal !== null && ` · Nota ${String(ppe.notaFinal).replace('.', ',')}`}
       </p>
+
+      {podeComunicar && (
+        <p className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-slate-800">
+          <span aria-hidden="true">✉ </span>
+          {COMUNICAR[situacao]}{' '}
+          <Link href={`/ppe/${ppe.id}/comunicar`} className="font-semibold text-if-verde-700 underline underline-offset-2">
+            Ver mensagens prontas
+          </Link>
+        </p>
+      )}
 
       {aviso === 'registrada' && (
         <div className="mt-4">
