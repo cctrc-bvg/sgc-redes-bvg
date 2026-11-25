@@ -148,7 +148,6 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
   - avaliação final no mínimo 3 dias letivos após o registro da média parcial (Art. 105, § 1º): conferência no
     cadastro do período de avaliações.
 - **Próximo (depende de decisão):**
-  - refeições nos dias de avaliação final (G24): sugestão de lançar acréscimos por dia;
   - login Google (G20–G22, adiado pelo usuário);
   - duas réplicas do app atrás do Caddy, se o pico crescer.
 - **Análise dos fluxos** (pedido do usuário): `docs/FLUXOS.md` com diagramas por fluxo (responsável, tela e código)

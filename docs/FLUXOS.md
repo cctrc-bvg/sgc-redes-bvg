@@ -139,7 +139,7 @@ flowchart LR
   `src/lib/calendario/regras.ts`).
 - Acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais.
 - O calendário avisa se o período for cadastrado antes do último dia letivo (`avisosAvaliacoesFinais`).
-- Refeições nesses dias: acréscimo manual pela Coordenação (G24, pendente).
+- Refeições nesses dias (G24, aceito): a grade não prevê nenhuma; a Coordenação lança o acréscimo por turma e dia em Alimentação › Acrescentar refeição, e a AE vê o acréscimo na agenda da tela inicial.
 
 ---
 

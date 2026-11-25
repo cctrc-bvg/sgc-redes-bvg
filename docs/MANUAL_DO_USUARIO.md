@@ -125,7 +125,7 @@ No sistema: `/calendario`.
 - Registrar suspensões não previstas (falta de energia, de água, de transporte, luto oficial, ponto facultativo municipal…) como dias a repor.
 - Cadastrar sábados letivos, cada um seguindo a grade de um dia da semana.
 - Contar os dias letivos por mês, etapa, semestre e ano, comparando com a meta (50 por etapa, 200 no ano).
-- Avaliações finais nunca contam como dias letivos (ROD, Art. 32): ficam fora da contagem e da grade, inclusive aos sábados. Acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais; o sistema avisa se o período for cadastrado antes disso.
+- Avaliações finais nunca contam como dias letivos (ROD, Art. 32; refeições nesses dias só por acréscimo lançado na Alimentação): ficam fora da contagem e da grade, inclusive aos sábados. Acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais; o sistema avisa se o período for cadastrado antes disso.
 - Ver o ano inteiro ou um mês, imprimir/salvar em PDF e exportar/importar em planilha.
 - Ao registrar uma alteração imprevista, abrir as mensagens prontas para avisar docentes, CAE, nutricionista, Gestão, CTP e turmas.
 

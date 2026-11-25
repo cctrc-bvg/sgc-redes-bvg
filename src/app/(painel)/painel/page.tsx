@@ -351,6 +351,8 @@ function RefeicoesDosDias({ dias, hoje }: { dias: TotaisDoDia[]; hoje: string })
         {dias.map((d) => {
           const ehHoje = d.dataISO === hoje;
           const quando = ehHoje ? 'Hoje' : 'Amanhã';
+          // Dia sem aula (feriado, avaliações finais) só some da lista se não houver acréscimo lançado.
+          const semRefeicao = d.semAula !== null && REFEICOES.every((r) => d.total[r] === 0);
           return (
             <li
               key={d.dataISO}
@@ -365,17 +367,20 @@ function RefeicoesDosDias({ dias, hoje }: { dias: TotaisDoDia[]; hoje: string })
                   Detalhar<span className="sr-only"> {quando.toLowerCase()}</span>
                 </Link>
               </p>
-              {d.semAula ? (
+              {semRefeicao ? (
                 <p className="mt-1 text-sm text-slate-600">{d.semAula}: nenhuma refeição prevista.</p>
               ) : (
-                <dl className="mt-1 space-y-0.5 text-sm">
-                  {REFEICOES.map((r) => (
-                    <div key={r} className="flex justify-between gap-2">
-                      <dt className="text-slate-700">{NOME_REFEICAO_HORARIO[r]}</dt>
-                      <dd className="font-semibold tabular-nums text-slate-900">{d.total[r]}</dd>
-                    </div>
-                  ))}
-                </dl>
+                <>
+                  {d.semAula && <p className="mt-1 text-sm text-slate-600">{d.semAula}: só os acréscimos lançados pela Coordenação.</p>}
+                  <dl className="mt-1 space-y-0.5 text-sm">
+                    {REFEICOES.map((r) => (
+                      <div key={r} className="flex justify-between gap-2">
+                        <dt className="text-slate-700">{NOME_REFEICAO_HORARIO[r]}</dt>
+                        <dd className="font-semibold tabular-nums text-slate-900">{d.total[r]}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </>
               )}
               {d.avisos > 0 && (
                 <p className="mt-1 rounded bg-amber-50 px-2 py-1 text-sm text-amber-900">
