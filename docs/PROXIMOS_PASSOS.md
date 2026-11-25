@@ -116,18 +116,19 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 
 - **Tela inicial nova** (pedido do usuário): "Precisa da sua atenção" primeiro (ações por perfil, de urgente a
   acompanhar, só com quantidades — `src/lib/painel/acoes.ts`), "Todas as funções" num `<details>` de um clique (aberto
-  quando não há pendências), agenda ao lado (semana do docente; mês + próximos 30 dias para os demais), ícones Lucide
+  quando não há pendências), agenda ao lado (semana do docente; refeições de hoje e amanhã para a AE; mês + próximos 30 dias para os demais, com as ausências de hoje para a Coordenação), ícones Lucide
   por função (`src/lib/navegacao.ts`, fonte única com o cabeçalho) e botão **Início** no cabeçalho.
 - Aviso de prazo prorrogado da PPE; PEI impresso no modelo do campus; textos de PPI/PPE validados.
 
-### Decisões pendentes do usuário (com sugestão)
+### Decisões de 25/11/2026 (sugestões aceitas pelo usuário)
 
-- **Agenda da Coordenação:** hoje mostra o mês. Sugestão: manter o mês e, numa próxima etapa, acrescentar "Hoje" (aulas
-  com ausência e coberturas do dia).
-- **Agenda da Assistência Estudantil:** hoje mostra o mês. Sugestão: trocar pela previsão de refeições de hoje e amanhã.
-- **"Minha grade" para a Coordenação:** aparece porque o perfil tem todas as permissões. Sugestão: manter (coordenador
-  também leciona).
-- **Logo oficial:** trocar `public/marca/ifce-vertical.png` pelo SVG da Comunicação do IFCE.
+- **Agenda da Coordenação:** mês + bloco **Hoje** com as ausências do dia (pendentes primeiro) — feito.
+- **Agenda da Assistência Estudantil:** refeições previstas para hoje e amanhã, já com os avisos, mais os próximos
+  eventos — feito (`src/lib/alimentacao/servidor.ts`, `totaisDoDia`).
+- **"Minha grade" para a Coordenação:** mantida (coordenador também leciona).
+- **Logo oficial:** `public/marca/ifce-vertical.png` substituído pela assinatura enviada pelo usuário (PNG; trocar por
+  SVG se a Comunicação do IFCE fornecer).
+- **PR #3** (`e2e-ampliado`): abrir depois que o PR #2 for mesclado.
 
 ### Concluídos em 24/11/2026
 

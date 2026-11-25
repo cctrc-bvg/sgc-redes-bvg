@@ -37,7 +37,7 @@ No sistema: `/painel` · disponível para todos os perfis.
 - Trocar a senha provisória no primeiro acesso (obrigatório).
 - Na tela inicial, ver primeiro o que precisa da sua atenção agora (do mais urgente ao menos), com um botão para resolver cada item.
 - Abrir "Todas as funções" com um clique: cada função tem um ícone, o mesmo do menu do cabeçalho. Sem pendências, o menu já vem aberto.
-- Acompanhar a agenda: o professor vê a própria semana (aulas, feriados, substituições); os demais perfis, o mês do calendário acadêmico e os próximos eventos.
+- Acompanhar a agenda: o professor vê a própria semana (aulas, feriados, substituições); a Assistência Estudantil, as refeições previstas para hoje e amanhã; os demais perfis, o mês do calendário acadêmico e os próximos eventos (a Coordenação, também as ausências de hoje).
 - Voltar à tela inicial de qualquer página pelo botão "Início" do cabeçalho.
 - Informar seu WhatsApp e dizer se aceita recebê-lo pelo sistema (Meu contato).
 - Sair do sistema em qualquer página (botão Sair). A sessão expira após 8 horas sem uso.
@@ -80,7 +80,7 @@ flowchart LR
 
 *Tela de entrada: e-mail institucional e senha.*
 
-![Tela inicial da Coordenação: cartões "Precisa da sua atenção" com quantidade e botão para resolver, o menu "Todas as funções" fechado e, ao lado, o calendário do mês com o dia de hoje marcado e os próximos eventos.](../public/manual/primeiros-passos-painel.jpg)
+![Tela inicial da Coordenação: cartões "Precisa da sua atenção" com quantidade e botão para resolver, o menu "Todas as funções" fechado e, ao lado, as ausências de hoje, o calendário do mês com o dia de hoje marcado e os próximos eventos.](../public/manual/primeiros-passos-painel.jpg)
 
 *Tela inicial: primeiro o que precisa de atenção; as demais funções num menu de um clique; ao lado, o mês.*
 

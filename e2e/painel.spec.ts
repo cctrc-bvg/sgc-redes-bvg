@@ -18,6 +18,20 @@ test('Coordenação: pendências primeiro, funções num menu de um clique e o m
   const agenda = page.locator('aside[aria-labelledby="agenda"]');
   await expect(agenda.locator('[aria-current="date"]')).toHaveCount(1);
   await expect(agenda.getByRole('link', { name: 'Abrir calendário' })).toBeVisible();
+  // Acima do mês, as ausências de hoje (ou o aviso de que não há nenhuma).
+  const hoje = agenda.locator('section[aria-labelledby="hoje"]');
+  await expect(hoje.getByRole('heading', { name: 'Hoje' })).toBeVisible();
+  await expect(hoje.getByRole('link', { name: 'Todas as ausências' })).toHaveAttribute('href', '/ausencias');
+});
+
+test('Assistência Estudantil: refeições previstas para hoje e amanhã', async ({ page }) => {
+  await entrar(page, 'cae');
+  const agenda = page.locator('aside[aria-labelledby="agenda"]');
+  await expect(agenda.getByRole('heading', { name: 'Refeições previstas' })).toBeVisible();
+  await expect(agenda.locator('ol > li')).toHaveCount(2);
+  await expect(agenda.locator('ol > li[aria-current="date"]')).toContainText('Hoje');
+  await expect(agenda.getByRole('link', { name: 'Detalhar amanhã' })).toHaveAttribute('href', /\/alimentacao\?data=\d{4}-\d{2}-\d{2}$/);
+  await expect(agenda.getByRole('heading', { name: 'Próximos 30 dias' })).toBeVisible();
 });
 
 test('Professor: a semana dele na agenda', async ({ page }) => {

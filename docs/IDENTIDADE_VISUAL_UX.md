@@ -17,7 +17,7 @@ obrigatória em sítios e sistemas de órgãos do Governo Federal.
 | Redução máxima: símbolo nunca menor que **1 cm / 30 px** (p. 13) | No cabeçalho, a assinatura horizontal é exibida com o símbolo de pelo menos 30 px de altura. Em telas estreitas, usa-se a versão vertical ou só o nome "SGC-Redes" — nunca a marca miniaturizada. |
 | Reserva de integridade de **1 módulo x** ao redor (p. 12) | Área livre mínima (padding) em volta da assinatura; nenhum botão, badge ou borda invade essa área. |
 | Em fundos coloridos, aplicar sobre **base branca**; em fundos escuros, tipografia branca (p. 19) | O cabeçalho é branco. Um eventual tema escuro usa a versão monocromática negativa (p. 15). |
-| Arquivo da marca em uso | `public/marca/ifce-vertical.png` (assinatura vertical *Instituto Federal — Ceará*) foi extraído do modelo de PEI do campus (`docs/referencias/modelo-pei-campus-boa-viagem.pdf`) e é usado só no PEI impresso, a 1,9 cm de altura, como no modelo. **Trocar pelo SVG oficial** da Comunicação do IFCE quando disponível. |
+| Arquivo da marca em uso | `public/marca/ifce-vertical.png`: assinatura vertical oficial *Instituto Federal — Ceará*, enviada pelo usuário em 25/11/2026 (margens aparadas). Usada só no PEI impresso, a 1,9 cm de altura, como no modelo do campus (`docs/referencias/modelo-pei-campus-boa-viagem.pdf`). Se a Comunicação do IFCE fornecer o SVG, trocar por ele. |
 | Não aplicar como marca d'água (p. 17) | A marca não aparece como fundo de telas, relatórios ou PDFs gerados (ficha PPI, PEI). |
 | Assinatura cooperada: distância mínima de **3x** de outras marcas; MEC/Governo Federal seguem a SECOM (p. 18) | Rodapés e documentos exportados que combinem IF + MEC seguem esse espaçamento. |
 

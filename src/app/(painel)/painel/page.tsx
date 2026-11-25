@@ -3,13 +3,16 @@ import Link from 'next/link';
 import { Alerta } from '@/components/campo';
 import { Icone } from '@/components/icone';
 import { exigirUsuario } from '@/lib/auth/dal';
-import { NOME_PERFIL, temPermissao } from '@/lib/auth/rbac';
-import { hojeEmFortaleza } from '@/lib/ausencias/regras';
+import { NOME_PERFIL, temPermissao, type Permissao } from '@/lib/auth/rbac';
+import { formatarData, hojeEmFortaleza, somarDias } from '@/lib/ausencias/regras';
+import { NOME_REFEICAO_HORARIO } from '@/lib/ausencias/mensagens';
+import { REFEICOES } from '@/lib/alimentacao/previsao';
+import { totaisDoDia, type TotaisDoDia } from '@/lib/alimentacao/servidor';
 import { carregarAno } from '@/lib/calendario/servidor';
 import { FUNCOES_DA_CONTA, funcoesPorGrupo, type NomeIcone } from '@/lib/navegacao';
 import { separarAcoes, type AcaoPrioritaria, type NivelAcao } from '@/lib/painel/acoes';
 import { periodoCurto, proximosEventos, tituloDoEvento, type DiaDaAgenda, type EventoAgenda } from '@/lib/painel/agenda';
-import { acoesDoPainel, semanaDoDocente } from '@/lib/painel/servidor';
+import { acoesDoPainel, ausenciasDoDia, semanaDoDocente } from '@/lib/painel/servidor';
 import { NOME_TIPO_EVENTO } from '@/lib/calendario/regras';
 import { montarDias } from '../calendario/dias';
 import { MesCompacto } from '../calendario/mes';
@@ -30,12 +33,17 @@ export default async function PaginaPainel({ searchParams }: { searchParams: Pro
   const { usuario } = await exigirUsuario();
   const { aviso } = await searchParams;
   const hoje = hojeEmFortaleza();
-  // Docente (sem a gestão de ausências) vê a própria semana; os demais perfis, o mês do calendário acadêmico.
-  const agendaDaSemana = temPermissao(usuario.role, 'substituicao:responder') && !temPermissao(usuario.role, 'ausencias:registrar');
-  const [acoes, semana, ano] = await Promise.all([
+  // Agenda por perfil: docente (sem a gestão de ausências) vê a própria semana; Assistência Estudantil, as refeições
+  // de hoje e amanhã; os demais, o mês do calendário acadêmico (a Coordenação, com as ausências de hoje acima).
+  const pode = (p: Permissao) => temPermissao(usuario.role, p);
+  const agendaDaSemana = pode('substituicao:responder') && !pode('ausencias:registrar');
+  const agendaDeRefeicoes = pode('alimentacao:confirmar') && !pode('alimentacao:gerenciar');
+  const [acoes, semana, ano, refeicoes, ausenciasHoje] = await Promise.all([
     acoesDoPainel(usuario),
     agendaDaSemana ? semanaDoDocente(usuario.id, hoje) : Promise.resolve(null),
     agendaDaSemana ? Promise.resolve(null) : carregarAno(Number(hoje.slice(0, 4))),
+    agendaDeRefeicoes ? Promise.all([totaisDoDia(hoje), totaisDoDia(somarDias(hoje, 1))]) : Promise.resolve(null),
+    pode('ausencias:registrar') ? ausenciasDoDia(hoje) : Promise.resolve(null),
   ]);
   const { agir, acompanhar } = separarAcoes(acoes);
   const grupos = funcoesPorGrupo(usuario.role);
@@ -116,8 +124,16 @@ export default async function PaginaPainel({ searchParams }: { searchParams: Pro
         <aside aria-labelledby="agenda" className="min-w-0 space-y-3">
           {semana ? (
             <SemanaDoDocente dias={semana} />
+          ) : refeicoes ? (
+            <>
+              <RefeicoesDosDias dias={refeicoes} hoje={hoje} />
+              {ano && <ProximosEventos ano={ano} hoje={hoje} />}
+            </>
           ) : ano ? (
-            <MesDoCalendario ano={ano} hoje={hoje} />
+            <>
+              {ausenciasHoje && <AusenciasDeHoje ausencias={ausenciasHoje} />}
+              <MesDoCalendario ano={ano} hoje={hoje} />
+            </>
           ) : null}
         </aside>
       </div>
@@ -233,17 +249,102 @@ function SemanaDoDocente({ dias }: { dias: DiaDaAgenda[] }) {
   );
 }
 
+/** Coordenação: ausências de hoje, as pendentes primeiro. */
+function AusenciasDeHoje({ ausencias }: { ausencias: Awaited<ReturnType<typeof ausenciasDoDia>> }) {
+  return (
+    <section aria-labelledby="hoje" className="rounded-lg border border-if-verde-700 bg-white p-3 shadow-sm">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 id="hoje" className="flex items-center gap-2 font-semibold text-slate-900">
+          <Icone nome="ausencias" className="size-5 text-if-verde-700" />
+          Hoje
+        </h2>
+        <Link href="/ausencias" className="text-sm text-if-verde-700 underline underline-offset-2">
+          Todas as ausências
+        </Link>
+      </div>
+      {ausencias.length === 0 ? (
+        <p className="mt-1 text-sm text-slate-600">Nenhuma ausência registrada para hoje.</p>
+      ) : (
+        <ul className="mt-1 space-y-2 text-sm">
+          {ausencias.map((a) => (
+            <li key={a.id}>
+              <Link href={`/ausencias/${a.id}`} className="font-semibold text-if-verde-800 underline underline-offset-2">
+                {a.turma} · {a.blocos}
+              </Link>
+              <span className="block text-slate-700">
+                {a.disciplina} · {a.professor}
+              </span>
+              <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${a.pendente ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'}`}>
+                {a.situacao}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/** Assistência Estudantil: refeições previstas para hoje e amanhã, já com os avisos de alteração. */
+function RefeicoesDosDias({ dias, hoje }: { dias: TotaisDoDia[]; hoje: string }) {
+  return (
+    <>
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 id="agenda" className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <Icone nome="alimentacao" className="size-5 text-if-verde-700" />
+          Refeições previstas
+        </h2>
+        <Link href="/alimentacao" className="text-sm text-if-verde-700 underline underline-offset-2">
+          Ver por turma
+        </Link>
+      </div>
+      <ol className="space-y-2">
+        {dias.map((d) => {
+          const ehHoje = d.dataISO === hoje;
+          const quando = ehHoje ? 'Hoje' : 'Amanhã';
+          return (
+            <li
+              key={d.dataISO}
+              aria-current={ehHoje ? 'date' : undefined}
+              className={`rounded-lg border bg-white p-3 shadow-sm ${ehHoje ? 'border-if-verde-700 ring-1 ring-if-verde-700' : 'border-slate-200'}`}
+            >
+              <p className="flex items-center justify-between gap-2 font-semibold text-slate-900">
+                <span>
+                  {quando}, {formatarData(d.dataISO).slice(0, 5)}
+                </span>
+                <Link href={`/alimentacao?data=${d.dataISO}`} className="text-sm font-normal text-if-verde-700 underline underline-offset-2">
+                  Detalhar<span className="sr-only"> {quando.toLowerCase()}</span>
+                </Link>
+              </p>
+              {d.semAula ? (
+                <p className="mt-1 text-sm text-slate-600">{d.semAula}: nenhuma refeição prevista.</p>
+              ) : (
+                <dl className="mt-1 space-y-0.5 text-sm">
+                  {REFEICOES.map((r) => (
+                    <div key={r} className="flex justify-between gap-2">
+                      <dt className="text-slate-700">{NOME_REFEICAO_HORARIO[r]}</dt>
+                      <dd className="font-semibold tabular-nums text-slate-900">{d.total[r]}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              {d.avisos > 0 && (
+                <p className="mt-1 rounded bg-amber-50 px-2 py-1 text-sm text-amber-900">
+                  {d.avisos === 1 ? '1 aviso de alteração já incluído na conta' : `${d.avisos} avisos de alteração já incluídos na conta`}
+                </p>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </>
+  );
+}
+
 function MesDoCalendario({ ano, hoje }: { ano: Awaited<ReturnType<typeof carregarAno>>; hoje: string }) {
   const mes = Number(hoje.slice(5, 7));
   const dias = montarDias(ano);
   const letivosNoMes = ano.contagem.letivos.filter((d) => d.slice(5, 7) === hoje.slice(5, 7)).length;
-  const eventos: EventoAgenda[] = ano.eventos.map((e) => ({
-    inicio: e.inicio,
-    fim: e.fim,
-    titulo: tituloDoEvento(NOME_TIPO_EVENTO[e.tipo], e.descricao),
-    suspende: e.suspendeAulas,
-  }));
-  const proximos = proximosEventos(eventos, hoje);
   return (
     <>
       <div className="flex items-baseline justify-between gap-2">
@@ -256,26 +357,40 @@ function MesDoCalendario({ ano, hoje }: { ano: Awaited<ReturnType<typeof carrega
         </Link>
       </div>
       <MesCompacto ano={ano.ano} mes={mes} dias={dias} letivos={letivosNoMes} hoje={hoje} />
-      <section aria-labelledby="proximos" className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-        <h3 id="proximos" className="text-sm font-semibold text-slate-900">
-          Próximos 30 dias
-        </h3>
-        {proximos.length === 0 ? (
-          <p className="mt-1 text-sm text-slate-600">Nenhum evento no calendário.</p>
-        ) : (
-          <ul className="mt-1 space-y-1 text-sm">
-            {proximos.map((e) => (
-              <li key={`${e.inicio}-${e.titulo}`} className="flex gap-2">
-                <span className="w-[6.5rem] shrink-0 tabular-nums text-slate-600">{periodoCurto(e)}</span>
-                <span className={e.suspende ? 'text-slate-900' : 'text-slate-700'}>
-                  {e.titulo}
-                  {e.suspende && <span className="ml-1 text-xs font-semibold text-slate-600">(sem aula)</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <ProximosEventos ano={ano} hoje={hoje} />
     </>
+  );
+}
+
+/** Eventos do calendário nos próximos 30 dias. */
+function ProximosEventos({ ano, hoje }: { ano: Awaited<ReturnType<typeof carregarAno>>; hoje: string }) {
+  const eventos: EventoAgenda[] = ano.eventos.map((e) => ({
+    inicio: e.inicio,
+    fim: e.fim,
+    titulo: tituloDoEvento(NOME_TIPO_EVENTO[e.tipo], e.descricao),
+    suspende: e.suspendeAulas,
+  }));
+  const proximos = proximosEventos(eventos, hoje);
+  return (
+    <section aria-labelledby="proximos" className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+      <h3 id="proximos" className="text-sm font-semibold text-slate-900">
+        Próximos 30 dias
+      </h3>
+      {proximos.length === 0 ? (
+        <p className="mt-1 text-sm text-slate-600">Nenhum evento no calendário.</p>
+      ) : (
+        <ul className="mt-1 space-y-1 text-sm">
+          {proximos.map((e) => (
+            <li key={`${e.inicio}-${e.titulo}`} className="flex gap-2">
+              <span className="w-[6.5rem] shrink-0 tabular-nums text-slate-600">{periodoCurto(e)}</span>
+              <span className={e.suspende ? 'text-slate-900' : 'text-slate-700'}>
+                {e.titulo}
+                {e.suspende && <span className="ml-1 text-xs font-semibold text-slate-600">(sem aula)</span>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

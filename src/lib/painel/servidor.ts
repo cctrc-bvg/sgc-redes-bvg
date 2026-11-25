@@ -2,7 +2,7 @@ import 'server-only';
 import type { Role } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { temPermissao, type Permissao } from '@/lib/auth/rbac';
-import { dataDoBanco, dataParaBanco, hojeEmFortaleza, somarDias } from '@/lib/ausencias/regras';
+import { NOME_STATUS, dataDoBanco, dataParaBanco, hojeEmFortaleza, somarDias } from '@/lib/ausencias/regras';
 import { mudancasDoProfessor } from '@/lib/ausencias/servidor';
 import { NOME_TIPO_EVENTO } from '@/lib/calendario/regras';
 import { blocosOrdenados, celulasDoProfessor } from '@/lib/grade/consultas';
@@ -142,4 +142,30 @@ export async function semanaDoDocente(professorId: string, hojeISO: string = hoj
     ausencias: porData,
     mudancas,
   });
+}
+
+/** Ausências do dia para a agenda da Coordenação: turma, horários e situação (com o docente, que ela já vê). */
+export async function ausenciasDoDia(dataISO: string) {
+  const lista = await prisma.ausenciaDocente.findMany({
+    where: { dataAula: dataParaBanco(dataISO) },
+    select: {
+      id: true,
+      blocosAfetados: true,
+      status: true,
+      turma: { select: { nome: true } },
+      oferta: { select: { disciplina: { select: { nome: true } } } },
+      professorAusente: { select: { nome: true } },
+    },
+  });
+  return lista
+    .map((a) => ({
+      id: a.id,
+      blocos: a.blocosAfetados.split(',').map((c) => c.trim()).join(', '),
+      turma: a.turma.nome,
+      disciplina: a.oferta.disciplina.nome,
+      professor: a.professorAusente.nome,
+      pendente: a.status === 'PENDENTE_DECISAO',
+      situacao: NOME_STATUS[a.status],
+    }))
+    .sort((a, b) => Number(b.pendente) - Number(a.pendente) || a.blocos.localeCompare(b.blocos));
 }

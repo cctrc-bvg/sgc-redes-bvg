@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import type { NivelUrgenciaSla, TipoRefeicao } from '@prisma/client';
+import type { NivelUrgenciaSla } from '@prisma/client';
 import { Alerta, BotaoSecundario, Campo } from '@/components/campo';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { temPermissao } from '@/lib/auth/rbac';
 import { validarDataISO } from '@/lib/alimentacao-engine';
 import { NOME_DIA_EXTENSO } from '@/lib/grade/regras';
-import { preverRefeicoesDaTurma, REFEICOES, somarQuantidades } from '@/lib/alimentacao/previsao';
+import { mediasDaTurma, preverRefeicoesDaTurma, REFEICOES, somarQuantidades } from '@/lib/alimentacao/previsao';
 import { ETIQUETA_SLA, NOME_REFEICAO_HORARIO } from '@/lib/ausencias/mensagens';
 import { formatarData, hojeEmFortaleza, presencaPorTurno, somarDias } from '@/lib/ausencias/regras';
 import { carregarDia, intervaloDoDia } from '@/lib/ausencias/servidor';
@@ -16,11 +16,6 @@ import { FormularioCancelarAcrescimo, FormularioCiencia, FormularioQuantidade } 
 export const metadata: Metadata = { title: 'Alimentação — SGC-Redes' };
 
 const ORDEM_SLA: Record<NivelUrgenciaSla, number> = { VERMELHO_MENOS_4H: 0, AMARELO_4H_A_24H: 1, VERDE_24H_MAIS: 2 };
-const CAMPO_MEDIA: Record<TipoRefeicao, 'qtdMediaLancheManha' | 'qtdMediaAlmoco' | 'qtdMediaLancheTarde'> = {
-  LANCHE_MANHA: 'qtdMediaLancheManha',
-  ALMOCO: 'qtdMediaAlmoco',
-  LANCHE_TARDE: 'qtdMediaLancheTarde',
-};
 
 function validarDataOuNull(v: string | undefined): string | null {
   if (!v) return null;
@@ -78,7 +73,7 @@ export default async function PaginaAlimentacao({ searchParams }: { searchParams
   const previsoes = turmas.map((t) => {
     const blocos = dia.aulasDoDia.filter((a) => a.turmaId === t.id).map((a) => a.blocoId);
     const presenca = presencaPorTurno(blocos, dia.blocos);
-    const medias = { LANCHE_MANHA: t[CAMPO_MEDIA.LANCHE_MANHA], ALMOCO: t[CAMPO_MEDIA.ALMOCO], LANCHE_TARDE: t[CAMPO_MEDIA.LANCHE_TARDE] };
+    const medias = mediasDaTurma(t);
     const avisos = avisosDoDia.filter((a) => a.turmaId === t.id && !a.canceladoEm);
     return { turma: t, presenca, avisos, ...preverRefeicoesDaTurma(presenca, medias, avisos) };
   });
