@@ -68,6 +68,7 @@ Professor sempre leciona.
     Pessoas. O sistema e a Coordenação do curso não recebem nem guardam motivo pessoal ou documento (LGPD).
   - O texto fica em `ORIENTACAO_GESTAO_PESSOAS` (`src/lib/ausencias/mensagens.ts`) e na variável
     `{{gestao de pessoas}}` dos textos-padrão. *(Implementado em 25/11/2026.)*
+- **Prazo de reposição (ROD, Art. 37, § 2º; implementado em 25/11/2026):** as aulas dispensadas devem ser repostas em até 15 dias letivos ou até o fim da etapa, o que ocorrer primeiro (`prazoDeReposicao`, `src/lib/calendario/regras.ts`). O prazo aparece no detalhe da ausência; a tela inicial da Coordenação avisa as reposições sem data agendada com prazo vencido (urgente) ou a vencer em 5 dias. A data deve ser combinada com pelo menos 75% da turma, com registro assinado (Art. 37, § 3º).
 - **RF02-A — Docente informa a própria ausência** *(decisão G15, implementado em 25/11/2026)*:
   - **Docente → Coordenação:** o docente informa a data (ou o período) e as aulas, escolhendo um motivo operacional
     da lista, nunca o motivo pessoal.
@@ -142,6 +143,26 @@ Professor sempre leciona.
 ### RF08 — Semáforo de Diários e Carga Horária (Art. 22, VI e VII)
 - Painel por semestre listando ofertas (`Turma × Disciplina × Professor`), comparando aulas previstas vs. ministradas e status do diário, com disparo rápido de lembrete ao docente via WhatsApp.
 
+### RF08-A — Progressão automática dos diários *(requisito de 25/11/2026; diários implementados em 25/11/2026; mensagens periódicas pendentes)*
+- **Premissa:** pode haver pouca adesão dos docentes ao sistema. O acompanhamento dos diários não pode depender de cada
+  docente lançar aulas: **com o passar dos dias, presume-se que as aulas estão sendo ministradas**, e só as exceções
+  (ausências, trocas, dispensas) são registradas.
+- **Aulas ministradas presumidas** por oferta: aulas da grade que já ocorreram em dias letivos, desde o início do período
+  até hoje (grade × calendário: feriados, suspensões, sábados letivos e avaliações finais ficam de fora), menos as aulas
+  perdidas sem cobertura e sem reposição. Substituição e adiantamento contam como aula dada.
+- **Valor efetivo** = valor lançado pela Coordenação, se houver (correção ou conferência no sistema acadêmico); senão, o
+  presumido. O diário é presumido "em dia"; "atrasado" só quando a Coordenação marca depois de conferir.
+- **Semáforo:** com o modo automático, "atenção" passa a significar problema estrutural, por exemplo a grade não
+  comporta as aulas previstas até o fim do período; a Coordenação vê isso cedo, sem depender do docente.
+- **Comunicação como principal interface com o docente:** em vez de exigir acesso, o sistema prepara mensagens para a
+  Coordenação enviar (e-mail ou WhatsApp): resumo da semana, mudanças, prazos do ROD calculados pelo calendário
+  (reposição, Art. 37; frequência em 7 dias letivos, Art. 43; entrega da etapa em 5 dias letivos, Art. 171, XIX) e
+  lembrete de fechamento do período. O docente só entra no sistema para informar ausência, tratar de atestado
+  (com a CGP, fora do sistema) ou responder algo específico.
+- **Sistema funciona sem adesão:** tudo que o docente pode fazer no sistema (informar ausência, responder convite,
+  definir modalidade e preencher o PEI, marcar encontros) a Coordenação também pode fazer por ele, depois de combinar
+  por telefone ou mensagem. Isso já vale hoje; o desenho novo evita criar função que só o docente consiga executar.
+
 ### RF09 — Kanban de Processos SEI e Atendimentos
 - Fluxo em 4 colunas (`NOVO` $\rightarrow$ `COM_PROFESSOR` $\rightarrow$ `AGUARDANDO_RETORNO` $\rightarrow$ `CONCLUIDO`) com número SEI, prazo e etiquetas (`Aproveitamento de Disciplina`, `Graduado/Transferido`, `Estágio`, `Orientação/Mediação`, `Outro SEI`).
 - Itens marcados como `sigiloso = true` são visíveis exclusivamente ao perfil `COORDENADOR`.
@@ -185,6 +206,11 @@ Professor sempre leciona.
 - Login com a conta Google institucional (OpenID Connect, domínio `ifce.edu.br`), mantendo o perfil e a docência no SGC-Redes e a senha local da Coordenação como contingência.
 - Viável, mas depende da TI. Estudo em `docs/estudos/SSO_GOOGLE.md`; decisões G20–G22, adiadas pelo usuário em 25/11/2026.
 
+### RNF06 — Funcionar com pouca adesão dos docentes
+- O sistema é operado pela Coordenação; o docente é, antes de tudo, **destinatário de comunicações**. Nenhuma rotina da Coordenação pode depender de o docente abrir o sistema.
+- Toda ação do docente tem equivalente na Coordenação, e a comunicação (e-mail institucional ou WhatsApp) cobre o que o docente precisa saber.
+- Requisito de projeto para os próximos módulos: ver RF08-A.
+
 ---
 
 ## 5. Checklist de Fechamento — Sessão `/grill-me` (Decisões Pendentes)
@@ -217,3 +243,9 @@ Professor sempre leciona.
 | **G22** | Cadastro automático de quem entra pelo Google | Não: só quem a Coordenação cadastrou | *Pendente* |
 | **G23** | Avaliações finais contam como dias letivos? Quando acontecem? | Não contam (ROD, Art. 32: "excetuando-se o período destinado aos exames finais"); sem aula regular pela grade | **Decidido (25/11/2026):** não contam como letivos; só no fim do ano, depois da última semana letiva, inclusive para as disciplinas semestrais; podem cair em sábado. Sempre "sem aula" no calendário (`SEMPRE_NAO_LETIVO`), com aviso se cadastradas antes do último dia letivo. A AF é aplicada no mínimo 3 dias letivos após o registro da média parcial (Art. 105, § 1º). |
 | **G24** | Refeições nos dias de avaliação final | Sem previsão pela grade; a Coordenação lança acréscimos por dia quando houver estudantes no campus para as avaliações (Alimentação › Acrescentar refeição) | **Aceito (25/11/2026).** Já funciona com o acréscimo existente, em qualquer data; a agenda da AE na tela inicial mostra os acréscimos mesmo em dia sem aula. |
+| **G25** | Adotar a progressão automática dos diários (RF08-A) como padrão? | Sim: aulas presumidas pela grade e pelo calendário; a Coordenação só corrige exceções | **Aceito (25/11/2026).** Implementado: aulas presumidas pela grade e pelo calendário (`src/lib/diarios/automatico.ts`); a Coordenação corrige (vira manual) ou volta ao automático. |
+| **G26** | Como tratar o "diário em dia" sem o docente lançar? | Presumido em dia; "atrasado" só quando a Coordenação conferir no acadêmico e marcar (conferência por amostra no fim de cada etapa) | **Aceito (25/11/2026).** Implementado: o diário é presumido em dia; "atrasado" só por marcação manual. Tela de conferência por amostra em `/diarios/conferencia`. |
+| **G27** | Quais mensagens periódicas o sistema prepara aos docentes? | Resumo semanal (aulas, mudanças, prazos) na sexta-feira; aviso de fim de etapa com o prazo de entrega (5 dias letivos); aviso de fechamento do período. A Coordenação revisa e envia | **Aceito (25/11/2026).** A implementar (item 5 do plano): resumo semanal na sexta, aviso de fim de etapa e aviso de fechamento; a Coordenação revisa e envia. |
+| **G28** | Qual grade vale para contar as aulas já dadas? | A grade vigente do semestre aplicada desde o início do período; a Coordenação corrige o valor se a grade mudou no meio. Alternativa: guardar uma cópia da grade a cada mudança (mais exata, mais trabalho) | **Aceito (25/11/2026).** Implementado: grade vigente do semestre desde o início do período (anuais: a grade de cada semestre); a Coordenação corrige se a grade mudou no meio. |
+| **G29** | Como confirmar a reposição de aulas (ROD, Art. 37)? | O docente informa a data e, se quiser, anexa o formulário (PDF, JPG ou PNG, até 5 MB, guardado no banco); a Coordenação dá ciência. A Coordenação também pode registrar direto. O anexo não é obrigatório: o formulário também pode ir pelo e-mail institucional (cctrc.boaviagem@ifce.edu.br) | **Decidido (25/11/2026), implementado:** `/reposicoes`; reposição informada deixa de ser pendência e conta como aula dada no diário. |
+| **G30** | Como tratar semanas de jogos internos, encontro dos servidores, Universo IFCE, semana do curso e de outros cursos, encontros de extensão e de pesquisa e eventos externos (grade temporária e alimentação)? | **Período especial** com datas (até 15 dias), **grade especial por turma** (copiada da normal e editada) que vale no lugar da normal nos dias do período, **estudantes presentes por turma e dia** (só a quantidade) e **resumo de refeições** (regra do campus × presentes) para a AE e a nutricionista | **Decidido (25/11/2026), implementado antes do congelamento de 04/01/2027:** `/periodos`. A grade especial vale em ausências e refeições (`aplicarGradeEspecial`) e no resumo semanal; Minha grade, agenda da tela inicial e aulas presumidas dos diários ainda usam a grade normal. |

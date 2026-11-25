@@ -21,6 +21,7 @@ import {
   type ContextoDia,
   type CoberturaDia,
 } from './regras';
+import { aplicarGradeEspecial } from '@/lib/periodos/servidor';
 import { enderecoDoSistema } from '@/lib/comunicacao/mensagem';
 import { suspensaoDoDia } from '@/lib/calendario/servidor';
 import { NOME_TIPO_EVENTO } from '@/lib/calendario/regras';
@@ -42,7 +43,7 @@ export async function carregarDia(dataISO: string, db: Tx | typeof prisma = pris
   const diaSemana = suspensao ? null : diaDaGradeNaData(dataISO, sabados);
   const { anoLetivo, semestreLetivo } = periodoDaData(dataISO);
 
-  const [blocos, celulas, ausencias, docentes] = await Promise.all([
+  const [blocos, celulasNormais, ausencias, docentes] = await Promise.all([
     db.blocoHorario.findMany({ orderBy: [{ turno: 'asc' }, { ordem: 'asc' }] }),
     diaSemana === null
       ? Promise.resolve([])
@@ -69,6 +70,9 @@ export async function carregarDia(dataISO: string, db: Tx | typeof prisma = pris
     }),
     db.user.findMany({ where: ONDE_DOCENTES, select: { id: true, nome: true }, orderBy: { nome: 'asc' } }),
   ]);
+
+  // Períodos especiais (jogos internos etc.): a grade especial da turma vale no lugar da normal.
+  const celulas = diaSemana === null ? [] : await aplicarGradeEspecial(dataISO, diaSemana, celulasNormais, db);
 
   const aulasDoDia: AulaDetalhada[] = celulas.map((c) => ({
     turmaId: c.turmaId,

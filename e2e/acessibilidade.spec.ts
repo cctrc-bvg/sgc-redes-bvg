@@ -9,8 +9,8 @@ const PAGINAS: [Perfil, string[]][] = [
     'coordenacao',
     [
       '/painel', '/calendario', '/calendario/eventos/novo', '/grade', '/grade/minha', '/diarios?escopo=meus', '/ppe?escopo=minhas', '/ausencias', '/ausencias/nova',
-      '/alimentacao', '/alimentacao/adicionar', '/comunicacao', '/comunicacao/modelos', '/usuarios', '/usuarios/importar',
-      '/turmas', '/turmas/nova', '/disciplinas', '/ofertas', '/ppe', '/ppi', '/diarios', '/processos', '/relatorios',
+      '/alimentacao', '/alimentacao/adicionar', '/comunicacao', '/comunicacao/modelos', '/comunicacao/periodicas', '/usuarios', '/usuarios/importar',
+      '/turmas', '/turmas/nova', '/disciplinas', '/ofertas', '/ppe', '/ppi', '/diarios', '/diarios/conferencia', '/reposicoes', '/periodos', '/processos', '/relatorios',
       '/auditoria', '/ajuda', '/conta/contato', '/conta/senha',
     ],
   ],
@@ -30,7 +30,7 @@ test('acessibilidade: tela de login', async ({ page }) => {
 
 for (const [perfil, rotas] of PAGINAS) {
   test(`acessibilidade: páginas de ${perfil}`, async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(300_000);
     await entrar(page, perfil);
     const achados: string[] = [];
     for (const rota of rotas) {
@@ -43,7 +43,7 @@ for (const [perfil, rotas] of PAGINAS) {
 
 // Páginas de detalhe: abre o primeiro item de cada listagem (dados de demonstração) e, quando houver, a comunicação.
 test('acessibilidade: páginas de detalhe e de comunicação', async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(300_000);
   await entrar(page, 'coordenacao');
   const achados: string[] = [];
   let visitadas = 0;

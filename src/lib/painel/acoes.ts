@@ -27,6 +27,14 @@ export interface ContagensPainel {
   avisosRefeicao: number;
   ausenciasPendentes: number;
   ausenciasHojeOuAmanha: number;
+  /** Reposições (ROD, Art. 37, § 2º) com prazo vencido, a repor e ainda não agendadas. */
+  reposicoesVencidas: number;
+  /** Reposições ainda não agendadas cujo prazo vence nos próximos 5 dias. */
+  reposicoesAVencer: number;
+  /** Reposições informadas pelo docente que aguardam a ciência da Coordenação. */
+  reposicoesParaCiencia: number;
+  /** Aulas dispensadas do próprio docente que ainda não tiveram a reposição informada. */
+  reposicoesAInformar: number;
   /** Das pendentes, quantas o próprio docente informou (RF02-A). */
   ausenciasInformadas: number;
   convitesPendentes: number;
@@ -35,6 +43,8 @@ export interface ContagensPainel {
   ppeParaDefinir: number;
   peiParaPreencher: number;
   diariosAtrasados: number;
+  /** Ofertas cuja grade não comporta as aulas previstas até o fim do período (RF08-A). */
+  diariosGradeCurta: number;
   meusDiariosAtrasados: number;
   processosVencidos: number;
   /** Processos que vencem nos próximos 3 dias. */
@@ -61,6 +71,10 @@ export const CONTAGENS_ZERADAS: ContagensPainel = {
   avisosRefeicao: 0,
   ausenciasPendentes: 0,
   ausenciasHojeOuAmanha: 0,
+  reposicoesVencidas: 0,
+  reposicoesAVencer: 0,
+  reposicoesParaCiencia: 0,
+  reposicoesAInformar: 0,
   ausenciasInformadas: 0,
   convitesPendentes: 0,
   ppiEmAnalise: 0,
@@ -68,6 +82,7 @@ export const CONTAGENS_ZERADAS: ContagensPainel = {
   ppeParaDefinir: 0,
   peiParaPreencher: 0,
   diariosAtrasados: 0,
+  diariosGradeCurta: 0,
   meusDiariosAtrasados: 0,
   processosVencidos: 0,
   processosAVencer: 0,
@@ -87,7 +102,7 @@ export interface PapelNoPainel {
 }
 
 /** Ações que são da docência (o resto é do cargo). */
-const DA_DOCENCIA = new Set(['convites', 'ppe-definir', 'pei-preencher', 'pei-encontros', 'pei-concluir', 'meus-diarios']);
+const DA_DOCENCIA = new Set(['reposicoes-informar', 'convites', 'ppe-definir', 'pei-preencher', 'pei-encontros', 'pei-concluir', 'meus-diarios']);
 
 const ORDEM: Record<NivelAcao, number> = { urgente: 0, atencao: 1, acompanhar: 2 };
 
@@ -149,6 +164,42 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
       .join(' '),
     href: '/ausencias',
     botao: 'Decidir',
+  });
+  add({
+    id: 'reposicoes',
+    nivel: c.reposicoesVencidas > 0 ? 'urgente' : 'atencao',
+    icone: 'ausencias',
+    quantidade: c.reposicoesVencidas + c.reposicoesAVencer,
+    titulo: 'Reposições de aulas sem data agendada',
+    detalhe: [
+      c.reposicoesVencidas > 0 && `${c.reposicoesVencidas} com o prazo vencido.`,
+      c.reposicoesAVencer > 0 && `${c.reposicoesAVencer} vencem em até 5 dias.`,
+      'Prazo: 15 dias letivos ou o fim da etapa (ROD, Art. 37).',
+    ]
+      .filter(Boolean)
+      .join(' '),
+    href: '/reposicoes',
+    botao: 'Ver reposições',
+  });
+  add({
+    id: 'reposicoes-ciencia',
+    nivel: 'atencao',
+    icone: 'ausencias',
+    quantidade: c.reposicoesParaCiencia,
+    titulo: 'Reposições informadas para dar ciência',
+    detalhe: 'O docente informou que repôs a aula (com ou sem formulário): confira e dê ciência.',
+    href: '/reposicoes',
+    botao: 'Dar ciência',
+  });
+  add({
+    id: 'reposicoes-informar',
+    nivel: 'atencao',
+    icone: 'ausencias',
+    quantidade: c.reposicoesAInformar,
+    titulo: 'Reposições de aulas para informar',
+    detalhe: 'Se você já repôs a aula, informe a data (o formulário é opcional; também pode ir pelo e-mail institucional).',
+    href: '/reposicoes',
+    botao: 'Informar reposição',
   });
   add(
     papel.daCienciaRefeicao
@@ -270,6 +321,16 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     quantidade: c.diariosAtrasados,
     titulo: 'Diários atrasados',
     detalhe: 'Disciplinas com diário fora do dia; dá para enviar lembrete ao docente.',
+    href: '/diarios',
+    botao: 'Ver diários',
+  });
+  add({
+    id: 'diarios-grade-curta',
+    nivel: 'acompanhar',
+    icone: 'diarios',
+    quantidade: c.diariosGradeCurta,
+    titulo: 'Carga projetada abaixo da prevista',
+    detalhe: 'A grade não comporta todas as aulas previstas até o fim do período: ajuste a grade ou programe reposições.',
     href: '/diarios',
     botao: 'Ver diários',
   });

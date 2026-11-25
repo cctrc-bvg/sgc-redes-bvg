@@ -4,7 +4,7 @@ import { entrar } from './apoio';
 test('diário: validação, atualização e lembrete ao docente', async ({ page }) => {
   await entrar(page, 'coordenacao');
   await page.goto('/diarios');
-  await page.locator('main a[href^="/diarios/"]').first().click();
+  await page.locator('main a[href^="/diarios/"]:not([href^="/diarios/conferencia"])').first().click();
   await expect(page).toHaveURL(/\/diarios\/[^/?]+$/);
 
   const ministradas = page.getByLabel(/^Aulas ministradas/);
@@ -34,4 +34,33 @@ test('diário: validação, atualização e lembrete ao docente', async ({ page 
   await emDia.setChecked(estavaEmDia);
   await page.getByRole('button', { name: 'Salvar', exact: true }).click();
   await expect(page.locator('main')).toContainText(/Diário atualizado\.|Nenhuma alteração para salvar\./);
+
+  // O valor corrigido à mão virou manual; "Voltar ao automático" devolve o presumido (RF08-A).
+  const voltar = page.getByRole('button', { name: 'Voltar ao automático' });
+  if (await voltar.isVisible()) {
+    await voltar.click();
+    await expect(page.locator('main')).toContainText('Valor automático');
+  }
+});
+
+test('conferência: valor igual ao presumido mantém o automático; diferente vira manual', async ({ page }) => {
+  await entrar(page, 'coordenacao');
+  await page.goto('/diarios/conferencia');
+  await expect(page.getByRole('heading', { level: 1, name: 'Conferência dos diários' })).toBeVisible();
+  const linha = page.locator('tbody tr').first();
+  await expect(linha).toBeVisible();
+  const campo = linha.getByRole('textbox');
+  const original = await campo.inputValue();
+  const disciplina = await linha.getByRole('link').first().innerText();
+
+  await campo.fill(String(Number(original) + 3));
+  await linha.getByRole('button', { name: 'Conferir' }).click();
+  // A linha pode mudar de posição (a lista ordena por diferença): procura pela disciplina.
+  const mesma = page.locator('tbody tr', { hasText: disciplina }).first();
+  await expect(mesma).toContainText('manual');
+
+  // Devolve o automático pelo detalhe do diário.
+  await mesma.getByRole('link').first().click();
+  const voltar = page.getByRole('button', { name: 'Voltar ao automático' });
+  if (await voltar.isVisible()) await voltar.click();
 });

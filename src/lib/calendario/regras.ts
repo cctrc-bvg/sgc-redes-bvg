@@ -213,7 +213,52 @@ export function avisosAvaliacoesFinais(eventos: readonly (Intervalo & { tipo: Ti
     );
 }
 
+/**
+ * Início sugerido para as avaliações finais: o dia seguinte ao último dia letivo (domingo passa para segunda).
+ * Elas costumam vir encadeadas depois da última semana letiva; os prazos entre elas são combinados pelos docentes.
+ */
+export function inicioSugeridoAvaliacoes(letivos: readonly string[]): string | null {
+  if (letivos.length === 0) return null;
+  let d = somarDiasISO(letivos[letivos.length - 1], 1);
+  if (diaDaSemanaISO(d) === 0) d = somarDiasISO(d, 1);
+  return d;
+}
+
 const formatarISO = (iso: string) => iso.split('-').reverse().join('/');
+
+/** Reposição de aulas (ROD, Art. 37, § 2º): 15 dias letivos ou até o fim da etapa, o que ocorrer primeiro. */
+export const DIAS_LETIVOS_REPOSICAO = 15;
+
+export interface PrazoReposicao {
+  /** Último dia para repor ("AAAA-MM-DD"). */
+  prazo: string;
+  /** O que fechou o prazo: os 15 dias letivos, o fim da etapa ou o fim do ano letivo (sem mais dias letivos). */
+  motivo: 'dias' | 'etapa' | 'fim-do-ano';
+  /** Número da etapa (N1–N4) quando o prazo é o fim dela. */
+  etapa?: number;
+}
+
+/**
+ * Prazo para repor aulas perdidas em `dataAula`: o 15º dia letivo depois dela ou o último dia da etapa em que ela
+ * caiu, o que vier primeiro. `letivos` são os dias letivos do ano em ordem (de `contarDiasLetivos`). Sem etapas
+ * cadastradas, só vale a contagem de dias; sem dias letivos depois da aula, o prazo é o último dia letivo.
+ */
+export function prazoDeReposicao(dataAula: string, letivos: readonly string[], etapas: readonly (Intervalo | null)[]): PrazoReposicao | null {
+  const depois = letivos.filter((d) => d > dataAula);
+  const dosDias = depois.length >= DIAS_LETIVOS_REPOSICAO ? depois[DIAS_LETIVOS_REPOSICAO - 1] : null;
+  const i = etapas.findIndex((e) => e !== null && e.inicio <= dataAula && dataAula <= e.fim);
+  const fimDaEtapa = i >= 0 ? etapas[i]!.fim : null;
+  if (dosDias && (!fimDaEtapa || dosDias <= fimDaEtapa)) return { prazo: dosDias, motivo: 'dias' };
+  if (fimDaEtapa) return { prazo: fimDaEtapa, motivo: 'etapa', etapa: i + 1 };
+  if (depois.length > 0) return { prazo: depois[depois.length - 1], motivo: 'fim-do-ano' };
+  return null;
+}
+
+/** "até 12/12/2026 (15 dias letivos)" ou "(fim da N2)". */
+export function textoPrazoReposicao(p: PrazoReposicao): string {
+  const motivo = p.motivo === 'dias' ? `${DIAS_LETIVOS_REPOSICAO} dias letivos` : p.motivo === 'etapa' ? `fim da ${nomeEtapa(p.etapa!)}` : 'fim do ano letivo';
+  return `até ${p.prazo.split('-').reverse().join('/')} (${motivo})`;
+}
 
 /** Dias letivos por mês ("aaaa-mm" → quantidade). */
 export function porMes(letivos: readonly string[]): Map<string, number> {

@@ -73,6 +73,23 @@ describe('montarAcoes', () => {
     expect(acoes.every((a) => a.papel === 'cargo')).toBe(true);
   });
 
+  it('reposições sem data: urgente se há prazo vencido, atenção se só vencem em breve; some sem nenhuma', () => {
+    expect(montarAcoes(CONTAGENS_ZERADAS, coordenacao).some((a) => a.id === 'reposicoes')).toBe(false);
+    const vencida = montarAcoes({ ...CONTAGENS_ZERADAS, reposicoesVencidas: 1, reposicoesAVencer: 2 }, coordenacao).find((a) => a.id === 'reposicoes')!;
+    expect(vencida).toMatchObject({ nivel: 'urgente', quantidade: 3, papel: 'cargo' });
+    expect(vencida.detalhe).toContain('1 com o prazo vencido');
+    expect(vencida.detalhe).toContain('2 vencem em até 5 dias');
+    const breve = montarAcoes({ ...CONTAGENS_ZERADAS, reposicoesAVencer: 1 }, coordenacao).find((a) => a.id === 'reposicoes')!;
+    expect(breve.nivel).toBe('atencao');
+  });
+
+  it('reposição: ciência para a Coordenação e "informar" para a docência', () => {
+    const c = montarAcoes({ ...CONTAGENS_ZERADAS, reposicoesParaCiencia: 2, reposicoesAInformar: 1 }, coordenacao);
+    expect(c.find((a) => a.id === 'reposicoes-ciencia')).toMatchObject({ quantidade: 2, papel: 'cargo', href: '/reposicoes' });
+    expect(c.find((a) => a.id === 'reposicoes-informar')).toMatchObject({ quantidade: 1, papel: 'docencia', href: '/reposicoes' });
+    expect(montarAcoes(CONTAGENS_ZERADAS, coordenacao).some((a) => a.id.startsWith('reposicoes-'))).toBe(false);
+  });
+
   it('ordenarAcoes é estável dentro do mesmo nível', () => {
     const base = { papel: 'cargo' as const, icone: 'ppe' as const, quantidade: 1, titulo: '', detalhe: '', href: '/', botao: '' };
     const r = ordenarAcoes([

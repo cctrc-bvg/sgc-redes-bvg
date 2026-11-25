@@ -19,5 +19,6 @@ export async function entrar(page: Page, perfil: Perfil) {
   await page.getByLabel('E-mail institucional').fill(USUARIOS[perfil]);
   await page.getByLabel('Senha').fill(SENHA_DEMO);
   await page.getByRole('button', { name: 'Entrar' }).click();
-  await expect(page).toHaveURL(/\/painel/);
+  // O primeiro login depois de subir o servidor é lento em máquina fraca (bcrypt + conexão fria ao banco).
+  await expect(page).toHaveURL(/\/painel/, { timeout: 30_000 });
 }

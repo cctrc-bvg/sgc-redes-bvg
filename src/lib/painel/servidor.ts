@@ -6,9 +6,12 @@ import { mudancasDoProfessor } from '@/lib/ausencias/servidor';
 import { NOME_TIPO_EVENTO } from '@/lib/calendario/regras';
 import { blocosOrdenados, celulasDoProfessor } from '@/lib/grade/consultas';
 import { anoLetivoAtual } from '@/lib/ofertas/regras';
+import { carregarAno } from '@/lib/calendario/servidor';
+import { prazoDeReposicao } from '@/lib/calendario/regras';
 import { semestreLetivoAtual } from '@/lib/grade/regras';
 import { andamentoDoPei } from '@/lib/ppe/andamento';
 import { anoDoSemestre, semestreAtual } from '@/lib/ppe/regras';
+import { diariosComGradeCurta } from '@/lib/diarios/servidor';
 import { disciplinasDoDocente } from '@/lib/ppe/servidor';
 import { CONTAGENS_ZERADAS, montarAcoes, type AcaoPrioritaria, type ContagensPainel } from './acoes';
 import { chavePeriodo, inicioDaSemana, montarSemana, tituloDoEvento, type CelulaAgenda } from './agenda';
@@ -38,12 +41,16 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     ausenciasPendentes,
     ausenciasHojeOuAmanha,
     ausenciasInformadas,
+    reposicoes,
+    reposicoesParaCiencia,
+    reposicoesAInformar,
     convitesPendentes,
     ppiEmAnalise,
     ppeRetencao,
     ppeParaDefinir,
     peiParaPreencher,
     diariosAtrasados,
+    diariosGradeCurta,
     meusDiariosAtrasados,
     processosVencidos,
     etapas,
@@ -60,6 +67,11 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { status: 'PENDENTE_DECISAO', dataAula: { gte: hoje } } })),
     contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { status: 'PENDENTE_DECISAO', dataAula: { gte: hoje, lte: amanha } } })),
     contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { status: 'PENDENTE_DECISAO', dataAula: { gte: hoje }, informadaPeloDocente: true } })),
+    pode('ausencias:registrar') ? reposicoesSemData(hojeISO) : Promise.resolve({ vencidas: 0, aVencer: 0 }),
+    contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { reposicaoEm: { not: null }, reposicaoCienteEm: null } })),
+    contar(docente, () =>
+      prisma.ausenciaDocente.count({ where: { professorAusenteId: usuario.id, reposicaoEm: null, status: { in: ['TURMA_DISPENSADA', 'REPOSICAO_AGENDADA'] }, dataAula: { gte: dataParaBanco(somarDias(hojeISO, -120)), lte: dataParaBanco(hojeISO) } } }),
+    ),
     contar(docente, () =>
       prisma.conviteSubstituicao.count({ where: { professorId: usuario.id, status: 'PENDENTE', ausencia: { dataAula: { gte: hoje } } } }),
     ),
@@ -70,6 +82,7 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     contar(minhasDisciplinas.length > 0, () => prisma.registroPPE.count({ where: { ...ppeDoDocente, modalidade: 'A_DEFINIR' } })),
     contar(minhasDisciplinas.length > 0, () => prisma.registroPPE.count({ where: { ...ppeDoDocente, modalidade: 'PEI', pei: null } })),
     contar(pode('diarios:ver-todos'), () => prisma.disciplinaOferta.count({ where: { anoLetivo: ano, diarioEmDia: false } })),
+    contar(pode('diarios:ver-todos'), () => diariosComGradeCurta(ano, semestreLetivoAtual(agora), hojeISO)),
     contar(docente, () =>
       prisma.disciplinaOferta.count({ where: { anoLetivo: ano, professorId: usuario.id, diarioEmDia: false } }),
     ),
@@ -117,12 +130,17 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     ausenciasPendentes,
     ausenciasHojeOuAmanha,
     ausenciasInformadas,
+    reposicoesVencidas: reposicoes.vencidas,
+    reposicoesAVencer: reposicoes.aVencer,
+    reposicoesParaCiencia,
+    reposicoesAInformar,
     convitesPendentes,
     ppiEmAnalise,
     ppeRetencao,
     ppeParaDefinir,
     peiParaPreencher,
     diariosAtrasados,
+    diariosGradeCurta,
     meusDiariosAtrasados,
     processosVencidos,
     processosAVencer,
@@ -136,6 +154,33 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     encontrosPeiAConfirmar: andamentoPeis.reduce((n, a) => n + a.encontrosAConfirmar, 0),
     peiParaConcluir: andamentoPeis.filter((a) => a.prontoParaConcluir).length,
   };
+}
+
+/**
+ * Reposições (ROD, Art. 37, § 2º): ausências com turma dispensada e reposição ainda não agendada, dos últimos 90 dias,
+ * contadas pelo prazo de cada uma (15 dias letivos ou fim da etapa). Vencidas e a vencer em até 5 dias.
+ */
+async function reposicoesSemData(hojeISO: string): Promise<{ vencidas: number; aVencer: number }> {
+  const dispensadas = await prisma.ausenciaDocente.findMany({
+    where: { status: 'TURMA_DISPENSADA', reposicaoEm: null, dataAula: { gte: dataParaBanco(somarDias(hojeISO, -90)), lte: dataParaBanco(hojeISO) } },
+    select: { dataAula: true },
+  });
+  if (dispensadas.length === 0) return { vencidas: 0, aVencer: 0 };
+  const datas = [...new Set(dispensadas.map((a) => dataDoBanco(a.dataAula)))];
+  const anos = [...new Set(datas.map((d) => Number(d.slice(0, 4))))];
+  const calendarios = new Map(await Promise.all(anos.map(async (a) => [a, await carregarAno(a)] as const)));
+  const limite = somarDias(hojeISO, 5);
+  let vencidas = 0;
+  let aVencer = 0;
+  for (const a of dispensadas) {
+    const d = dataDoBanco(a.dataAula);
+    const cal = calendarios.get(Number(d.slice(0, 4)))!;
+    const prazo = prazoDeReposicao(d, cal.contagem.letivos, cal.etapas)?.prazo;
+    if (!prazo) continue;
+    if (prazo < hojeISO) vencidas++;
+    else if (prazo <= limite) aVencer++;
+  }
+  return { vencidas, aVencer };
 }
 
 /** Disciplinas ativas da matriz sem oferta (professor) nas turmas ativas, no ano letivo (como em Ofertas). */

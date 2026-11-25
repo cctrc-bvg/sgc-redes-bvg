@@ -121,6 +121,8 @@ model Turma {
   ofertas             DisciplinaOferta[]
   ausencias           AusenciaDocente[]
   alertasRefeicao     AlertaAlimentacao[]
+  gradesEspeciais     GradeEspecial[]
+  presencasEspeciais  PresencaEspecial[]
 }
 
 model Disciplina {
@@ -155,11 +157,14 @@ model DisciplinaOferta {
   // Controle de Diários e Carga Horária (Art. 22, VI e VII)
   aulasPrevistas  Int      @default(0)
   aulasMinistradas Int     @default(0)
+  // RF08-A: false = vale o presumido (grade × dias letivos); true = a Coordenação lançou o valor à mão.
+  ministradasManual Boolean @default(false)
   diarioEmDia     Boolean  @default(true)
   ultimaCobranca  DateTime?
   observacaoDiario String?
 
   horarios      GradeHorario[]
+  horariosEspeciais GradeEspecial[]
   ausencias     AusenciaDocente[]
 
   // Uma disciplina é ofertada uma vez por ano letivo em cada turma.
@@ -178,6 +183,7 @@ model BlocoHorario {
   horaFim    String // ex: "08:20"
 
   grades     GradeHorario[]
+  gradesEspeciais GradeEspecial[]
   coberturas CoberturaBloco[] @relation("BlocoCoberto")
   adiantamentosOrigem CoberturaBloco[] @relation("BlocoOrigemAdiantamento")
   convites   ConviteSubstituicao[]
@@ -287,18 +293,49 @@ model AusenciaDocente {
   motivoOperacional   String          // Texto curto e não sensível (LGPD)
   // RF02-A: o próprio docente informou a ausência (a Coordenação dá ciência e decide a cobertura).
   informadaPeloDocente Boolean        @default(false)
+  // Reposição das aulas dispensadas (ROD, Art. 37): o docente informa que repôs (com formulário opcional) e a
+  // Coordenação dá ciência; ou a Coordenação registra direto. Nada aqui é obrigatório.
+  reposicaoEm          DateTime?       @db.Date // data em que a aula foi reposta
+  reposicaoOrigem      OrigemReposicao?
+  reposicaoObservacao  String?
+  reposicaoInformadaEm DateTime?
+  reposicaoCienteEm    DateTime?       // ciência da Coordenação (imediata quando ela mesma registra)
+  reposicaoCientePorId String?
   status              StatusAusencia  @default(PENDENTE_DECISAO)
   // Registro obrigatório quando a dispensa gera aviso de emergência à AE (RF04, < 4h)
   justificativa       String?
   decididaEm          DateTime?
   createdAt           DateTime        @default(now())
 
+  anexosReposicao     AnexoReposicao[]
   alertasAlimentacao  AlertaAlimentacao[]
   coberturas          CoberturaBloco[]
   convites            ConviteSubstituicao[]
 
   @@unique([dataAula, ofertaId])
   @@index([dataAula])
+}
+
+enum OrigemReposicao {
+  DOCENTE
+  COORDENACAO
+}
+
+// Formulário de reposição de aula enviado pelo sistema (opcional; o docente também pode enviar pelo e-mail institucional).
+// Fica no próprio banco (PDF, JPG ou PNG, até 5 MB), para entrar no mesmo backup. Pode conter assinaturas de estudantes:
+// só a Coordenação e o docente da ausência baixam.
+model AnexoReposicao {
+  id          String          @id @default(cuid())
+  ausenciaId  String
+  ausencia    AusenciaDocente @relation(fields: [ausenciaId], references: [id], onDelete: Cascade)
+  nome        String
+  tipoMime    String
+  tamanho     Int
+  conteudo    Bytes
+  enviadoPorId String
+  criadoEm    DateTime        @default(now())
+
+  @@index([ausenciaId])
 }
 
 enum TipoCobertura {
@@ -604,4 +641,67 @@ model ProcessoKanban {
   criadoPor    User         @relation(fields: [criadoPorId], references: [id])
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+}
+// ==========================================
+// PERÍODOS ESPECIAIS (jogos internos, encontro dos servidores, eventos externos)
+// ==========================================
+
+enum TipoPeriodoEspecial {
+  JOGOS_INTERNOS
+  ENCONTRO_SERVIDORES
+  UNIVERSO_IFCE
+  SEMANA_DO_CURSO
+  SEMANA_OUTROS_CURSOS
+  ENCONTRO_EXTENSAO
+  ENCONTRO_PESQUISA
+  EVENTO_EXTERNO
+  OUTRO
+}
+
+// Intervalo de datas em que a rotina muda: parte da turma vai a um evento, alguns docentes se ausentam e a Coordenação
+// monta grades temporárias e replaneja a alimentação. Nos dias do período, a grade especial de uma turma vale no
+// lugar da grade normal (se ela tiver grade especial); fora do período, nada muda.
+model PeriodoEspecial {
+  id          String              @id @default(cuid())
+  nome        String
+  tipo        TipoPeriodoEspecial
+  inicio      DateTime            @db.Date
+  fim         DateTime            @db.Date
+  observacao  String?
+  createdAt   DateTime            @default(now())
+
+  grades      GradeEspecial[]
+  presencas   PresencaEspecial[]
+
+  @@index([inicio, fim])
+}
+
+// Célula da grade temporária de uma turma no período (mesma ideia de GradeHorario, sem ano e semestre).
+model GradeEspecial {
+  id         String          @id @default(cuid())
+  periodoId  String
+  periodo    PeriodoEspecial @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  turmaId    String
+  turma      Turma           @relation(fields: [turmaId], references: [id])
+  diaSemana  Int             // 1=Segunda ... 5=Sexta
+  blocoId    String
+  bloco      BlocoHorario    @relation(fields: [blocoId], references: [id])
+  ofertaId   String?
+  oferta     DisciplinaOferta? @relation(fields: [ofertaId], references: [id], onDelete: SetNull)
+  sala       String?
+
+  @@unique([periodoId, turmaId, diaSemana, blocoId])
+}
+
+// Quantos estudantes da turma ficam no campus em cada dia do período (só a quantidade, nunca nomes).
+model PresencaEspecial {
+  id         String          @id @default(cuid())
+  periodoId  String
+  periodo    PeriodoEspecial @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  turmaId    String
+  turma      Turma           @relation(fields: [turmaId], references: [id])
+  data       DateTime        @db.Date
+  qtdAlunos  Int
+
+  @@unique([periodoId, turmaId, data])
 }

@@ -11,6 +11,8 @@ import { DiarioSchema, lembreteDoDiario, validarMinistradas } from '@/lib/diario
 import { lerModoEnvio, NOME_MODO } from '@/lib/comunicacao/mensagem';
 import { lerAnoLetivo } from '@/lib/ofertas/regras';
 import { lerSemestreLetivo } from '@/lib/grade/regras';
+import { situacoesAutomaticas } from '@/lib/diarios/servidor';
+import { hojeEmFortaleza } from '@/lib/ausencias/regras';
 
 export type EstadoDiario = {
   erros?: Partial<Record<'aulasMinistradas' | 'observacaoDiario', string[]>>;
@@ -34,8 +36,12 @@ export async function atualizarDiario(_estado: EstadoDiario | undefined, formDat
   const alto = validarMinistradas(validacao.data.aulasMinistradas, atual.aulasPrevistas);
   if (alto) return { erros: { aulasMinistradas: [alto] }, valores };
 
+  // RF08-A: valor igual ao presumido de uma oferta automática continua automático; qualquer outro vira manual.
+  const { presumido } = (await situacoesAutomaticas(atual.anoLetivo, [atual], hojeEmFortaleza())).get(atual.id) ?? { presumido: null };
+  const manual = atual.ministradasManual || presumido === null || validacao.data.aulasMinistradas !== presumido;
   const dados = {
-    aulasMinistradas: validacao.data.aulasMinistradas,
+    aulasMinistradas: manual ? validacao.data.aulasMinistradas : atual.aulasMinistradas,
+    ministradasManual: manual,
     diarioEmDia: validacao.data.diarioEmDia,
     observacaoDiario: validacao.data.observacaoDiario ?? null,
   };
@@ -51,6 +57,47 @@ export async function atualizarDiario(_estado: EstadoDiario | undefined, formDat
   });
   revalidatePath('/diarios');
   return { sucesso: true, mensagem: 'Diário atualizado.', valores };
+}
+
+/** Descarta o lançamento manual: o diário volta a valer o presumido pela grade e pelo calendário. */
+export async function voltarAoAutomatico(formData: FormData): Promise<void> {
+  const { usuario } = await exigirPermissao('diarios:ver-todos');
+  const ofertaId = String(formData.get('ofertaId') ?? '');
+  const atual = await prisma.disciplinaOferta.findUnique({ where: { id: ofertaId }, select: { id: true, ministradasManual: true } });
+  if (!atual || !atual.ministradasManual) return;
+  await prisma.disciplinaOferta.update({ where: { id: atual.id }, data: { ministradasManual: false } });
+  await registrarAuditoria({ userId: usuario.id, acao: 'ATUALIZOU_DIARIO', entidade: 'DisciplinaOferta', entidadeId: atual.id, detalhes: { voltouAoAutomatico: true } });
+  revalidatePath('/diarios');
+  revalidatePath(`/diarios/${atual.id}`);
+}
+
+/**
+ * Conferência por amostra (G26): a Coordenação compara com o diário do sistema acadêmico. Valor igual ao presumido
+ * confirma o automático; valor diferente vira lançamento manual. Também marca se o diário está em dia.
+ */
+export async function conferirDiario(formData: FormData): Promise<void> {
+  const { usuario } = await exigirPermissao('diarios:ver-todos');
+  const ofertaId = String(formData.get('ofertaId') ?? '');
+  const texto = String(formData.get('aulasMinistradas') ?? '').trim();
+  if (!/^\d{1,3}$/.test(texto)) return;
+  const informado = Number(texto);
+  const emDia = formData.get('diarioEmDia') === 'on';
+  const atual = await prisma.disciplinaOferta.findUnique({ where: { id: ofertaId } });
+  if (!atual || validarMinistradas(informado, atual.aulasPrevistas)) return;
+  const { presumido } = (await situacoesAutomaticas(atual.anoLetivo, [atual], hojeEmFortaleza())).get(atual.id) ?? { presumido: null };
+  const igual = presumido !== null && informado === presumido;
+  const manual = atual.ministradasManual || !igual;
+  const dados = { aulasMinistradas: manual ? informado : atual.aulasMinistradas, ministradasManual: manual, diarioEmDia: emDia };
+  await prisma.disciplinaOferta.update({ where: { id: atual.id }, data: dados });
+  await registrarAuditoria({
+    userId: usuario.id,
+    acao: 'ATUALIZOU_DIARIO',
+    entidade: 'DisciplinaOferta',
+    entidadeId: atual.id,
+    detalhes: { conferencia: true, informado, presumido, confirmouAutomatico: igual && !atual.ministradasManual, diarioEmDia: emDia },
+  });
+  revalidatePath('/diarios');
+  revalidatePath('/diarios/conferencia');
 }
 
 export type EstadoLembrete = { mensagem?: string; sucesso?: boolean };

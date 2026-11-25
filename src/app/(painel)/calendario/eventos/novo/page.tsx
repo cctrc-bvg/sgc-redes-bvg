@@ -2,13 +2,15 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { hojeEmFortaleza } from '@/lib/ausencias/regras';
+import { SUSPENDE_POR_PADRAO, TIPOS_EVENTO } from '@/lib/calendario/regras';
 import { FormularioEvento } from '../../formularios';
 
 export const metadata: Metadata = { title: 'Novo evento — SGC-Redes' };
 
-export default async function PaginaNovoEvento({ searchParams }: { searchParams: Promise<{ inicio?: string }> }) {
+export default async function PaginaNovoEvento({ searchParams }: { searchParams: Promise<{ inicio?: string; tipo?: string }> }) {
   await exigirPermissao('calendario:gerenciar');
-  const { inicio } = await searchParams;
+  const { inicio, tipo: tipoParam } = await searchParams;
+  const tipo = TIPOS_EVENTO.find((t) => t === tipoParam) ?? 'FERIADO';
   const data = /^\d{4}-\d{2}-\d{2}$/.test(inicio ?? '') ? inicio! : hojeEmFortaleza();
   return (
     <div className="max-w-2xl">
@@ -24,7 +26,7 @@ export default async function PaginaNovoEvento({ searchParams }: { searchParams:
         Para sábado letivo, use <Link href="/grade/sabados" className="text-if-verde-700 underline underline-offset-2">Sábados letivos</Link> (com o dia da grade a que se refere).
       </p>
       <div className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <FormularioEvento inicial={{ tipo: 'FERIADO', inicio: data, fim: '', descricao: '', suspendeAulas: true, imprevisto: false, motivo: '' }} />
+        <FormularioEvento inicial={{ tipo, inicio: data, fim: '', descricao: '', suspendeAulas: SUSPENDE_POR_PADRAO[tipo], imprevisto: false, motivo: '' }} />
       </div>
     </div>
   );

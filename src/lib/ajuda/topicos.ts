@@ -169,8 +169,9 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Cadastrar eventos: férias docentes, matrícula, encontro pedagógico, acolhida, feriados, pontos facultativos, PITs/RITs, reuniões, avaliações finais e outros.',
       'Registrar suspensões não previstas (falta de energia, de água, de transporte, luto oficial, ponto facultativo municipal…) como dias a repor.',
       'Cadastrar sábados letivos, cada um seguindo a grade de um dia da semana.',
+      'Períodos especiais (jogos internos, encontro dos servidores, Universo IFCE, semana do curso ou de outros cursos, encontros de extensão e de pesquisa, eventos externos): criar o período, montar a grade temporária de cada turma, informar quantos estudantes ficam no campus em cada dia e gerar o resumo de refeições para a Assistência Estudantil e a nutricionista. Nos dias do período, a grade especial vale no lugar da normal.',
       'Contar os dias letivos por mês, etapa, semestre e ano, comparando com a meta (50 por etapa, 200 no ano).',
-      'Avaliações finais nunca contam como dias letivos (ROD, Art. 32; refeições nesses dias só por acréscimo lançado na Alimentação): ficam fora da contagem e da grade, inclusive aos sábados. Acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais; o sistema avisa se o período for cadastrado antes disso.',
+      'Avaliações finais nunca contam como dias letivos (ROD, Art. 32; refeições nesses dias só por acréscimo lançado na Alimentação): ficam fora da contagem e da grade, inclusive aos sábados. Acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais; o sistema avisa se o período for cadastrado antes disso e, enquanto elas não estiverem cadastradas, sugere começar no dia seguinte ao último dia letivo. Os prazos entre as avaliações são combinados com os docentes.',
       'Ver o ano inteiro ou um mês, imprimir/salvar em PDF e exportar/importar em planilha.',
       'Ao registrar uma alteração imprevista, abrir as mensagens prontas para avisar docentes, CAE, nutricionista, Gestão, CTP e turmas.',
     ],
@@ -185,6 +186,16 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       ],
     },
     fluxos: [
+      {
+        titulo: 'Montar um período especial (jogos internos, encontro dos servidores)',
+        quem: 'Coordenação',
+        passos: [
+          'No Calendário, abra "Períodos especiais" e crie o período com nome, tipo e datas (até 15 dias). Nome, tipo e datas podem ser editados depois; os tipos são exemplos e "Outro" serve para o que não couber.',
+          'Para cada turma afetada, clique em "Montar a grade especial": copie a grade normal como ponto de partida e reorganize as disciplinas.',
+          'Em "Estudantes no campus", informe quantos estudantes de cada turma ficam em cada dia (só a quantidade).',
+          'Em "Resumo de refeições", confira as quantidades por dia, copie a mensagem para a Assistência Estudantil e a nutricionista, envie e registre.',
+        ],
+      },
       {
         titulo: 'Cadastrar as etapas do ano',
         quem: 'Coordenação',
@@ -352,6 +363,8 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     capacidades: [
       'Registrar a ausência de um docente numa data: o sistema mostra as aulas dele pela grade vigente.',
       'Licença de vários dias: informe também "Até" (até 15 dias) e registre todas as aulas do período de uma vez; feriados e sábados letivos já entram na conta.',
+      'Acompanhar o prazo de reposição das aulas dispensadas (15 dias letivos ou o fim da etapa, o que vier primeiro, ROD Art. 37): aparece na ausência e, quando está vencido ou perto de vencer sem data agendada, na tela inicial.',
+      'Reposição de aulas (menu da tela inicial ou "Reposição de aulas"): o docente informa a data em que repôs, com o formulário em anexo se quiser (PDF, JPG ou PNG, até 5 MB), e a Coordenação dá ciência; a Coordenação também pode registrar direto. O formulário pode ir só pelo e-mail institucional: o anexo no sistema é opcional.',
       'Receber as ausências que os próprios docentes informam (selo "Informada pelo docente" e contagem na tela inicial) e dar ciência a eles.',
       'Para cada horário perdido: substituição por outro docente, adiantamento de uma aula posterior da turma, dispensa da turma ou decidir depois.',
       'Sugestões de cobertura priorizando professores da mesma turma e livres no horário.',
@@ -379,6 +392,25 @@ export const TOPICOS: readonly TopicoAjuda[] = [
           'Marque as aulas afetadas e informe um motivo operacional, sem dados pessoais ou médicos (ex.: "Participação em evento").',
           'Em Comunicar, envie ao docente a "Ciência da sua ausência": ela já orienta a procurar a Gestão de Pessoas com o motivo e o comprovante, fora do sistema.',
           'Salve: a página da ausência abre com a situação de cada horário.',
+        ],
+      },
+      {
+        titulo: 'Informar que repôs uma aula',
+        quem: 'Professor',
+        passos: [
+          'Na tela inicial, abra "Reposições de aulas para informar" (ou acesse /reposicoes).',
+          'Na aula reposta, clique em "Informar que repus" e escolha a data. O formulário em anexo e a observação são opcionais.',
+          'Se preferir, envie o formulário pelo seu e-mail institucional para a Coordenação (cctrc.boaviagem@ifce.edu.br): vale do mesmo jeito.',
+          'A Coordenação dá ciência; a aula sai da lista de pendências e passa a contar como dada no diário.',
+        ],
+      },
+      {
+        titulo: 'Conferir as reposições',
+        quem: 'Coordenação',
+        passos: [
+          'Na tela inicial, abra "Reposições informadas para dar ciência" ou entre em Reposição de aulas.',
+          'Confira a data e baixe o formulário, se houver, e clique em "Dar ciência".',
+          'Para uma reposição que o docente não informou, use "Registrar reposição"; use "Desfazer registro" se foi por engano.',
         ],
       },
       {
@@ -487,6 +519,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Textos-padrão por tipo de interação, com campos de substituição como {{data}} e {{codigo da turma}} — criar, editar e remover.',
       'Cadastro do e-mail e da saudação de cada grupo ou setor (CAE, CTP, Gestão, nutricionista, professores, líderes).',
       'Histórico dos envios registrados, exportável em planilha.',
+      'Resumo semanal dos docentes (Mensagens periódicas): aulas da semana seguinte, mudanças e prazos do ROD, uma mensagem por docente e por semana.',
     ],
     diagrama: {
       titulo: 'Envio semiautomático',
@@ -498,6 +531,15 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       ],
     },
     fluxos: [
+      {
+        titulo: 'Enviar o resumo semanal aos docentes',
+        quem: 'Coordenação',
+        passos: [
+          'Na sexta-feira, em Comunicação, abra "Mensagens periódicas".',
+          'Confira o texto de cada docente (aulas, mudanças e prazos), copie ou abra no e-mail/WhatsApp e envie.',
+          'Clique em "Já enviei: registrar": o docente sai da fila da semana.',
+        ],
+      },
       {
         titulo: 'Enviar uma mensagem avulsa',
         quem: 'Coordenação',
@@ -689,12 +731,15 @@ export const TOPICOS: readonly TopicoAjuda[] = [
   {
     id: 'diarios',
     titulo: 'Diários',
-    resumo: 'Semáforo de carga horária e preenchimento dos diários, com lembrete ao docente.',
+    resumo: 'Aulas dadas presumidas pela grade e pelo calendário, correção das exceções, conferência por amostra e lembrete ao docente.',
     permissao: 'diarios:ver-proprios',
     rota: '/diarios',
     capacidades: [
       'Ver, por oferta (turma × disciplina × professor), as aulas previstas e ministradas e a situação do diário.',
-      'Ordenar do que precisa de atenção ao que está em dia (semáforo).',
+      'As aulas ministradas são presumidas pela grade nos dias letivos já decorridos (etiqueta "automático"): o docente não precisa lançar nada, e só as exceções são corrigidas.',
+      'Corrigir o valor (ele passa a "manual") e voltar ao automático quando a exceção acabar.',
+      'Conferir por amostra com o diário do sistema acadêmico, em "Conferir com o sistema acadêmico".',
+      'Ordenar do que precisa de atenção ao que está em dia (semáforo); amarelo também quando a grade não comporta as aulas previstas até o fim do período.',
       'Registrar a situação do diário e enviar lembrete ao docente por e-mail ou WhatsApp (Coordenação).',
       'O professor vê os próprios diários.',
     ],
@@ -702,13 +747,23 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       titulo: 'Acompanhar os diários',
       etapas: [
         { rotulo: 'Datas do semestre', ator: 'Coordenação', detalhe: 'base para as aulas esperadas (a tela inicial avisa se faltar)', onde: { tela: 'Calendário › Etapas', rota: '/calendario/etapas' } },
-        { rotulo: 'Aulas ministradas', ator: 'Coordenação', detalhe: 'conforme o diário no sistema acadêmico', onde: { tela: 'Diários', rota: '/diarios' } },
-        { rotulo: 'Semáforo', ator: 'Sistema', detalhe: 'em dia, atenção ou atrasado pelo esperado até hoje', onde: { tela: 'Diários', rota: '/diarios' } },
+        { rotulo: 'Aulas presumidas', ator: 'Sistema', detalhe: 'grade × dias letivos até ontem, menos as dispensas sem reposição', onde: { tela: 'Diários', rota: '/diarios' } },
+        { rotulo: 'Conferência', ator: 'Coordenação', detalhe: 'por amostra, com o acadêmico; diferença vira valor manual', onde: { tela: 'Diários › Conferência', rota: '/diarios/conferencia' } },
+        { rotulo: 'Semáforo', ator: 'Sistema', detalhe: 'em dia, atenção (grade curta) ou atrasado (marcado pela Coordenação)', onde: { tela: 'Diários', rota: '/diarios' } },
         { rotulo: 'Lembrete', ator: 'Coordenação', detalhe: 'mensagem pronta ao docente, registrada', onde: { tela: 'Diários › disciplina' } },
         { rotulo: 'Lançamento', ator: 'Professor', detalhe: 'atualiza o diário no acadêmico; vê os seus em Meus diários', onde: { tela: 'Meus diários', rota: '/diarios?escopo=meus' } },
       ],
     },
     fluxos: [
+      {
+        titulo: 'Conferir os diários por amostra',
+        quem: 'Coordenação',
+        passos: [
+          'Em Diários, abra "Conferir com o sistema acadêmico".',
+          'Compare o presumido com o número do diário no acadêmico e digite o valor de cada disciplina da amostra.',
+          'Clique em "Conferir": valor igual mantém o automático; diferente vira manual. Marque "em dia" conforme o acadêmico.',
+        ],
+      },
       {
         titulo: 'Cobrar um diário atrasado',
         quem: 'Coordenação',
@@ -723,7 +778,10 @@ export const TOPICOS: readonly TopicoAjuda[] = [
         captura: { rota: '/diarios', perfil: 'coordenacao' },
       },
     ],
-    duvidas: [{ pergunta: 'De onde vêm as aulas previstas?', resposta: 'Da grade e das datas dos semestres cadastradas no calendário.' }],
+    duvidas: [
+      { pergunta: 'De onde vêm as aulas previstas?', resposta: 'Da grade e das datas dos semestres cadastradas no calendário.' },
+      { pergunta: 'O docente precisa lançar as aulas?', resposta: 'Não. As aulas são presumidas dadas pela grade; só as exceções (ausências, dispensas sem reposição) mudam o valor. A aula de hoje só conta a partir de amanhã.' },
+    ],
     relacionados: ['comunicacao', 'calendario'],
   },
   {

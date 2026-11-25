@@ -46,3 +46,13 @@ test('suspensão de aulas: formulário dinâmico, mensagens prontas e remoção'
   await expect(page).toHaveURL(/\/calendario\?.*aviso=removido/);
   await expect(page.locator('main')).not.toContainText(descricao);
 });
+
+test('atalho das avaliações finais: tipo preenchido, início na data sugerida e "sem aula" fixo', async ({ page }) => {
+  await entrar(page, 'coordenacao');
+  await page.goto('/calendario/eventos/novo?tipo=AVALIACOES_FINAIS&inicio=2026-12-17');
+  await expect(page.getByLabel('Tipo')).toHaveValue('AVALIACOES_FINAIS');
+  await expect(page.getByLabel('Início')).toHaveValue('2026-12-17');
+  const semAula = page.getByRole('checkbox', { name: /Sem aula nestes dias/ });
+  await expect(semAula).toBeChecked();
+  await expect(semAula).toBeDisabled();
+});

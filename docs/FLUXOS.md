@@ -187,7 +187,35 @@ flowchart TB
 | 4 | Responder o convite | Docente | Minha grade | `responderConvite` | Aceitar cria a substituição se o horário ainda está aberto e o docente livre |
 | 5 | Refeições | Sistema | Alimentação | `recalcularAlertasDaTurma`, `src/lib/alimentacao-engine.ts` | Avisos de cancelamento com urgência verde, amarela ou vermelha |
 | 6 | Comunicar | Coordenação | Ausências › detalhe › Comunicar | `src/lib/ausencias/mensagens.ts` (`mensagensDaAusencia`) | Mensagens prontas por público, registradas no histórico |
+| 5a | Prazo de reposição (ROD, Art. 37, § 2º) | Sistema | Ausências › detalhe; tela inicial | `prazoDeReposicao` (`src/lib/calendario/regras.ts`), `reposicoesSemData` (`src/lib/painel/servidor.ts`) | Turma dispensada: prazo de 15 dias letivos ou fim da etapa; a tela inicial avisa as reposições vencidas ou a vencer em 5 dias, sem data agendada |
 | 6a | Ciência ao docente ausente | Coordenação | Ausências › detalhe › Comunicar | `mensagensDaAusencia` (chave `ciencia:`), `ORIENTACAO_GESTAO_PESSOAS` | Antes da cobertura: confirma o registro e orienta a tratar o motivo e o comprovante (ex.: atestado) **direto com a Coordenadoria de Gestão de Pessoas (CGP, cgp.boaviagem@ifce.edu.br), fora do sistema**. A mensagem da cobertura repete a orientação. |
+
+---
+
+## 4A. Períodos especiais (jogos internos, encontro dos servidores)
+
+Todo ano, semanas de evento (jogos internos, encontro dos servidores, Universo IFCE, semana do curso ou de outros cursos, encontros de extensão e de pesquisa) mudam a rotina: parte da turma sai para o evento, alguns docentes se ausentam e a Coordenação
+monta grades temporárias e replaneja as refeições. O período especial reúne tudo isso (G30).
+
+```mermaid
+flowchart LR
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  P["1. Criar o período<br/>nome, tipo, datas (até 15 dias)"]:::gestao --> G["2. Grade especial por turma<br/>copiada da normal e editada"]:::gestao --> Q["3. Estudantes no campus<br/>quantidade por turma e dia"]:::gestao --> R["4. Resumo de refeições<br/>regra do campus × presentes"]:::sistema --> M["5. Mensagem à AE e à nutricionista<br/>enviar e registrar"]:::gestao
+  G --> A["Ausências e refeições<br/>usam a grade especial nos dias do período"]:::sistema
+```
+
+| # | Etapa | Responsável | Parte do sistema |
+| :-- | :-- | :-- | :-- |
+| 1 | Criar o período | Coordenação | `src/app/(painel)/periodos/actions.ts` (`criarPeriodo`), `src/lib/periodos/regras.ts` (`PeriodoSchema`) |
+| 2 | Grade especial | Coordenação | `copiarGradeNormal`, `salvarGradeEspecial` (avisa conflito de professor), modelo `GradeEspecial` |
+| 3 | Presentes por dia | Coordenação | `salvarPresencas`, modelo `PresencaEspecial` (só a quantidade, sem nomes) |
+| 4 | Resumo de refeições | Sistema | `planoAlimentar` (só manhã: lanche da manhã; só tarde: lanche da tarde; integral: os três) |
+| 5 | Mensagem e registro | Coordenação | `mensagemPlanoAlimentar`, `registrarResumoAlimentar`; chave `periodo:<id>:<canal>` |
+| — | Grade que vale no dia | Sistema | `aplicarGradeEspecial` (ausências e refeições) e o resumo semanal dos docentes |
+
+Turmas sem grade especial seguem a grade normal. Ainda usam a grade normal: Minha grade, a agenda da tela inicial e as
+aulas presumidas dos diários (a Coordenação corrige se a semana especial mudar a contagem).
 
 ---
 
@@ -234,6 +262,9 @@ flowchart LR
 | Textos-padrão editáveis e variáveis | `src/lib/comunicacao/modelos.ts`, Comunicação › Textos-padrão |
 | Montagem (saudação do canal, links `mailto:` e `wa.me`) | `src/lib/comunicacao/mensagem.ts`, `src/lib/comunicacao/servidor.ts` |
 | Registro do envio | `src/app/(painel)/comunicacao/actions.ts` (`registrarEnvio`) e as ações de envio de PPE e PPI |
+| Resumo semanal dos docentes (G27) | `src/lib/comunicacao/periodicas.ts` (texto e prazos), `periodicas-servidor.ts` (dados), `/comunicacao/periodicas`; chave `resumo:<segunda>:<docente>` |
+
+O **resumo semanal** (sexta-feira) reúne, por docente, as aulas da semana seguinte, as mudanças (substituições, ausências) e os prazos do ROD (reposição Art. 37, frequência Art. 43, entrega da etapa Art. 171, XIX); a chave é semanal, então não repete.
 
 A chave de envio evita pedir de novo o que já foi enviado. Na prorrogação da PPE, a chave inclui a data, então uma nova prorrogação pede um novo envio.
 
@@ -293,19 +324,25 @@ flowchart LR
 
 ## 9. Diários
 
+> **Progressão automática (RF08-A, G25–G28; implementada em 25/11/2026):** como o docente pode não aderir ao sistema, as
+> aulas ministradas são presumidas dadas pela grade vigente e pelo calendário (dias letivos até ontem, menos as
+> dispensas sem reposição); só as exceções são registradas. A Coordenação confere por amostra com o acadêmico e corrige
+> (valor manual) ou volta ao automático. O docente é avisado pelo resumo semanal (`/comunicacao/periodicas`).
+
 ```mermaid
 flowchart LR
   classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
   classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
   classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
-  P["1. Datas do semestre<br/>Calendário › Etapas"]:::gestao --> M["2. Aulas ministradas<br/>do acadêmico"]:::gestao --> S["3. Semáforo<br/>esperado até hoje"]:::sistema --> L["4. Lembrete<br/>mensagem ao docente"]:::gestao --> D["5. Docente atualiza<br/>no acadêmico"]:::docencia
+  P["1. Datas do semestre<br/>Calendário › Etapas"]:::gestao --> M["2. Aulas presumidas<br/>grade × dias letivos"]:::sistema --> C["2a. Conferência<br/>por amostra"]:::gestao --> S["3. Semáforo<br/>esperado e grade curta"]:::sistema --> L["4. Lembrete<br/>mensagem ao docente"]:::gestao --> D["5. Docente atualiza<br/>no acadêmico"]:::docencia
 ```
 
 | # | Etapa | Responsável | Parte do sistema |
 | :-- | :-- | :-- | :-- |
 | 1 | Datas do semestre | Coordenação | `calendario/actions.ts` (etapas e semestres); aviso `semestreSemDatas` na tela inicial |
-| 2 | Aulas ministradas | Coordenação | `src/app/(painel)/diarios/actions.ts` (`atualizarDiario`) |
-| 3 | Semáforo | Sistema | `src/lib/diarios/regras.ts` (`aulasEsperadas`, `semaforo`) |
+| 2 | Aulas presumidas | Sistema | `src/lib/diarios/automatico.ts`, `servidor.ts` (`situacoesAutomaticas`); coluna `ministradasManual` |
+| 2a | Conferência e correção | Coordenação | `diarios/actions.ts` (`conferirDiario`, `atualizarDiario`, `voltarAoAutomatico`); `/diarios/conferencia` |
+| 3 | Semáforo | Sistema | `src/lib/diarios/regras.ts` (`aulasEsperadas`, `semaforo` com déficit projetado) |
 | 4 | Lembrete | Coordenação | `registrarLembrete`, `lembreteDoDiario` |
 | 5 | Meus diários | Docente | `/diarios?escopo=meus` |
 

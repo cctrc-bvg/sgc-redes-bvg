@@ -6,7 +6,9 @@ import { exigirPermissao } from '@/lib/auth/dal';
 import { temPermissao } from '@/lib/auth/rbac';
 import {
   descreverBloco,
+  dataDoBanco,
   formatarData,
+  hojeEmFortaleza,
   NOME_STATUS_CONVITE,
   OPCAO_DISPENSA,
   OPCAO_PENDENTE,
@@ -23,6 +25,8 @@ import { carregarModelos } from '@/lib/comunicacao/servidor';
 import { carregarAusencia, contextoDaAusencia, impactoDaTurma } from '@/lib/ausencias/servidor';
 import { configuracaoEvolution, destinoValido } from '@/lib/comunicacao/evolution';
 import { prisma } from '@/lib/db';
+import { carregarAno } from '@/lib/calendario/servidor';
+import { prazoDeReposicao, textoPrazoReposicao } from '@/lib/calendario/regras';
 import { FormularioEnvio } from '../../comunicacao/formulario-envio';
 import { SituacaoAusencia } from '../situacao';
 import { FormularioCancelamento, FormularioConvite, FormularioDecisao, type HorarioDecisao } from './formularios';
@@ -44,6 +48,10 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
   const dados = await carregarAusencia(id);
   if (!dados) notFound();
   const { registro, dia, ausencia, alertas, horarios, mensagens, dataISO } = dados;
+  // Reposição das aulas dispensadas: 15 dias letivos ou o fim da etapa, o que vier primeiro (ROD, Art. 37, § 2º).
+  const precisaRepor = registro.status === 'TURMA_DISPENSADA' || registro.status === 'REPOSICAO_AGENDADA';
+  const anoCal = precisaRepor ? await carregarAno(Number(dataISO.slice(0, 4))) : null;
+  const prazoRepor = anoCal ? prazoDeReposicao(dataISO, anoCal.contagem.letivos, anoCal.etapas) : null;
   // Envio automático só com a API configurada e destino válido no canal (G07).
   const comApi = podeComunicar && configuracaoEvolution() !== null;
   const mostrarWhatsapp = usuario.usaWhatsapp;
@@ -136,6 +144,20 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
           <span className="rounded-full bg-docencia-50 px-2 py-0.5 text-xs font-semibold text-docencia-800">Informada pelo docente</span>
         )}
       </p>
+      {prazoRepor && (
+        <div className="mt-3">
+          <Alerta tipo={registro.status === 'TURMA_DISPENSADA' && prazoRepor.prazo < hojeEmFortaleza() ? 'erro' : 'info'}>
+            Reposição das aulas dispensadas: {textoPrazoReposicao(prazoRepor)} (ROD, Art. 37, § 2º).
+            {registro.status === 'TURMA_DISPENSADA'
+              ? prazoRepor.prazo < hojeEmFortaleza()
+                ? ' O prazo já passou e a reposição ainda não foi agendada.'
+                : ' Combine a data com a turma (pelo menos 75% de acordo, com registro assinado) e marque "reposição agendada" na decisão.'
+              : ' Reposição já agendada.'}
+            {registro.reposicaoEm && ` Aula reposta em ${formatarData(dataDoBanco(registro.reposicaoEm))}.`}{' '}
+            <Link href="/reposicoes" className="font-semibold underline underline-offset-2">Registrar ou conferir a reposição</Link>.
+          </Alerta>
+        </div>
+      )}
       {registro.informadaPeloDocente && registro.status === 'PENDENTE_DECISAO' && (
         <div className="mt-3">
           <Alerta tipo="info">

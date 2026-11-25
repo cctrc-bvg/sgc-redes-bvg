@@ -52,6 +52,11 @@ export default async function PaginaComunicacao() {
         )}
       </p>
 
+      <p className="mt-6 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-800 shadow-sm">
+        <strong>Resumo semanal dos docentes:</strong> aulas da semana, mudanças e prazos, uma mensagem por docente.{' '}
+        <a href="/comunicacao/periodicas" className="font-semibold text-if-verde-700 underline underline-offset-2">Abrir mensagens periódicas</a>.
+      </p>
+
       <section aria-labelledby="avulsa" className="mt-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h2 id="avulsa" className="text-lg font-semibold text-slate-900">Mensagem avulsa</h2>
         <p className="mb-4 mt-1 text-sm text-slate-700">

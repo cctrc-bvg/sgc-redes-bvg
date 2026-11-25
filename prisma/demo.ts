@@ -240,6 +240,29 @@ async function main() {
     if (livre) await prisma.conviteSubstituicao.create({ data: { ausenciaId: ausencia.id, blocoId: aula.blocoId, professorId: livre } });
   }
 
+  // 6b. Turma dispensada há alguns dias e reposição ainda sem data (prazo do ROD, Art. 37, § 2º, ainda em curso)
+  const diaPassado = diaUtil(somarDias(hoje, -8));
+  const aulaPassada = await prisma.gradeHorario.findFirst({
+    where: { anoLetivo: ano, semestreLetivo: sem, diaSemana: diaSemana(diaPassado), ofertaId: { not: null }, bloco: { turno: 'TARDE' } },
+    include: { bloco: true, oferta: true },
+    orderBy: { bloco: { ordem: 'asc' } },
+  });
+  if (aulaPassada?.oferta) {
+    await prisma.ausenciaDocente.create({
+      data: {
+        dataAula: data(diaPassado),
+        turmaId: aulaPassada.turmaId,
+        ofertaId: aulaPassada.oferta.id,
+        professorAusenteId: aulaPassada.oferta.professorId,
+        blocosAfetados: `T${aulaPassada.bloco.ordem}`,
+        motivoOperacional: 'Participação em evento',
+        status: 'TURMA_DISPENSADA',
+        decididaEm: new Date(),
+        coberturas: { create: { blocoId: aulaPassada.blocoId, tipo: 'DISPENSA' } },
+      },
+    });
+  }
+
   // 7. Alimentação: acréscimo planejado (encontro de PEI) e um ajuste do dia seguinte
   const turma1 = turmas[0];
   await prisma.alertaAlimentacao.create({

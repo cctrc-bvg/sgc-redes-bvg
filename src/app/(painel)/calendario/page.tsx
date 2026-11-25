@@ -5,7 +5,7 @@ import { LinkExportar, LinkImpressao } from '@/components/barra-impressao';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { temPermissao } from '@/lib/auth/rbac';
 import { formatarData } from '@/lib/ausencias/regras';
-import { DIAS_LETIVOS_ANO, DIAS_POR_ETAPA, MESES, NOME_TIPO_EVENTO, datasEntre, diaDaSemanaISO, nomeEtapa, situacaoDasAulas } from '@/lib/calendario/regras';
+import { DIAS_LETIVOS_ANO, DIAS_POR_ETAPA, MESES, NOME_TIPO_EVENTO, datasEntre, diaDaSemanaISO, nomeEtapa, inicioSugeridoAvaliacoes, situacaoDasAulas } from '@/lib/calendario/regras';
 import { carregarAno } from '@/lib/calendario/servidor';
 import { NOME_DIA_EXTENSO } from '@/lib/grade/regras';
 import { anoLetivoAtual, lerAnoLetivo } from '@/lib/ofertas/regras';
@@ -87,6 +87,9 @@ export default async function PaginaCalendario({ searchParams }: { searchParams:
           <Link href={`/calendario/etapas?ano=${ano}`} className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
             Etapas e semestres
           </Link>
+          <Link href="/periodos" className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
+            Períodos especiais
+          </Link>
           <Link href="/grade/sabados" className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
             Sábados letivos
           </Link>
@@ -96,6 +99,20 @@ export default async function PaginaCalendario({ searchParams }: { searchParams:
         </div>
       )}
 
+      {podeEditar && cal.intervalo && !cal.eventos.some((e) => e.tipo === 'AVALIACOES_FINAIS') && inicioSugeridoAvaliacoes(cal.contagem.letivos) && (
+        <div className="mt-4">
+          <Alerta tipo="info">
+            As avaliações finais ainda não foram cadastradas. Elas costumam começar depois do último dia letivo ({formatarData(cal.contagem.letivos[cal.contagem.letivos.length - 1])}):{' '}
+            <Link
+              href={`/calendario/eventos/novo?tipo=AVALIACOES_FINAIS&inicio=${inicioSugeridoAvaliacoes(cal.contagem.letivos)}`}
+              className="font-semibold underline underline-offset-2"
+            >
+              cadastrar a partir de {formatarData(inicioSugeridoAvaliacoes(cal.contagem.letivos)!)}
+            </Link>
+            . Podem incluir sábados; os prazos entre as avaliações são combinados com os docentes.
+          </Alerta>
+        </div>
+      )}
       {cal.avisos.map((a) => (
         <div key={a} className="mt-4">
           <Alerta tipo="erro">{a}</Alerta>
