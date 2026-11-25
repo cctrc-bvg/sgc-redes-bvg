@@ -30,7 +30,7 @@ export async function darCiencia(_estado: EstadoAviso | undefined, formData: For
   await registrarAuditoria({ userId: usuario.id, acao: 'DEU_CIENCIA_ALIMENTACAO', entidade: 'AlertaAlimentacao', entidadeId: alvo.id });
   revalidatePath('/alimentacao');
   revalidatePath('/ausencias');
-  if (temPermissao(usuario.role, 'comunicacao:enviar')) redirect(paginaComunicar(alvo.dataRefeicao, 'ciencia'));
+  if (temPermissao(usuario, 'comunicacao:enviar')) redirect(paginaComunicar(alvo.dataRefeicao, 'ciencia'));
   return { sucesso: true, mensagem: 'Ciência registrada.' };
 }
 
@@ -54,7 +54,7 @@ export async function ajustarQuantidade(_estado: EstadoAviso | undefined, formDa
   });
   revalidatePath('/alimentacao');
   revalidatePath('/ausencias');
-  if (temPermissao(usuario.role, 'comunicacao:enviar')) redirect(paginaComunicar(alvo.dataRefeicao, 'ajuste'));
+  if (temPermissao(usuario, 'comunicacao:enviar')) redirect(paginaComunicar(alvo.dataRefeicao, 'ajuste'));
   return { sucesso: true, mensagem: 'Quantidade ajustada. A Assistência Estudantil precisa dar ciência de novo.' };
 }
 
@@ -104,7 +104,7 @@ export async function criarAcrescimo(_estado: EstadoAcrescimo | undefined, formD
     await registrarAuditoria({ userId: usuario.id, acao: 'ADICIONOU_REFEICAO', entidade: 'AlertaAlimentacao', entidadeId: id, detalhes: { quantidade: d.quantidade } });
   }
   revalidatePath('/alimentacao');
-  if (temPermissao(usuario.role, 'comunicacao:enviar')) redirect(`/alimentacao/comunicar?data=${d.data}&motivo=acrescimo`);
+  if (temPermissao(usuario, 'comunicacao:enviar')) redirect(`/alimentacao/comunicar?data=${d.data}&motivo=acrescimo`);
   redirect(`/alimentacao?data=${d.data}&aviso=acrescimo`);
 }
 

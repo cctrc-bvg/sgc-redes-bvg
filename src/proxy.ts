@@ -5,7 +5,8 @@ import { NextResponse, type NextRequest } from 'next/server';
  * Não consulta o banco — a validação real da sessão acontece no DAL (src/lib/auth/dal.ts).
  */
 const COOKIE_SESSAO = 'sgc_sessao'; // mesmo nome de src/lib/auth/sessao.ts
-const ROTAS_PUBLICAS = ['/login'];
+// /api/saude: healthcheck do Docker e do monitoramento (não expõe dados).
+const ROTAS_PUBLICAS = ['/login', '/api/saude'];
 
 export default function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;

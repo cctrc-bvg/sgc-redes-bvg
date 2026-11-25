@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao } from '@/lib/auth/dal';
-import { UsuarioSchema, gerarSenhaProvisoria, verificarAlteracao } from '@/lib/usuarios/regras';
+import { UsuarioSchema, gerarSenhaProvisoria, lecionaNoCadastro, verificarAlteracao } from '@/lib/usuarios/regras';
 
 const CUSTO_BCRYPT = 12;
 
@@ -44,7 +44,7 @@ function erroDeUnicidade(e: unknown): ErrosCampos | null {
 
 export async function criarUsuario(_estado: EstadoUsuario | undefined, formData: FormData): Promise<EstadoUsuario> {
   const { usuario: editor } = await exigirPermissao('usuarios:gerenciar');
-  const valores = lerFormulario(formData);
+  const valores = { ...lerFormulario(formData), leciona: formData.get('leciona') === 'on' ? 'on' : '' };
   const validacao = UsuarioSchema.safeParse(valores);
   if (!validacao.success) return { erros: z.flattenError(validacao.error).fieldErrors, valores };
 
@@ -53,6 +53,7 @@ export async function criarUsuario(_estado: EstadoUsuario | undefined, formData:
     const criado = await prisma.user.create({
       data: {
         ...validacao.data,
+        leciona: lecionaNoCadastro(validacao.data.role, valores.leciona === 'on'),
         siape: validacao.data.siape ?? null,
         whatsapp: validacao.data.whatsapp ?? null,
         passwordHash: await bcrypt.hash(senhaProvisoria, CUSTO_BCRYPT),
@@ -78,7 +79,7 @@ export async function criarUsuario(_estado: EstadoUsuario | undefined, formData:
 export async function atualizarUsuario(_estado: EstadoUsuario | undefined, formData: FormData): Promise<EstadoUsuario> {
   const { usuario: editor } = await exigirPermissao('usuarios:gerenciar');
   const usuarioId = String(formData.get('usuarioId') ?? '');
-  const valores = { ...lerFormulario(formData), ativo: formData.get('ativo') === 'on' ? 'on' : '' };
+  const valores = { ...lerFormulario(formData), ativo: formData.get('ativo') === 'on' ? 'on' : '', leciona: formData.get('leciona') === 'on' ? 'on' : '' };
   const validacao = UsuarioSchema.safeParse(valores);
   if (!validacao.success) return { erros: z.flattenError(validacao.error).fieldErrors, valores };
 
@@ -102,6 +103,7 @@ export async function atualizarUsuario(_estado: EstadoUsuario | undefined, formD
     siape: validacao.data.siape ?? null,
     whatsapp: validacao.data.whatsapp ?? null,
     ativo: novoAtivo,
+    leciona: lecionaNoCadastro(validacao.data.role, valores.leciona === 'on'),
   };
   // Auditoria registra QUAIS campos mudaram, sem copiar os valores pessoais.
   const alterados = (Object.keys(dados) as (keyof typeof dados)[]).filter((k) => dados[k] !== atual[k]);

@@ -22,6 +22,11 @@ export interface PrevisaoTurma {
   final: Quantidades;
 }
 
+/** Médias cadastradas na turma, por refeição. */
+export function mediasDaTurma(t: { qtdMediaLancheManha: number; qtdMediaAlmoco: number; qtdMediaLancheTarde: number }): Quantidades {
+  return { LANCHE_MANHA: t.qtdMediaLancheManha, ALMOCO: t.qtdMediaAlmoco, LANCHE_TARDE: t.qtdMediaLancheTarde };
+}
+
 const zeros = (): Quantidades => ({ LANCHE_MANHA: 0, ALMOCO: 0, LANCHE_TARDE: 0 });
 
 /**

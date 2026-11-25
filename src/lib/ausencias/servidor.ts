@@ -2,7 +2,7 @@ import 'server-only';
 import type { Prisma, TipoRefeicao } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { diaDaGradeNaData, NOME_DIA_EXTENSO } from '@/lib/grade/regras';
-import { PERFIS_DOCENTES } from '@/lib/ofertas/regras';
+import { ONDE_DOCENTES } from '@/lib/ofertas/regras';
 import {
   ACAO_DO_IMPACTO,
   blocosOcupadosDepois,
@@ -67,7 +67,7 @@ export async function carregarDia(dataISO: string, db: Tx | typeof prisma = pris
         coberturas: { select: { blocoId: true, tipo: true, substitutoId: true, blocoOrigemId: true } },
       },
     }),
-    db.user.findMany({ where: { ativo: true, role: { in: [...PERFIS_DOCENTES] } }, select: { id: true, nome: true }, orderBy: { nome: 'asc' } }),
+    db.user.findMany({ where: ONDE_DOCENTES, select: { id: true, nome: true }, orderBy: { nome: 'asc' } }),
   ]);
 
   const aulasDoDia: AulaDetalhada[] = celulas.map((c) => ({
@@ -246,6 +246,7 @@ export async function carregarAusencia(ausenciaId: string) {
     professor: registro.professorAusente.nome,
     motivoOperacional: registro.motivoOperacional,
     status: registro.status,
+    informada: registro.informadaPeloDocente,
     horarios,
     refeicoes: ativos.map((a) => ({ tipo: a.tipoRefeicao, acao: a.acao, quantidade: a.qtdImpactada, nivel: a.nivelSla })),
   };

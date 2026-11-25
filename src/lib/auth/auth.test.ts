@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Role } from '@prisma/client';
 import { LimitadorTentativas } from './limitador';
-import { MODULOS, PERMISSOES, modulosDoPerfil, permissoesDoPerfil, temPermissao } from './rbac';
+import { MODULOS, PERMISSOES, acumulaDocencia, ehDocente, modulosDoPerfil, permissoesDoPerfil, temPermissao, temPermissaoDoCargo } from './rbac';
 import { gerarTokenSessao, hashToken } from './token';
 import { LoginSchema, NovaSenhaSchema, destinoSeguro } from './validacao';
 
@@ -175,5 +175,30 @@ describe('token de sessão', () => {
     expect(hashToken(t)).toBe(hashToken(t));
     expect(hashToken(t)).toMatch(/^[0-9a-f]{64}$/);
     expect(hashToken(t)).not.toContain(t);
+  });
+});
+
+describe('RBAC — docência acumulada ao cargo', () => {
+  it('soma as permissões de docente às do cargo, sem tirar nenhuma', () => {
+    const direcao = { role: 'DIRECAO' as const, leciona: true };
+    expect(temPermissao(direcao, 'relatorios:ver')).toBe(true);
+    expect(temPermissao(direcao, 'ppe:definir')).toBe(true);
+    expect(temPermissao(direcao, 'substituicao:responder')).toBe(true);
+    expect(temPermissao(direcao, 'ppe:gerenciar')).toBe(false);
+    expect(temPermissao({ role: 'DIRECAO', leciona: false }, 'ppe:definir')).toBe(false);
+    expect(permissoesDoPerfil(direcao)).toEqual(expect.arrayContaining(['relatorios:ver', 'diarios:ver-proprios']));
+  });
+
+  it('distingue quem leciona e quem acumula dois papéis', () => {
+    expect(ehDocente('PROFESSOR')).toBe(true);
+    expect(acumulaDocencia('PROFESSOR')).toBe(false);
+    expect(acumulaDocencia({ role: 'COORDENADOR', leciona: true })).toBe(true);
+    expect(ehDocente({ role: 'CTP', leciona: false })).toBe(false);
+  });
+
+  it('permissão do cargo ignora a docência (a CTP que leciona continua vendo todas as PPEs)', () => {
+    expect(temPermissaoDoCargo({ role: 'CTP', leciona: true }, 'ppe:ver')).toBe(true);
+    expect(temPermissaoDoCargo('PROFESSOR', 'ppe:ver')).toBe(false);
+    expect(temPermissaoDoCargo({ role: 'DIRECAO', leciona: true }, 'ppe:ver')).toBe(false);
   });
 });

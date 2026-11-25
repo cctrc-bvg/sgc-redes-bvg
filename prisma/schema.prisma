@@ -29,6 +29,9 @@ model User {
   usaWhatsapp   Boolean  @default(true)
   passwordHash  String
   role          Role     @default(PROFESSOR)
+  // Também leciona (docência acumulada ao cargo): soma as permissões de docente às do perfil. Sempre verdadeiro
+  // para PROFESSOR; ligado automaticamente quando a pessoa recebe uma disciplina em Ofertas.
+  leciona       Boolean  @default(false)
   ativo         Boolean  @default(true)
   // Senha provisória (seed ou cadastro pela coordenação) deve ser trocada no primeiro acesso.
   deveTrocarSenha Boolean @default(true)
@@ -282,6 +285,8 @@ model AusenciaDocente {
   professorSubstituto User?           @relation("ProfessorSubstituto", fields: [professorSubstitutoId], references: [id])
   blocosAfetados      String          // ex: "M1,M2" ou "T3,T4"
   motivoOperacional   String          // Texto curto e não sensível (LGPD)
+  // RF02-A: o próprio docente informou a ausência (a Coordenação dá ciência e decide a cobertura).
+  informadaPeloDocente Boolean        @default(false)
   status              StatusAusencia  @default(PENDENTE_DECISAO)
   // Registro obrigatório quando a dispensa gera aviso de emergência à AE (RF04, < 4h)
   justificativa       String?

@@ -24,8 +24,8 @@ const AVISOS: Record<string, string> = { criado: 'Item cadastrado no quadro.', e
 
 export default async function PaginaProcessos({ searchParams }: { searchParams: Promise<{ tipo?: string; aviso?: string }> }) {
   const { usuario } = await exigirPermissao('kanban:ver');
-  const podeGerenciar = temPermissao(usuario.role, 'kanban:gerenciar');
-  const podeSigilo = temPermissao(usuario.role, 'kanban:ver-sigiloso');
+  const podeGerenciar = temPermissao(usuario, 'kanban:gerenciar');
+  const podeSigilo = temPermissao(usuario, 'kanban:ver-sigiloso');
   const { tipo: tipoUrl, aviso } = await searchParams;
   const tipo = TIPOS.includes(tipoUrl as TipoProcesso) ? (tipoUrl as TipoProcesso) : undefined;
   const hoje = hojeEmFortaleza();

@@ -50,6 +50,7 @@ export type UsuarioSessao = {
   nome: string;
   email: string;
   role: import('@prisma/client').Role;
+  leciona: boolean;
   deveTrocarSenha: boolean;
   /** Falso: a pessoa não quer usar o WhatsApp no sistema (só e-mail). */
   usaWhatsapp: boolean;
@@ -63,7 +64,7 @@ export async function lerSessao(): Promise<{ sessaoId: string; usuario: UsuarioS
   const sessaoId = hashToken(token);
   const sessao = await prisma.sessao.findUnique({
     where: { id: sessaoId },
-    include: { user: { select: { id: true, nome: true, email: true, role: true, ativo: true, deveTrocarSenha: true, usaWhatsapp: true } } },
+    include: { user: { select: { id: true, nome: true, email: true, role: true, leciona: true, ativo: true, deveTrocarSenha: true, usaWhatsapp: true } } },
   });
   if (!sessao) return null;
 

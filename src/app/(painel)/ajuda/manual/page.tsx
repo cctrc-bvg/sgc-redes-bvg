@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: 'Manual do usuário — SGC-Redes' };
 export default async function PaginaManual({ searchParams }: { searchParams: Promise<{ perfil?: string }> }) {
   const { usuario } = await exigirUsuario();
   const soPerfil = (await searchParams).perfil === '1';
-  const lista = TOPICOS.filter((t) => !soPerfil || topicoDoPerfil(t, usuario.role));
+  const lista = TOPICOS.filter((t) => !soPerfil || topicoDoPerfil(t, usuario));
   return (
     <div className="bg-white p-4 text-slate-900 print:p-0">
       <BarraImpressao voltar="/ajuda" rotulo="Voltar à Ajuda" />

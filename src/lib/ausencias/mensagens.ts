@@ -14,6 +14,15 @@ export const NOME_REFEICAO_HORARIO: Record<TipoRefeicao, string> = {
   LANCHE_TARDE: 'Lanche da tarde (15:00)',
 };
 
+/** Setor que recebe o motivo e o comprovante da ausência (decisão G16, 25/11/2026). */
+export const GESTAO_PESSOAS = { nome: 'Coordenadoria de Gestão de Pessoas', sigla: 'CGP', email: 'cgp.boaviagem@ifce.edu.br' } as const;
+
+/**
+ * Orientação ao docente ausente (decisão de 25/11/2026): o motivo e o comprovante (ex.: atestado médico) são tratados
+ * direto com a Gestão de Pessoas do campus, nunca pelo SGC-Redes nem pela Coordenação do curso (LGPD).
+ */
+export const ORIENTACAO_GESTAO_PESSOAS = `Importante: informe também a ${GESTAO_PESSOAS.nome} (${GESTAO_PESSOAS.sigla}) do campus sobre a ausência, com o motivo, pelo e-mail ${GESTAO_PESSOAS.email}, e entregue a ela o comprovante (por exemplo, atestado médico), se houver. Esse contato e a entrega de documentos são feitos direto com a ${GESTAO_PESSOAS.sigla}, fora do SGC-Redes; não é preciso enviar motivo nem documento à Coordenação do curso.`;
+
 export const ETIQUETA_SLA: Record<NivelUrgenciaSla, string> = {
   VERDE_24H_MAIS: '🟢 Planejado (24h+)',
   AMARELO_4H_A_24H: '🟡 Imprevisto moderado (4h–24h)',
@@ -43,6 +52,8 @@ export interface DadosMensagem {
   professor: string;
   motivoOperacional: string;
   status: StatusAusencia;
+  /** RF02-A: o próprio docente informou a ausência (a mensagem de ciência responde a ele). */
+  informada?: boolean;
   horarios: readonly LinhaHorario[];
   /** Avisos de refeição ativos da turma no dia. */
   refeicoes: readonly { tipo: TipoRefeicao; acao: 'CANCELAR_REFEICAO' | 'ADICIONAR_REFEICAO'; quantidade: number; nivel: NivelUrgenciaSla }[];
@@ -240,6 +251,7 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
     disciplina: d.disciplina,
     situacao: NOME_STATUS[d.status],
     reposicao,
+    'gestao de pessoas': ORIENTACAO_GESTAO_PESSOAS,
     ...(x.linkMinhaGrade ? { link: x.linkMinhaGrade } : {}),
   };
   const horariosDe = (paraEstudantes: boolean) => lista_(d.horarios.map((h) => `${h.bloco}: ${textoHorario(h, paraEstudantes)}`));
@@ -344,6 +356,20 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
 
   const ausente = pessoa(x.ausenteId);
   const decididos = d.horarios.filter((h) => h.situacao !== 'pendente');
+  // Ciência da ausência: assim que a ausência é registrada (antes da cobertura), com a orientação da Gestão de Pessoas.
+  if (ausente && decididos.length === 0) {
+    lista.push(
+      individual(ausente, `ciencia:${ausente.id}`, 'Docente ausente', `${ASSUNTO} Ciência da sua ausência — ${quando}`, [
+        d.informada
+          ? `A Coordenação recebeu a ausência que você informou nas aulas de *${d.disciplina}* na turma *${d.turma}* em *${cabecalhoData(d)}*:`
+          : `A Coordenação registrou a sua ausência nas aulas de *${d.disciplina}* na turma *${d.turma}* em *${cabecalhoData(d)}*:`,
+        ...d.horarios.map((h) => `- ${h.bloco}`),
+        'Vamos organizar a cobertura e avisar você quando estiver decidida.',
+        '',
+        ORIENTACAO_GESTAO_PESSOAS,
+      ], 'docente_ausente', { ...base, horarios: lista_(d.horarios.map((h) => h.bloco)) }),
+    );
+  }
   if (ausente && decididos.length > 0) {
     lista.push(
       individual(ausente, `ausente:${ausente.id}`, 'Docente ausente', `${ASSUNTO} Cobertura das suas aulas — ${quando}`, [
@@ -354,6 +380,8 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
             ? 'A reposição das aulas dispensadas já está agendada.'
             : 'Combine com a Coordenação a reposição das aulas dispensadas.'
           : 'Nenhuma aula ficou sem atendimento.',
+        '',
+        ORIENTACAO_GESTAO_PESSOAS,
       ], 'docente_ausente', { ...base, horarios: horariosDe(false) }),
     );
   }

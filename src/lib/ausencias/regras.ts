@@ -130,6 +130,30 @@ export function criarRegistroAusenciaSchema(hojeISO: string) {
   });
 }
 
+/** Registro por período (licença de vários dias): no máximo 15 dias corridos de uma vez. */
+export const DIAS_MAXIMOS_PERIODO = 15;
+
+/**
+ * Datas do período "de… até…", em ordem. `ate` vazio, inválido ou igual a `de`: só o dia `de`. Devolve null se o fim
+ * vier antes do início ou o período passar do máximo.
+ */
+export function datasDoPeriodo(de: string, ate: string | null | undefined): string[] | null {
+  if (!ate || ate === de || !ehDataValida(ate)) return [de];
+  if (ate < de) return null;
+  const datas = [de];
+  while (datas[datas.length - 1] < ate) {
+    if (datas.length >= DIAS_MAXIMOS_PERIODO) return null;
+    datas.push(somarDias(datas[datas.length - 1], 1));
+  }
+  return datas;
+}
+
+/** Chave de uma aula num período: "AAAA-MM-DD#oferta|bloco". Sem data, vale a data informada. */
+export function lerChaveDoPeriodo(chave: string, dataPadrao: string): { data: string; chave: string } {
+  const i = chave.indexOf('#');
+  return i < 0 ? { data: dataPadrao, chave } : { data: chave.slice(0, i), chave: chave.slice(i + 1) };
+}
+
 /** Valor do checkbox de cada aula na segunda etapa. */
 export const chaveAula = (a: Pick<AulaDia, 'ofertaId' | 'blocoId'>) => `${a.ofertaId}|${a.blocoId}`;
 

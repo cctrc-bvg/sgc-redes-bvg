@@ -1,7 +1,7 @@
 import 'server-only';
-import type { Prisma, Role } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { temPermissao } from '@/lib/auth/rbac';
+import { temPermissao, temPermissaoDoCargo, type Titular } from '@/lib/auth/rbac';
 import { anoDoSemestre, excedeLimitePpe } from './regras';
 
 type Db = Prisma.TransactionClient | typeof prisma;
@@ -18,13 +18,13 @@ export type Acesso = { ver: boolean; definir: boolean; gerenciar: boolean };
  * O que o usuário pode fazer com uma PPE: Coordenação gerencia tudo; docente define e acompanha as das
  * disciplinas que leciona no ano; CTP (e demais com ppe:ver) só consulta (Art. 127).
  */
-export async function acessoAoPpe(usuario: { id: string; role: Role }, ppe: { disciplinaId: string; semestre: string }): Promise<Acesso> {
-  const gerenciar = temPermissao(usuario.role, 'ppe:gerenciar');
-  const ver = temPermissao(usuario.role, 'ppe:ver');
+export async function acessoAoPpe(usuario: { id: string } & Exclude<Titular, string>, ppe: { disciplinaId: string; semestre: string }): Promise<Acesso> {
+  const gerenciar = temPermissao(usuario, 'ppe:gerenciar');
+  const ver = temPermissao(usuario, 'ppe:ver');
   if (gerenciar) return { ver: true, definir: true, gerenciar: true };
-  const ehDocente = temPermissao(usuario.role, 'ppe:definir') && (await disciplinasDoDocente(usuario.id, anoDoSemestre(ppe.semestre))).has(ppe.disciplinaId);
-  // Professor só vê as PPEs das próprias disciplinas; CTP vê todas.
-  const verTodas = ver && !temPermissao(usuario.role, 'ppe:definir');
+  const ehDocente = temPermissao(usuario, 'ppe:definir') && (await disciplinasDoDocente(usuario.id, anoDoSemestre(ppe.semestre))).has(ppe.disciplinaId);
+  // Docente só vê as PPEs das próprias disciplinas; CTP vê todas (mesmo se também lecionar).
+  const verTodas = ver && temPermissaoDoCargo(usuario, 'ppe:ver');
   return { ver: verTodas || ehDocente, definir: ehDocente, gerenciar: false };
 }
 

@@ -137,6 +137,11 @@ sequenceDiagram
 - **Idioma:** nomes de domínio, mensagens, comentários e commits em português (`exigirPermissao`, `planejarGrade`).
 - **Ids e contexto em campos ocultos**, nunca `acao.bind(null, id)` com `useActionState` (sem JS, re-render infinito).
   O `ImportadorPlanilha` aceita `ocultos={{ anoLetivo: '2026' }}` para isso.
+- **`<select>` em formulário com Server Action:** depois da ação o React 19 limpa o formulário, e o `<select>` volta à
+  opção da primeira renderização, perdendo a escolha do usuário. O `Selecao` já se protege (`key` pelo `defaultValue`).
+  Num `<select>` próprio, use `key={valorDevolvido}`. Com campos controlados por `useState`, use
+  `<form key={useVersaoDoEstado(estado)}>` (`src/components/versao-do-estado.ts`). Devolva sempre os valores
+  enviados no estado da ação.
 - **Arquivo `'use server'` só exporta funções assíncronas**; constantes e tipos compartilhados vão para `src/lib`.
 - **Código de servidor** importa `'server-only'`. Componentes cliente não importam Prisma, `node:crypto` ou ExcelJS —
   recebem dados prontos por props.
@@ -155,7 +160,10 @@ sequenceDiagram
 ## 7. Receita: criar um módulo novo
 
 1. **Especifique** na issue: perfis que usam, regras (com artigo do regimento/ROD) e decisões em aberto.
-2. **Permissões** em `rbac.ts` (+ teste em `auth.test.ts`) e o módulo em `MODULOS` / link em `layout.tsx`.
+2. **Permissões** em `rbac.ts` (+ teste em `auth.test.ts`), o módulo em `MODULOS` e a função em `src/lib/navegacao.ts`
+   (rótulo, descrição de uma linha, ícone, grupo): é a fonte única do menu do cabeçalho e de "Todas as funções" no painel.
+   Se o módulo gera pendência para alguém, conte-a em `src/lib/painel/servidor.ts` e descreva a ação (nível, texto,
+   botão) em `src/lib/painel/acoes.ts`, com teste.
 3. **Schema e migração** (seção 8), se houver dados novos.
 4. **Regras puras** em `src/lib/<modulo>/regras.ts` com `regras.test.ts`.
 5. **Consultas** em `src/lib/<modulo>/servidor.ts` (`'server-only'`).
@@ -210,7 +218,14 @@ npm run e2e                            # sobe o servidor standalone na porta 312
 ```
 
 Os roteiros são **de fumaça**: login e sessão, menus do cabeçalho, acesso por perfil, mensagem avulsa e caixa de
-mensagem (copiar, e-mail, registrar), importação com prévia e as páginas principais de cada perfil sem erro. Cubra
+mensagem (copiar, e-mail, registrar), importação com prévia, páginas principais de cada perfil sem erro, PPI/PPE,
+exportação de planilhas (.xlsx/.csv) e modelos, cadastro de turma (erro de validação, edição, exclusão), máscara de
+telefone em Meu contato, suspensão de aulas no calendário (formulário dinâmico, mensagens prontas, remoção),
+ausência com convite de substituição aceito pelo docente em Minha grade, acréscimo de refeição com ciência da
+Assistência Estudantil e diário com lembrete ao docente. O `acessibilidade.spec.ts` roda o axe-core (WCAG 2.1 A/AA,
+base do eMAG) nas páginas principais e de detalhe; o `paginas.spec.ts` falha com violação da política de conteúdo
+(CSP do `next.config.ts`) — recurso externo novo exige ajustar a política. Roteiros que gravam dados usam datas futuras e textos únicos
+por execução e desfazem o que criaram, para rodarem de novo no mesmo banco. Cubra
 regras com Vitest; um roteiro novo só quando o comportamento depende do navegador (JS, área de transferência, menus).
 Ao mudar textos de botões ou rótulos usados nos roteiros, ajuste-os também (eles localizam pelo nome acessível).
 
@@ -223,6 +238,7 @@ Boas práticas: teste a regra pura (casos de borda, erros com a mensagem que o u
 | :--- | :--- | :--- |
 | Usuários | Sistema → **Ajuda** (`/ajuda`, PDF em `/ajuda/manual`) e [docs/MANUAL_DO_USUARIO.md](../MANUAL_DO_USUARIO.md) | edite `src/lib/ajuda/topicos.ts`, rode `npm run manual` |
 | Capturas de tela | `public/manual/*.jpg` | servidor com `db:demo` + `BASE_URL=http://localhost:3000 npm run capturas [-- id]` |
+| Fluxos | [FLUXOS.md](../FLUXOS.md): diagramas por fluxo com responsável, tela e código | edite à mão ao mudar um fluxo; os diagramas da Ajuda ficam em `topicos.ts` (campo `diagrama`, com `onde`) |
 | Contribuidores | este guia e [CONTRIBUTING.md](../../CONTRIBUTING.md) | edite à mão |
 | Negócio | [FSD.md](../FSD.md), [ARQUITETURA_LGPD.md](../ARQUITETURA_LGPD.md) | edite à mão; decisões novas na tabela de pendências do FSD |
 | Andamento | [PROXIMOS_PASSOS.md](../PROXIMOS_PASSOS.md) | backlog e decisões |

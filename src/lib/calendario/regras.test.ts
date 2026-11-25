@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contarDiasLetivos, dentro, EventoSchema, intervaloDoAno, porMes, semanasDoMes, suspensaoNaData, validarSequencia } from './regras';
+import { avisosAvaliacoesFinais, contarDiasLetivos, dentro, EventoSchema, situacaoDasAulas, intervaloDoAno, porMes, semanasDoMes, suspensaoNaData, validarSequencia } from './regras';
 
 const ev = (inicio: string, fim: string, suspendeAulas = true, imprevisto = false) => ({ inicio, fim, suspendeAulas, imprevisto });
 
@@ -92,5 +92,33 @@ describe('visualização', () => {
     const e = [ev('2026-03-02', '2026-03-04', false), ev('2026-03-03', '2026-03-03')];
     expect(suspensaoNaData('2026-03-03', e)).toBe(e[1]);
     expect(suspensaoNaData('2026-03-02', e)).toBeNull();
+  });
+});
+
+describe('avaliações finais (ROD, Arts. 32 e 105)', () => {
+  const ev = { tipo: 'AVALIACOES_FINAIS' as const, inicio: '2026-12-17', fim: '2026-12-22', descricao: '', suspendeAulas: false, imprevisto: false, motivo: '' };
+
+  it('nunca contam como dias letivos, mesmo se o evento vier marcado com aula', () => {
+    const r = EventoSchema.safeParse(ev);
+    expect(r.success && r.data.suspendeAulas).toBe(true);
+    expect(situacaoDasAulas({ tipo: 'AVALIACOES_FINAIS', suspendeAulas: true })).toBe('Não letivo (avaliações)');
+    expect(situacaoDasAulas({ tipo: 'FERIADO', suspendeAulas: true })).toBe('Sem aula');
+  });
+
+  it('dentro do ano letivo, saem da contagem, inclusive num sábado letivo', () => {
+    const c = contarDiasLetivos({
+      inicio: '2026-12-14',
+      fim: '2026-12-22',
+      eventos: [{ inicio: ev.inicio, fim: ev.fim, suspendeAulas: true, imprevisto: false }],
+      sabadosLetivos: new Set(['2026-12-19']),
+    });
+    expect(c.letivos).toEqual(['2026-12-14', '2026-12-15', '2026-12-16']);
+  });
+
+  it('avisa quando há dia letivo depois delas (ex.: cadastradas no meio do ano)', () => {
+    expect(avisosAvaliacoesFinais([ev], ['2026-12-15', '2026-12-16'])).toEqual([]);
+    const meio = avisosAvaliacoesFinais([{ ...ev, inicio: '2026-07-01', fim: '2026-07-03' }], ['2026-07-06', '2026-12-16']);
+    expect(meio).toHaveLength(1);
+    expect(meio[0]).toContain('último dia letivo: 16/12/2026');
   });
 });

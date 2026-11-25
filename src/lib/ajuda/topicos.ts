@@ -34,6 +34,8 @@ export interface EtapaFluxo {
   /** Quem faz a etapa (perfil ou "Sistema"). */
   ator: string;
   detalhe?: string;
+  /** Onde a etapa acontece: a tela (como aparece no menu) e, se houver, o endereço para abrir direto. */
+  onde?: { tela: string; rota?: string };
 }
 
 export interface FluxoAjuda {
@@ -65,23 +67,27 @@ export const TOPICOS: readonly TopicoAjuda[] = [
   {
     id: 'primeiros-passos',
     titulo: 'Primeiros passos',
-    resumo: 'Acesso, troca de senha, painel inicial, menus e preferências de contato.',
+    resumo: 'Acesso, troca de senha, tela inicial, menus e preferências de contato.',
     permissao: null,
     rota: '/painel',
     capacidades: [
       'Entrar com o e-mail institucional e a senha recebida da Coordenação.',
       'Trocar a senha provisória no primeiro acesso (obrigatório).',
-      'Ver no painel só os módulos permitidos ao seu perfil, com as pendências de cada um.',
+      'Na tela inicial, ver primeiro o que precisa da sua atenção agora (do mais urgente ao menos), com um botão para resolver cada item.',
+      'Abrir "Todas as funções" com um clique: cada função tem um ícone, o mesmo do menu do cabeçalho. Sem pendências, o menu já vem aberto.',
+      'Acompanhar a agenda: o professor vê a própria semana (aulas, feriados, substituições); a Assistência Estudantil, as refeições previstas para hoje e amanhã; os demais perfis, o mês do calendário acadêmico e os próximos eventos (a Coordenação, também as ausências de hoje).',
+      'Se você tem um cargo (Coordenação, Direção, CTP) e também leciona, ver tudo junto: o que é do cargo em verde e o que é da docência em azul, sempre com o nome "Docência" escrito.',
+      'Voltar à tela inicial de qualquer página pelo botão "Início" do cabeçalho.',
       'Informar seu WhatsApp e dizer se aceita recebê-lo pelo sistema (Meu contato).',
       'Sair do sistema em qualquer página (botão Sair). A sessão expira após 8 horas sem uso.',
     ],
     diagrama: {
       titulo: 'Primeiro acesso',
       etapas: [
-        { rotulo: 'Cadastro', ator: 'Coordenação', detalhe: 'cria o usuário e entrega a senha provisória em mensagem privada' },
-        { rotulo: 'Login', ator: 'Você', detalhe: 'e-mail institucional + senha provisória' },
-        { rotulo: 'Nova senha', ator: 'Você', detalhe: '10+ caracteres, com letras e números' },
-        { rotulo: 'Painel', ator: 'Sistema', detalhe: 'mostra os módulos do seu perfil' },
+        { rotulo: 'Cadastro', ator: 'Coordenação', detalhe: 'cria o usuário e entrega a senha provisória em mensagem privada', onde: { tela: 'Cadastros › Usuários', rota: '/usuarios' } },
+        { rotulo: 'Login', ator: 'Você', detalhe: 'e-mail institucional + senha provisória', onde: { tela: 'Entrada', rota: '/login' } },
+        { rotulo: 'Nova senha', ator: 'Você', detalhe: '10+ caracteres, com letras e números', onde: { tela: 'Alterar senha', rota: '/conta/senha' } },
+        { rotulo: 'Tela inicial', ator: 'Sistema', detalhe: 'o que pede atenção, as funções do seu perfil e a agenda', onde: { tela: 'Início', rota: '/painel' } },
       ],
     },
     fluxos: [
@@ -91,16 +97,27 @@ export const TOPICOS: readonly TopicoAjuda[] = [
         passos: [
           'Abra o endereço do sistema e informe seu e-mail institucional e a senha provisória.',
           'O sistema pede uma nova senha: use pelo menos 10 caracteres, com letras e números, diferente da provisória.',
-          'Pronto: o painel abre com os módulos do seu perfil.',
+          'Pronto: a tela inicial mostra o que precisa da sua atenção, as funções do seu perfil e a sua agenda.',
         ],
       },
       {
         titulo: 'Ajustar preferências de contato',
         quem: 'Todos',
         passos: [
-          'No cabeçalho, clique em "Meu contato".',
+          'No cabeçalho, clique no seu nome e escolha "Meu contato".',
           'Informe o WhatsApp (a máscara preenche o formato) e marque se aceita que o sistema use esse número.',
           'Sem WhatsApp, todas as mensagens continuam disponíveis para envio pelo e-mail institucional.',
+        ],
+      },
+      {
+        titulo: 'Tenho um cargo e também dou aula',
+        quem: 'Coordenação, Direção, CTP ou AE que lecionam',
+        passos: [
+          'Peça à Coordenação para marcar "Também leciona" no seu cadastro (em Usuários). Ao receber uma disciplina pela planilha de ofertas, a marca liga sozinha.',
+          'Na tela inicial, os cartões trazem o selo do papel: "Docência" (azul) para convites de substituição, PPE e diários seus; o nome do cargo (verde) para o resto.',
+          'No cabeçalho, o menu "Docência" reúne Minha grade, Meus diários e Minhas PPE / PEI.',
+          'Em PPE e Diários, alterne entre "Todas" (o que o cargo acompanha) e "Minhas" (as suas disciplinas).',
+          'Na agenda, "Minha semana" mostra as suas aulas; o calendário do mês fica recolhido logo abaixo.',
         ],
       },
       {
@@ -121,20 +138,22 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       },
       {
         arquivo: 'primeiros-passos-painel.jpg',
-        alt: 'Painel da Coordenação com cartões dos módulos (calendário, grade, alimentação, comunicação, PPE, PPI, diários, processos, relatórios) e pendências.',
-        legenda: 'Painel inicial: um cartão por módulo, com as pendências do dia.',
+        alt: 'Tela inicial da Coordenação: cartões "Precisa da sua atenção" com quantidade e botão para resolver, o menu "Todas as funções" fechado e, o selo "Docência" em azul nas ações das disciplinas que a coordenadora leciona; ao lado, as ausências de hoje, a semana de aulas dela e o calendário do mês recolhido.',
+        legenda: 'Tela inicial da Coordenação que também leciona: o cargo em verde, a docência em azul.',
         captura: { rota: '/painel', perfil: 'coordenacao' },
       },
       {
         arquivo: 'primeiros-passos-painel-professor.jpg',
-        alt: 'Painel de um professor, com menos módulos: calendário, grade, PPE e diários.',
-        legenda: 'Cada perfil vê só os seus módulos (aqui, o de um professor).',
+        alt: 'Tela inicial de um professor, com a agenda "Minha semana": aulas de cada dia, feriados e substituições.',
+        legenda: 'O professor vê a própria semana; cada perfil vê só as suas funções.',
         captura: { rota: '/painel', perfil: 'professor' },
       },
     ],
     duvidas: [
       { pergunta: 'Errei a senha várias vezes e fui bloqueado. E agora?', resposta: 'Depois de 5 tentativas erradas, o login daquele e-mail fica bloqueado por 15 minutos. Espere ou peça uma nova senha à Coordenação.' },
       { pergunta: 'Um menu que eu esperava não aparece.', resposta: 'Os menus dependem do perfil (veja "Quem vê o quê" no início da Ajuda). Se precisar de outro acesso, fale com a Coordenação.' },
+      { pergunta: 'Por que algumas ações aparecem em azul?', resposta: 'Para quem tem um cargo e também leciona, azul (com o selo "Docência") marca o que é da sua docência; verde, o que é do cargo. Quem tem um papel só não vê essa distinção.' },
+      { pergunta: 'Onde ficaram as outras funções na tela inicial?', resposta: 'Em "Todas as funções", logo abaixo das pendências: clique para abrir. Elas também estão nos menus do cabeçalho.' },
       { pergunta: 'Preciso usar meu WhatsApp pessoal?', resposta: 'Não. Todas as comunicações funcionam pelo e-mail institucional; o WhatsApp é opcional.' },
     ],
     relacionados: ['comunicacao', 'privacidade'],
@@ -151,17 +170,18 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Registrar suspensões não previstas (falta de energia, de água, de transporte, luto oficial, ponto facultativo municipal…) como dias a repor.',
       'Cadastrar sábados letivos, cada um seguindo a grade de um dia da semana.',
       'Contar os dias letivos por mês, etapa, semestre e ano, comparando com a meta (50 por etapa, 200 no ano).',
+      'Avaliações finais nunca contam como dias letivos (ROD, Art. 32; refeições nesses dias só por acréscimo lançado na Alimentação): ficam fora da contagem e da grade, inclusive aos sábados. Acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais; o sistema avisa se o período for cadastrado antes disso.',
       'Ver o ano inteiro ou um mês, imprimir/salvar em PDF e exportar/importar em planilha.',
       'Ao registrar uma alteração imprevista, abrir as mensagens prontas para avisar docentes, CAE, nutricionista, Gestão, CTP e turmas.',
     ],
     diagrama: {
       titulo: 'Montar o calendário do ano',
       etapas: [
-        { rotulo: 'Etapas e semestres', ator: 'Coordenação', detalhe: 'datas de início e fim de N1–N4' },
-        { rotulo: 'Eventos', ator: 'Coordenação', detalhe: 'feriados, recesso, reuniões, avaliações' },
-        { rotulo: 'Sábados letivos', ator: 'Coordenação', detalhe: 'data + dia cuja grade vale' },
-        { rotulo: 'Contagem', ator: 'Sistema', detalhe: 'dias letivos por mês, etapa e ano; saldo da meta' },
-        { rotulo: 'Consulta e PDF', ator: 'Todos', detalhe: 'visão anual, mensal e impressão' },
+        { rotulo: 'Etapas e semestres', ator: 'Coordenação', detalhe: 'datas de início e fim de N1–N4 e dos dois semestres', onde: { tela: 'Calendário › Etapas', rota: '/calendario/etapas' } },
+        { rotulo: 'Eventos', ator: 'Coordenação', detalhe: 'feriados, recesso, reuniões, avaliações', onde: { tela: 'Calendário › Novo evento', rota: '/calendario/eventos/novo' } },
+        { rotulo: 'Sábados letivos', ator: 'Coordenação', detalhe: 'data + dia cuja grade vale', onde: { tela: 'Grade › Sábados letivos', rota: '/grade/sabados' } },
+        { rotulo: 'Contagem', ator: 'Sistema', detalhe: 'dias letivos por mês, etapa e ano; saldo da meta', onde: { tela: 'Calendário', rota: '/calendario' } },
+        { rotulo: 'Consulta e PDF', ator: 'Todos', detalhe: 'visão anual, mensal e impressão', onde: { tela: 'Calendário › Imprimir', rota: '/calendario/imprimir' } },
       ],
     },
     fluxos: [
@@ -240,6 +260,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     capacidades: [
       'Consultar a grade de cada turma por ano e semestre, com disciplina e professor em cada horário.',
       'Ver a sua grade individual (Minha grade) e responder convites de substituição.',
+      'Informar a sua ausência à Coordenação (um dia ou um período de até 15 dias) e acompanhar a situação em "Minhas ausências" (docentes).',
       'Identificar janelas livres: horários vagos num turno em que a turma tem aula.',
       'Conferir se as aulas na grade batem com a carga horária da matriz.',
       'Editar a grade com verificação de choque de horário do professor entre turmas (Coordenação).',
@@ -249,10 +270,10 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     diagrama: {
       titulo: 'Montar a grade do semestre',
       etapas: [
-        { rotulo: 'Ofertas', ator: 'Coordenação', detalhe: 'professor de cada disciplina na turma' },
-        { rotulo: 'Grade', ator: 'Coordenação', detalhe: 'pela tela ou por planilha' },
-        { rotulo: 'Conferência', ator: 'Sistema', detalhe: 'choques de horário e aulas × matriz' },
-        { rotulo: 'Consulta', ator: 'Professores', detalhe: 'grade da turma e Minha grade' },
+        { rotulo: 'Ofertas', ator: 'Coordenação', detalhe: 'professor de cada disciplina na turma', onde: { tela: 'Cadastros › Ofertas', rota: '/ofertas' } },
+        { rotulo: 'Grade', ator: 'Coordenação', detalhe: 'pela tela ou por planilha', onde: { tela: 'Operação › Grade', rota: '/grade' } },
+        { rotulo: 'Conferência', ator: 'Sistema', detalhe: 'choques de horário e aulas × matriz; a tela inicial avisa turma sem grade', onde: { tela: 'Grade › Turma' } },
+        { rotulo: 'Consulta', ator: 'Professores', detalhe: 'grade da turma e Minha grade', onde: { tela: 'Minha grade', rota: '/grade/minha' } },
       ],
     },
     fluxos: [
@@ -281,6 +302,18 @@ export const TOPICOS: readonly TopicoAjuda[] = [
         passos: [
           'Em Grade, clique em "Ver minha grade": aparecem suas aulas em todas as turmas e os sábados letivos.',
           'Se houver convite de substituição, ele aparece no topo: aceite ou recuse.',
+        ],
+      },
+      {
+        titulo: 'Informar minha ausência',
+        quem: 'Professor',
+        passos: [
+          'Em Minha grade, clique em "Informar ausência" (ou use o menu).',
+          'Escolha a data; para vários dias, preencha também "Até" (até 15 dias). Aparecem as suas aulas pela grade.',
+          'Marque as aulas e escolha um motivo operacional da lista. Nunca escreva o motivo pessoal ou médico.',
+          'Envie: a Coordenação recebe o aviso na tela inicial, dá ciência e organiza a cobertura. Se a ausência for hoje, ligue também para a Coordenação.',
+          'Acompanhe em "Minhas ausências"; enquanto a Coordenação não decidir, você pode cancelar.',
+          'O motivo e o comprovante (ex.: atestado médico) vão direto à Coordenadoria de Gestão de Pessoas (CGP), pelo e-mail cgp.boaviagem@ifce.edu.br, fora do sistema.',
         ],
       },
     ],
@@ -318,6 +351,8 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     rota: '/ausencias',
     capacidades: [
       'Registrar a ausência de um docente numa data: o sistema mostra as aulas dele pela grade vigente.',
+      'Licença de vários dias: informe também "Até" (até 15 dias) e registre todas as aulas do período de uma vez; feriados e sábados letivos já entram na conta.',
+      'Receber as ausências que os próprios docentes informam (selo "Informada pelo docente" e contagem na tela inicial) e dar ciência a eles.',
       'Para cada horário perdido: substituição por outro docente, adiantamento de uma aula posterior da turma, dispensa da turma ou decidir depois.',
       'Sugestões de cobertura priorizando professores da mesma turma e livres no horário.',
       'Convidar docentes para substituir; eles aceitam ou recusam em Minha grade.',
@@ -327,11 +362,11 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     diagrama: {
       titulo: 'Da ausência à comunicação',
       etapas: [
-        { rotulo: 'Registro', ator: 'Coordenação', detalhe: 'docente, data e aulas afetadas' },
-        { rotulo: 'Cobertura', ator: 'Coordenação', detalhe: 'substituir, adiantar, dispensar ou decidir depois' },
-        { rotulo: 'Convites', ator: 'Professores', detalhe: 'aceitam ou recusam em Minha grade' },
-        { rotulo: 'Refeições', ator: 'Sistema', detalhe: 'calcula o impacto e avisa a CAE' },
-        { rotulo: 'Mensagens', ator: 'Coordenação', detalhe: 'envia por e-mail ou WhatsApp e registra' },
+        { rotulo: 'Registro', ator: 'Coordenação', detalhe: 'docente, data (ou período de até 15 dias) e aulas afetadas', onde: { tela: 'Ausências › Registrar', rota: '/ausencias/nova' } },
+        { rotulo: 'Cobertura', ator: 'Coordenação', detalhe: 'substituir, adiantar, dispensar ou decidir depois', onde: { tela: 'Ausências › detalhe', rota: '/ausencias' } },
+        { rotulo: 'Convites', ator: 'Professores', detalhe: 'aceitam ou recusam em Minha grade (ou pela tela inicial)', onde: { tela: 'Minha grade', rota: '/grade/minha' } },
+        { rotulo: 'Refeições', ator: 'Sistema', detalhe: 'calcula o impacto e avisa a CAE', onde: { tela: 'Alimentação', rota: '/alimentacao' } },
+        { rotulo: 'Mensagens', ator: 'Coordenação', detalhe: 'envia por e-mail ou WhatsApp e registra', onde: { tela: 'Ausências › detalhe › Comunicar' } },
       ],
     },
     fluxos: [
@@ -340,8 +375,9 @@ export const TOPICOS: readonly TopicoAjuda[] = [
         quem: 'Coordenação',
         passos: [
           'Em Ausências, clique em "Registrar ausência".',
-          'Escolha o docente e a data: aparecem as aulas dele naquele dia.',
+          'Escolha o docente e a data: aparecem as aulas dele naquele dia. Para vários dias, preencha também "Até": as aulas aparecem separadas por dia.',
           'Marque as aulas afetadas e informe um motivo operacional, sem dados pessoais ou médicos (ex.: "Participação em evento").',
+          'Em Comunicar, envie ao docente a "Ciência da sua ausência": ela já orienta a procurar a Gestão de Pessoas com o motivo e o comprovante, fora do sistema.',
           'Salve: a página da ausência abre com a situação de cada horário.',
         ],
       },
@@ -374,6 +410,8 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       { pergunta: 'Posso registrar uma ausência que já aconteceu?', resposta: 'Sim, até 30 dias para trás, e ausências planejadas até um ano à frente.' },
       { pergunta: 'O docente avisou que não vai mais faltar.', resposta: 'Na página da ausência, use "Cancelar registro". Os avisos de refeição são desfeitos e a CAE vê que tudo volta ao normal.' },
       { pergunta: 'Por que não posso escrever o motivo real da falta?', resposta: 'Por privacidade (LGPD): o sistema e as mensagens trazem só um motivo operacional. Atestados e motivos pessoais ficam nos sistemas oficiais.' },
+      { pergunta: 'E o atestado ou o motivo da ausência do docente?', resposta: 'O docente trata direto com a Coordenadoria de Gestão de Pessoas (CGP, cgp.boaviagem@ifce.edu.br): informa o motivo e entrega o comprovante (por exemplo, atestado médico). Isso não passa pelo SGC-Redes nem pela Coordenação do curso; a mensagem de ciência da ausência traz essa orientação.' },
+      { pergunta: 'O que é o selo "Informada pelo docente"?', resposta: 'O próprio docente informou a ausência em Minha grade. Dê ciência a ele pela mensagem pronta e decida a cobertura, como num registro feito pela Coordenação.' },
     ],
     relacionados: ['grade', 'alimentacao', 'comunicacao'],
   },
@@ -394,10 +432,10 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     diagrama: {
       titulo: 'Aviso de refeição',
       etapas: [
-        { rotulo: 'Origem', ator: 'Sistema/Coordenação', detalhe: 'dispensa de turma ou acréscimo manual' },
-        { rotulo: 'Urgência', ator: 'Sistema', detalhe: 'verde, amarelo ou vermelho pela antecedência' },
-        { rotulo: 'Ciência', ator: 'Assistência Estudantil', detalhe: 'confirma no painel' },
-        { rotulo: 'Comunicar', ator: 'Coordenação', detalhe: 'CAE, nutricionista, Gestão, turmas' },
+        { rotulo: 'Origem', ator: 'Sistema/Coordenação', detalhe: 'dispensa de turma ou acréscimo manual', onde: { tela: 'Ausências ou Alimentação › Acrescentar', rota: '/alimentacao/adicionar' } },
+        { rotulo: 'Urgência', ator: 'Sistema', detalhe: 'verde, amarelo ou vermelho pela antecedência', onde: { tela: 'Alimentação', rota: '/alimentacao' } },
+        { rotulo: 'Ciência', ator: 'Assistência Estudantil', detalhe: 'confirma no painel (a tela inicial mostra os pendentes)', onde: { tela: 'Alimentação', rota: '/alimentacao' } },
+        { rotulo: 'Comunicar', ator: 'Coordenação', detalhe: 'CAE, nutricionista, Gestão, turmas', onde: { tela: 'Alimentação › Comunicar', rota: '/alimentacao/comunicar' } },
       ],
     },
     fluxos: [
@@ -453,10 +491,10 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     diagrama: {
       titulo: 'Envio semiautomático',
       etapas: [
-        { rotulo: 'Mensagem pronta', ator: 'Sistema', detalhe: 'texto, assunto e destinatário' },
-        { rotulo: 'Revisar', ator: 'Você', detalhe: 'editar, preencher campos, escolher texto-padrão' },
-        { rotulo: 'Enviar', ator: 'Você', detalhe: 'e-mail institucional ou WhatsApp' },
-        { rotulo: 'Registrar', ator: 'Você', detalhe: '"Já enviei: registrar" guarda no histórico' },
+        { rotulo: 'Mensagem pronta', ator: 'Sistema', detalhe: 'texto, assunto e destinatário', onde: { tela: 'Comunicar (em cada módulo)' } },
+        { rotulo: 'Revisar', ator: 'Você', detalhe: 'editar, preencher campos, escolher texto-padrão', onde: { tela: 'Comunicação › Textos-padrão', rota: '/comunicacao/modelos' } },
+        { rotulo: 'Enviar', ator: 'Você', detalhe: 'e-mail institucional ou WhatsApp', onde: { tela: 'botões Abrir e-mail / WhatsApp' } },
+        { rotulo: 'Registrar', ator: 'Você', detalhe: '"Já enviei: registrar" guarda no histórico', onde: { tela: 'Comunicação › Histórico', rota: '/comunicacao' } },
       ],
     },
     fluxos: [
@@ -517,18 +555,22 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'O docente da disciplina define a modalidade: PEI ou Dependência (Arts. 117–118).',
       'Preencher o PEI no modelo do campus, com trava de 30% da carga horária (Art. 117 §1º) e prática obrigatória quando a disciplina exige (Art. 121).',
       'Cronograma de encontros, com cópia de outro PEI da mesma disciplina (G09).',
+      'Marcar os encontros realizados: a tela inicial do docente lembra os que já passaram e avisa quando é hora de lançar o resultado (fim do cronograma ou do prazo prorrogado).',
+      'A Coordenação vê na tela inicial as PPE com resultado à espera do lançamento no sistema acadêmico (Art. 125) e as que aguardam o docente.',
       'Acompanhar a situação: em andamento, prorrogado, aprovado, reprovado, lançado no acadêmico. Imprimir o PEI.',
       'Visível também à CTP e ao Conselho de Classe (Art. 127).',
-      'Mensagens prontas de cada momento (Coordenação): pedir ao docente a definição da modalidade; avisar estudante e CTP da modalidade, do PEI pronto (com o cronograma de encontros) e do resultado.',
+      'Mensagens prontas de cada momento (Coordenação): pedir ao docente a definição da modalidade; avisar estudante e CTP da modalidade, do PEI pronto (com o cronograma de encontros), da prorrogação do prazo (Art. 124) e do resultado. Ao prorrogar, a Coordenação vai direto às mensagens.',
     ],
     diagrama: {
       titulo: 'Ciclo da PPE',
       etapas: [
-        { rotulo: 'Registro', ator: 'Coordenação', detalhe: 'estudante e componente pendente' },
-        { rotulo: 'Modalidade', ator: 'Professor', detalhe: 'PEI ou Dependência' },
-        { rotulo: 'PEI', ator: 'Professor', detalhe: 'objetivos, conteúdos, carga e encontros' },
-        { rotulo: 'Acompanhamento', ator: 'Coordenação/CTP', detalhe: 'situação e prorrogação' },
-        { rotulo: 'Lançamento', ator: 'Coordenação', detalhe: 'marcado como lançado no acadêmico' },
+        { rotulo: 'Registro', ator: 'Coordenação', detalhe: 'estudante e componente pendente', onde: { tela: 'PPE / PEI › Registrar', rota: '/ppe/nova' } },
+        { rotulo: 'Modalidade', ator: 'Professor', detalhe: 'PEI ou Dependência (aparece na tela inicial do docente)', onde: { tela: 'Minhas PPE / PEI', rota: '/ppe?escopo=minhas' } },
+        { rotulo: 'PEI', ator: 'Professor', detalhe: 'objetivos, conteúdos, carga e encontros', onde: { tela: 'PPE › detalhe' } },
+        { rotulo: 'Encontros', ator: 'Professor', detalhe: 'marca os realizados; a tela inicial lembra os que já passaram', onde: { tela: 'PPE › Encontros realizados' } },
+        { rotulo: 'Resultado', ator: 'Professor', detalhe: 'aprovado ou reprovado ao fim do cronograma (ou prorrogação, Art. 124)', onde: { tela: 'PPE › Situação' } },
+        { rotulo: 'Comunicar', ator: 'Coordenação', detalhe: 'estudante e CTP recebem o resultado', onde: { tela: 'PPE › Comunicar' } },
+        { rotulo: 'Lançamento', ator: 'Coordenação', detalhe: 'lança no acadêmico e marca aqui (Art. 125)', onde: { tela: 'PPE / PEI', rota: '/ppe' } },
       ],
     },
     fluxos: [
@@ -545,6 +587,16 @@ export const TOPICOS: readonly TopicoAjuda[] = [
           'Abra o registro e escolha PEI ou Dependência.',
           'No PEI, preencha carga horária (até 30% da disciplina), horas presenciais e práticas, objetivos, conteúdos, critérios e o cronograma.',
           'Salve e use "Imprimir" para gerar o documento para assinatura.',
+        ],
+      },
+      {
+        titulo: 'Acompanhar e encerrar o PEI',
+        quem: 'Professor',
+        passos: [
+          'Depois de cada encontro, abra a PPE e marque-o em "Encontros realizados". A tela inicial lembra os encontros que já passaram sem marca.',
+          'Ao fim do cronograma (ou do prazo prorrogado, Art. 124), a tela inicial mostra "PEI prontos para lançar o resultado".',
+          'Em "Situação", escolha Aprovado ou Reprovado e informe a nota, se houver.',
+          'A Coordenação avisa o estudante e a CTP e, depois de lançar no sistema acadêmico, marca "Lançado no acadêmico" (Art. 125).',
         ],
       },
       {
@@ -595,10 +647,10 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     diagrama: {
       titulo: 'Auditoria de PPI',
       etapas: [
-        { rotulo: 'Solicitação', ator: 'Coordenação', detalhe: 'estudante, matrícula e turma' },
-        { rotulo: 'Atividades', ator: 'Coordenação', detalhe: 'categoria, comprovante, quantidade' },
-        { rotulo: 'Tetos', ator: 'Sistema', detalhe: 'horas validadas pelo Manual 2022' },
-        { rotulo: 'Decisão e ficha', ator: 'Coordenação', detalhe: 'deferir e imprimir' },
+        { rotulo: 'Solicitação', ator: 'Coordenação', detalhe: 'estudante, matrícula e turma', onde: { tela: 'PPI › Nova', rota: '/ppi/nova' } },
+        { rotulo: 'Atividades', ator: 'Coordenação', detalhe: 'categoria, comprovante, quantidade', onde: { tela: 'PPI › detalhe' } },
+        { rotulo: 'Tetos', ator: 'Sistema', detalhe: 'horas validadas pelo Manual 2022', onde: { tela: 'PPI › detalhe' } },
+        { rotulo: 'Decisão e ficha', ator: 'Coordenação', detalhe: 'deferir, avisar e imprimir', onde: { tela: 'PPI › Comunicar / Ficha' } },
       ],
     },
     fluxos: [
@@ -646,6 +698,16 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Registrar a situação do diário e enviar lembrete ao docente por e-mail ou WhatsApp (Coordenação).',
       'O professor vê os próprios diários.',
     ],
+    diagrama: {
+      titulo: 'Acompanhar os diários',
+      etapas: [
+        { rotulo: 'Datas do semestre', ator: 'Coordenação', detalhe: 'base para as aulas esperadas (a tela inicial avisa se faltar)', onde: { tela: 'Calendário › Etapas', rota: '/calendario/etapas' } },
+        { rotulo: 'Aulas ministradas', ator: 'Coordenação', detalhe: 'conforme o diário no sistema acadêmico', onde: { tela: 'Diários', rota: '/diarios' } },
+        { rotulo: 'Semáforo', ator: 'Sistema', detalhe: 'em dia, atenção ou atrasado pelo esperado até hoje', onde: { tela: 'Diários', rota: '/diarios' } },
+        { rotulo: 'Lembrete', ator: 'Coordenação', detalhe: 'mensagem pronta ao docente, registrada', onde: { tela: 'Diários › disciplina' } },
+        { rotulo: 'Lançamento', ator: 'Professor', detalhe: 'atualiza o diário no acadêmico; vê os seus em Meus diários', onde: { tela: 'Meus diários', rota: '/diarios?escopo=meus' } },
+      ],
+    },
     fluxos: [
       {
         titulo: 'Cobrar um diário atrasado',
@@ -679,10 +741,10 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     diagrama: {
       titulo: 'Colunas do quadro',
       etapas: [
-        { rotulo: 'Novo', ator: 'Coordenação' },
-        { rotulo: 'Com professor', ator: 'Docente' },
-        { rotulo: 'Aguardando retorno', ator: 'Interessado/setor' },
-        { rotulo: 'Concluído', ator: 'Coordenação' },
+        { rotulo: 'Novo', ator: 'Coordenação', onde: { tela: 'Processos › Novo', rota: '/processos/novo' } },
+        { rotulo: 'Com professor', ator: 'Docente', onde: { tela: 'Processos', rota: '/processos' } },
+        { rotulo: 'Aguardando retorno', ator: 'Interessado/setor', detalhe: 'a tela inicial avisa prazos em 3 dias e vencidos', onde: { tela: 'Processos', rota: '/processos' } },
+        { rotulo: 'Concluído', ator: 'Coordenação', onde: { tela: 'Processos', rota: '/processos' } },
       ],
     },
     fluxos: [
@@ -715,6 +777,14 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Só números agregados, sem nomes de estudantes nem motivos (LGPD).',
       'Imprimir/salvar em PDF e exportar em planilha.',
     ],
+    diagrama: {
+      titulo: 'Gerar um relatório',
+      etapas: [
+        { rotulo: 'Ano letivo', ator: 'Coordenação/CTP/Direção', detalhe: 'escolhe o ano', onde: { tela: 'Relatórios', rota: '/relatorios' } },
+        { rotulo: 'Consolidação', ator: 'Sistema', detalhe: 'faltas, substituições, PPE e PPI, sem dados sensíveis', onde: { tela: 'Relatórios', rota: '/relatorios' } },
+        { rotulo: 'Saída', ator: 'Você', detalhe: 'PDF para impressão ou planilha (.xlsx/.csv)', onde: { tela: 'Relatórios › Imprimir', rota: '/relatorios/imprimir' } },
+      ],
+    },
     fluxos: [{ titulo: 'Gerar o relatório do ano', quem: 'Coordenação, CTP e Direção', passos: ['Em Relatórios, escolha o ano e clique em "Ver".', 'Use "Imprimir / PDF" ou "Exportar planilha".'] }],
     imagens: [
       {
@@ -742,11 +812,12 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     diagrama: {
       titulo: 'Ordem dos cadastros no início do ano',
       etapas: [
-        { rotulo: 'Usuários', ator: 'Coordenação', detalhe: 'professores e setores' },
-        { rotulo: 'Turmas', ator: 'Coordenação', detalhe: 'confere estudantes e médias' },
-        { rotulo: 'Disciplinas', ator: 'Coordenação', detalhe: 'matriz já vem cadastrada' },
-        { rotulo: 'Ofertas', ator: 'Coordenação', detalhe: 'professor de cada disciplina' },
-        { rotulo: 'Grade', ator: 'Coordenação', detalhe: 'horários do semestre' },
+        { rotulo: 'Usuários', ator: 'Coordenação', detalhe: 'professores, setores e quem também leciona', onde: { tela: 'Cadastros › Usuários', rota: '/usuarios' } },
+        { rotulo: 'Turmas', ator: 'Coordenação', detalhe: 'confere estudantes e médias', onde: { tela: 'Cadastros › Turmas', rota: '/turmas' } },
+        { rotulo: 'Disciplinas', ator: 'Coordenação', detalhe: 'matriz já vem cadastrada', onde: { tela: 'Cadastros › Disciplinas', rota: '/disciplinas' } },
+        { rotulo: 'Ofertas', ator: 'Coordenação', detalhe: 'professor de cada disciplina (a tela inicial conta as que faltam)', onde: { tela: 'Cadastros › Ofertas', rota: '/ofertas' } },
+        { rotulo: 'Grade', ator: 'Coordenação', detalhe: 'horários do semestre', onde: { tela: 'Operação › Grade', rota: '/grade' } },
+        { rotulo: 'Calendário', ator: 'Coordenação', detalhe: 'etapas, semestres, eventos e sábados', onde: { tela: 'Calendário › Etapas', rota: '/calendario/etapas' } },
       ],
     },
     fluxos: [
@@ -800,10 +871,10 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     diagrama: {
       titulo: 'Importação com prévia',
       etapas: [
-        { rotulo: 'Modelo', ator: 'Você', detalhe: 'baixe o .xlsx ou .csv' },
+        { rotulo: 'Modelo', ator: 'Você', detalhe: 'baixe o .xlsx ou .csv', onde: { tela: 'Importar planilha (em cada cadastro)' } },
         { rotulo: 'Preencher', ator: 'Você', detalhe: 'Excel ou LibreOffice' },
-        { rotulo: 'Prévia', ator: 'Sistema', detalhe: 'criar, alterar, igual ou erro por linha' },
-        { rotulo: 'Confirmar', ator: 'Você', detalhe: 'grava tudo ou nada' },
+        { rotulo: 'Prévia', ator: 'Sistema', detalhe: 'criar, alterar, igual ou erro por linha', onde: { tela: 'Importar planilha' } },
+        { rotulo: 'Confirmar', ator: 'Você', detalhe: 'grava tudo ou nada', onde: { tela: 'Importar planilha' } },
       ],
     },
     fluxos: [
@@ -854,6 +925,15 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Senhas guardadas com criptografia forte; sessões expiram após 8 horas sem uso.',
       'Auditoria (Coordenação): quem fez o quê e quando — logins, cadastros, alterações, envios e exportações —, sem guardar nomes ou senhas no registro.',
     ],
+    diagrama: {
+      titulo: 'Proteção dos dados em cada ação',
+      etapas: [
+        { rotulo: 'Acesso', ator: 'Sistema', detalhe: 'cada tela e ação confere o perfil (e a docência) da conta' },
+        { rotulo: 'Ação', ator: 'Você', detalhe: 'registra, decide ou envia' },
+        { rotulo: 'Auditoria', ator: 'Sistema', detalhe: 'guarda quem fez o quê e quando, sem copiar dados pessoais', onde: { tela: 'Cadastros › Auditoria', rota: '/auditoria' } },
+        { rotulo: 'Mensagens', ator: 'Sistema', detalhe: 'textos sem nome de estudante quando não precisam dele' },
+      ],
+    },
     fluxos: [
       {
         titulo: 'Consultar a auditoria',

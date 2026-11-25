@@ -3,7 +3,7 @@ import type { CanalWhatsapp } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { CAMPO_SAUDACAO, NOME_CANAL } from '@/lib/ausencias/mensagens';
 import { descreverBloco } from '@/lib/ausencias/regras';
-import { anoLetivoAtual, PERFIS_DOCENTES } from '@/lib/ofertas/regras';
+import { anoLetivoAtual, ONDE_DOCENTES } from '@/lib/ofertas/regras';
 import { lerTipoInteracao, MODELOS_TEXTO, type ModeloTexto } from './modelos';
 import { contatoDoUsuario, preencherCampos, primeiroNome, saudacao, type MensagemPronta } from './mensagem';
 
@@ -45,7 +45,7 @@ export async function opcoesDeDestino(anoLetivo = anoLetivoAtual()) {
 /** Docentes ativos de um grupo "docentes:..." (pelas ofertas do ano letivo). */
 async function docentesDoGrupo(grupo: string, anoLetivo: number) {
   const select = { id: true, email: true } as const;
-  if (grupo === 'todos') return { rotulo: 'docentes', pessoas: await prisma.user.findMany({ where: { ativo: true, role: { in: [...PERFIS_DOCENTES] } }, select, orderBy: { nome: 'asc' } }) };
+  if (grupo === 'todos') return { rotulo: 'docentes', pessoas: await prisma.user.findMany({ where: ONDE_DOCENTES, select, orderBy: { nome: 'asc' } }) };
   const [tipo, valor] = grupo.split(':', 2);
   const turma =
     tipo === 'turma' ? { codigo: valor } : tipo === 'ano' && /^[123]$/.test(valor ?? '') ? { anoCurso: Number(valor) } : null;

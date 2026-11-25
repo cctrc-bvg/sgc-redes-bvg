@@ -38,6 +38,9 @@ export const UsuarioSchema = z.object({
 
 export type DadosUsuario = z.infer<typeof UsuarioSchema>;
 
+/** Docência do cadastro: o Professor sempre leciona; os demais perfis, se marcado "Também leciona". */
+export const lecionaNoCadastro = (role: Role, marcado: boolean) => role === 'PROFESSOR' || marcado;
+
 // Sem caracteres ambíguos (0/O, 1/l/I) para ditar a senha por telefone ou WhatsApp.
 const LETRAS = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
 const NUMEROS = '23456789';

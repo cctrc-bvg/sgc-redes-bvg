@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mensagemAssistencia, mensagemCtp, mensagemGestao, mensagemLideres, mensagemProfessores, mensagensDaAusencia, type DadosMensagem, type ExtrasMensagem, type PessoaMensagem } from './mensagens';
+import { mensagemAssistencia, mensagemCtp, mensagemGestao, mensagemLideres, mensagemProfessores, mensagensDaAusencia, ORIENTACAO_GESTAO_PESSOAS, type DadosMensagem, type ExtrasMensagem, type PessoaMensagem } from './mensagens';
 
 const base: DadosMensagem = {
   turma: 'Redes 2º Ano (Integrado)',
@@ -127,6 +127,21 @@ describe('mensagensDaAusencia (e-mail e WhatsApp)', () => {
     expect(msgs.some((m) => m.chave.startsWith('ausente:'))).toBe(false);
   });
 
+  it('ciência ao docente ausente antes da cobertura, com a orientação da Gestão de Pessoas (sem pedir motivo)', () => {
+    const msgs = mensagensDaAusencia(base, extras());
+    const ciencia = msgs.find((m) => m.chave === 'ciencia:ana')!;
+    expect(ciencia.assunto).toContain('Ciência da sua ausência');
+    expect(ciencia.texto).toContain('Coordenadoria de Gestão de Pessoas (CGP)');
+    expect(ciencia.texto).toContain('cgp.boaviagem@ifce.edu.br');
+    expect(ciencia.texto).toContain('A Coordenação registrou a sua ausência');
+    // Informada pelo próprio docente (RF02-A): a ciência responde ao aviso dele.
+    const informada = mensagensDaAusencia({ ...base, informada: true }, extras()).find((m) => m.chave === 'ciencia:ana')!;
+    expect(informada.texto).toContain('recebeu a ausência que você informou');
+    expect(ciencia.texto).toContain('atestado médico');
+    expect(ciencia.texto).toContain('fora do SGC-Redes');
+    expect(ciencia.variaveis?.['gestao de pessoas']).toBe(ORIENTACAO_GESTAO_PESSOAS);
+  });
+
   it('substituto, professor da aula adiantada e docente ausente recebem mensagens individuais', () => {
     const d: DadosMensagem = {
       ...base,
@@ -147,6 +162,8 @@ describe('mensagensDaAusencia (e-mail e WhatsApp)', () => {
     expect(sub.texto).not.toContain('evento');
     expect(msgs[1].texto).toContain('sua aula de BD (Tarde A) passa para Manhã B.');
     expect(msgs[4].texto).toContain('Combine com a Coordenação a reposição');
+    expect(msgs[4].texto).toContain(ORIENTACAO_GESTAO_PESSOAS);
+    expect(chaves).not.toContain('ciencia:ana');
     expect(msgs[4].whatsapp).toBe('5588999990000');
   });
 

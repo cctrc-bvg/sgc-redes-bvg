@@ -2,7 +2,7 @@ import 'server-only';
 import type { TipoEventoCalendario } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { dataDoBanco, dataParaBanco } from '@/lib/ausencias/regras';
-import { contarDiasLetivos, dentro, ETAPAS, intervaloDoAno, porMes, suspensaoNaData, type Intervalo } from './regras';
+import { avisosAvaliacoesFinais, contarDiasLetivos, dentro, ETAPAS, intervaloDoAno, porMes, suspensaoNaData, type Intervalo } from './regras';
 
 export interface EventoAno {
   id: string;
@@ -60,6 +60,8 @@ export async function carregarAno(ano: number) {
     porMes: porMes(contagem.letivos),
     porEtapa: etapas.map((e) => (e ? dentro(contagem.letivos, e) : null)),
     porSemestre: semestres.map((s) => (s ? dentro(contagem.letivos, s) : null)),
+    /** Conferências do calendário (ex.: avaliações finais antes do fim do ano letivo). */
+    avisos: avisosAvaliacoesFinais(eventos, contagem.letivos),
   };
 }
 

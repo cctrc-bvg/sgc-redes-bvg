@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: 'Disciplina — SGC-Redes' };
 
 export default async function PaginaDisciplina({ params }: { params: Promise<{ id: string }> }) {
   const { usuario } = await exigirPermissao('disciplinas:ver');
-  const podeGerenciar = temPermissao(usuario.role, 'disciplinas:gerenciar');
+  const podeGerenciar = temPermissao(usuario, 'disciplinas:gerenciar');
   const { id } = await params;
   const d = await prisma.disciplina.findUnique({
     where: { id },

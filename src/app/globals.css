@@ -19,6 +19,11 @@
   --color-if-vermelho-700: #a3141a;
 
   --color-if-preto: #000000;
+
+  /* Docência acumulada ao cargo: azul distingue as ações de docente das do cargo (verde). Sempre com rótulo escrito. */
+  --color-docencia-50: #e8f0fb;
+  --color-docencia-700: #1d5fb8; /* 6,21:1 sobre branco; 5,41:1 sobre docencia-50 */
+  --color-docencia-800: #174a8f; /* 8,70:1 */
 }
 
 :focus-visible {

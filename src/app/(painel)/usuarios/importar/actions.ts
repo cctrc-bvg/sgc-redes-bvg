@@ -59,7 +59,7 @@ export async function importarUsuarios(_estado: EstadoImportacao | undefined, fo
     criados = await prisma.$transaction(
       novos.map(({ dados, hash }) =>
         prisma.user.create({
-          data: { ...dados, siape: dados.siape ?? null, whatsapp: dados.whatsapp ?? null, passwordHash: hash, deveTrocarSenha: true },
+          data: { ...dados, leciona: dados.role === 'PROFESSOR', siape: dados.siape ?? null, whatsapp: dados.whatsapp ?? null, passwordHash: hash, deveTrocarSenha: true },
           select: { id: true },
         }),
       ),

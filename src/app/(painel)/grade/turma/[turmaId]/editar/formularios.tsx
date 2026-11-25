@@ -71,6 +71,7 @@ export function FormularioGrade(props: Contexto & { dias: string[]; linhas: Linh
                         {c.rotulo}
                       </label>
                       <select
+                        key={estado?.valores?.[c.chave] ?? c.valor}
                         id={c.campo}
                         name={c.campo}
                         defaultValue={estado?.valores?.[c.chave] ?? c.valor}

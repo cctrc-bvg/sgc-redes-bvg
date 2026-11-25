@@ -90,11 +90,25 @@ export function QuadroGrade({
 }
 
 /** Seletor de ano e semestre letivo por GET (funciona sem JavaScript). */
-export function SeletorPeriodo({ anoLetivo, semestreLetivo, anos }: { anoLetivo: number; semestreLetivo: number; anos: number[] }) {
+export function SeletorPeriodo({
+  anoLetivo,
+  semestreLetivo,
+  anos,
+  manter = {},
+}: {
+  anoLetivo: number;
+  semestreLetivo: number;
+  anos: number[];
+  /** Outros parâmetros da URL a preservar ao trocar o período (ex.: escopo). */
+  manter?: Record<string, string>;
+}) {
   const classeSelect =
     'mt-1 block min-h-11 rounded-md border border-slate-400 bg-white px-3 py-2 text-base text-slate-900 focus:border-if-verde-700 focus:outline-none focus:ring-2 focus:ring-if-verde-700';
   return (
     <form method="get" className="flex flex-wrap items-end gap-3">
+      {Object.entries(manter).map(([nome, valor]) => (
+        <input key={nome} type="hidden" name={nome} value={valor} />
+      ))}
       <div>
         <label htmlFor="ano" className="block text-sm font-semibold text-slate-800">
           Ano letivo

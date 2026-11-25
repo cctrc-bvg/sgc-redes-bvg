@@ -12,8 +12,8 @@ export const metadata: Metadata = { title: 'Processo — SGC-Redes' };
 
 export default async function PaginaProcesso({ params }: { params: Promise<{ id: string }> }) {
   const { usuario } = await exigirPermissao('kanban:ver');
-  const podeGerenciar = temPermissao(usuario.role, 'kanban:gerenciar');
-  const podeSigilo = temPermissao(usuario.role, 'kanban:ver-sigiloso');
+  const podeGerenciar = temPermissao(usuario, 'kanban:gerenciar');
+  const podeSigilo = temPermissao(usuario, 'kanban:ver-sigiloso');
   const { id } = await params;
   // Sem permissão de sigilo, um item sigiloso responde 404 (não revela que existe).
   const p = await prisma.processoKanban.findFirst({ where: { id, ...filtroSigilo(podeSigilo) }, include: { criadoPor: { select: { nome: true } } } });

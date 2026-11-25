@@ -1,6 +1,7 @@
 /**
  * Mensagens prontas das decisões da PPE (modo semiautomático): pedir ao docente que defina a modalidade,
- * avisar o estudante e a CTP da modalidade definida, do PEI pronto (com o cronograma) e do resultado.
+ * avisar o estudante e a CTP da modalidade definida, do PEI pronto (com o cronograma), da prorrogação do prazo
+ * (Art. 124) e do resultado.
  * Funções puras: o servidor (comunicar.ts) acrescenta destinatário, saudação e contato.
  */
 import type { ModalidadePPE, StatusPPE } from '@prisma/client';
@@ -27,13 +28,14 @@ export interface PpeComunicavel {
 }
 
 /** Momento da PPE que pede comunicação; define os textos e os destinatários. */
-export type SituacaoPpe = 'definir' | 'modalidade' | 'pei' | 'resultado';
+export type SituacaoPpe = 'definir' | 'modalidade' | 'pei' | 'prorrogacao' | 'resultado';
 export type PublicoPpe = 'docente' | 'estudante' | 'ctp';
 
 export const NOME_SITUACAO_PPE: Record<SituacaoPpe, string> = {
   definir: 'Pedir a definição da modalidade',
   modalidade: 'Modalidade definida',
   pei: 'PEI pronto',
+  prorrogacao: 'Prazo prorrogado',
   resultado: 'Resultado',
 };
 
@@ -48,6 +50,8 @@ const MODALIDADE_ESTUDANTE: Record<ModalidadePPE, string> = {
 export function situacaoDaPpe(p: Pick<PpeComunicavel, 'modalidade' | 'status'> & { pei: { encontros: readonly unknown[] } | null }): SituacaoPpe {
   if (p.status === 'APROVADO' || p.status === 'REPROVADO' || p.status === 'LANCADO_ACADEMICO') return 'resultado';
   if (p.modalidade === 'A_DEFINIR' || p.status === 'AGUARDANDO_PROFESSOR') return 'definir';
+  // Prorrogação (Art. 124) é um aviso próprio: o PEI pronto pode já ter sido enviado com o prazo anterior.
+  if (p.status === 'PRORROGADO' && p.modalidade === 'PEI' && p.pei) return 'prorrogacao';
   if (p.modalidade === 'PEI' && p.pei && p.pei.encontros.length > 0) return 'pei';
   return 'modalidade';
 }
@@ -57,6 +61,7 @@ export const PUBLICOS_PPE: Record<SituacaoPpe, readonly PublicoPpe[]> = {
   definir: ['docente'],
   modalidade: ['estudante', 'ctp'],
   pei: ['estudante', 'ctp'],
+  prorrogacao: ['estudante', 'ctp'],
   resultado: ['estudante', 'ctp'],
 };
 
@@ -68,6 +73,7 @@ export function assuntoPpe(p: PpeComunicavel, situacao: SituacaoPpe): string {
   if (situacao === 'definir') return `[SGC-Redes] ${base}: definir a modalidade`;
   if (situacao === 'modalidade') return `[SGC-Redes] ${base}: modalidade definida`;
   if (situacao === 'pei') return `[SGC-Redes] ${base}: Plano de Estudo Individual`;
+  if (situacao === 'prorrogacao') return `[SGC-Redes] ${base}: prazo do PEI prorrogado`;
   return `[SGC-Redes] ${base}: resultado`;
 }
 
@@ -104,6 +110,18 @@ export function textoPpe(p: PpeComunicavel, situacao: SituacaoPpe, publico: Publ
     linhas.push('', '*Encontros:*', ...p.pei.encontros.map((e) => `• ${formatarData(e.data)} — ${e.conteudo}`));
     linhas.push('');
     linhas.push(doEstudante ? 'Compareça aos encontros e procure o docente em caso de dúvida. O plano impresso fica na Coordenação para assinatura.' : 'Acompanhamento disponível em PPE / PEI no SGC-Redes (Art. 127).');
+  } else if (situacao === 'prorrogacao') {
+    const prazo = p.pei?.prorrogadoAte ? ` até *${formatarData(p.pei.prorrogadoAte)}*` : '';
+    linhas.push(
+      doEstudante
+        ? `O prazo do seu Plano de Estudo Individual (PEI) em *${p.disciplina}* (${p.semestre}) foi prorrogado${prazo} (Art. 124).`
+        : `PEI de ${quem} em *${p.disciplina}* (${p.semestre}): prazo prorrogado${prazo} (Art. 124).`,
+    );
+    if (p.docente) linhas.push(`Docente responsável: ${p.docente}.`);
+    const encontros = p.pei?.encontros ?? [];
+    if (encontros.length > 0) linhas.push('', '*Encontros:*', ...encontros.map((e) => `• ${formatarData(e.data)} — ${e.conteudo}`));
+    linhas.push('');
+    linhas.push(doEstudante ? 'Continue os encontros com o docente e procure a Coordenação em caso de dúvida.' : 'Acompanhamento disponível em PPE / PEI no SGC-Redes (Art. 127).');
   } else {
     const n = nota(p.notaFinal);
     // Lançada no acadêmico: a situação anterior (aprovado/reprovado) não fica guardada, então não se presume.

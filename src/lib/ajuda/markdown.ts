@@ -1,6 +1,17 @@
 import { MODULOS, NOME_PERFIL, PERFIS } from '@/lib/auth/rbac';
 import { matrizDeAcesso } from './acesso';
 import { TOPICOS } from './topicos';
+import { tipoDeAtor } from './atores';
+
+/** Cores dos diagramas por quem faz a etapa (as mesmas da Ajuda no sistema). */
+export const CLASSES_MERMAID = [
+  '  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27',
+  '  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f',
+  '  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f',
+  '  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b',
+  '  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b',
+];
+export const LEGENDA_CORES = '*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*';
 
 /** Manual do usuário em Markdown (docs/MANUAL_DO_USUARIO.md), com as imagens de public/manual. */
 export function montarManual(): string {
@@ -25,13 +36,13 @@ export function montarManual(): string {
     if (t.rota) l.push(`No sistema: \`${t.rota}\`${t.permissao ? '' : ' · disponível para todos os perfis'}.`, '');
     l.push('### O que você pode fazer', '', ...t.capacidades.map((c) => `- ${c}`), '');
     if (t.diagrama) {
-      l.push(`### Fluxo: ${t.diagrama.titulo}`, '', '```mermaid', 'flowchart LR');
+      l.push(`### Fluxo: ${t.diagrama.titulo}`, '', '```mermaid', 'flowchart LR', ...CLASSES_MERMAID);
       t.diagrama.etapas.forEach((e, k) => {
-        const texto = [e.rotulo, e.ator, e.detalhe].filter(Boolean).join('<br/>').replace(/"/g, "'");
-        l.push(`  E${k}["${texto}"]`);
+        const texto = [`<b>${k + 1}. ${e.rotulo}</b>`, `<i>${e.ator}</i>`, e.detalhe, e.onde && `Onde: ${e.onde.tela}`].filter(Boolean).join('<br/>').replace(/"/g, "'");
+        l.push(`  E${k}["${texto}"]:::${tipoDeAtor(e.ator)}`);
         if (k > 0) l.push(`  E${k - 1} --> E${k}`);
       });
-      l.push('```', '');
+      l.push('```', '', LEGENDA_CORES, '');
     }
     l.push('### Passo a passo', '');
     for (const f of t.fluxos) l.push(`**${f.titulo}** (${f.quem})`, '', ...f.passos.map((p, k) => `${k + 1}. ${p}`), '');

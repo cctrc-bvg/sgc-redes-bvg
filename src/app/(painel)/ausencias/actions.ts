@@ -13,7 +13,11 @@ import {
   criarRegistroAusenciaSchema,
   dataDoBanco,
   dataParaBanco,
+  datasDoPeriodo,
+  DIAS_MAXIMOS_PERIODO,
+  formatarData,
   hojeEmFortaleza,
+  lerChaveDoPeriodo,
   planejarCoberturas,
   PREFIXO_DECISAO,
   statusDaAusencia,
@@ -29,61 +33,128 @@ export type EstadoRegistro = {
   valores?: { motivoOperacional: string; aulas: string[] };
 };
 
-export async function registrarAusencia(_estado: EstadoRegistro | undefined, formData: FormData): Promise<EstadoRegistro> {
-  const { usuario: editor } = await exigirPermissao('ausencias:registrar');
+/**
+ * Cria as ausências do formulário (uma por turma, disciplina e dia). Usada pela Coordenação (qualquer docente) e
+ * pelo próprio docente (RF02-A: `professorFixo` = ele mesmo, `informada` = true).
+ */
+async function criarAusencias(
+  formData: FormData,
+  opcoes: { autorId: string; professorFixo: string | null; informada: boolean },
+): Promise<{ erro: EstadoRegistro } | { criadas: string[]; primeiraData: string }> {
   const valores = {
-    professorId: String(formData.get('professorId') ?? ''),
+    professorId: opcoes.professorFixo ?? String(formData.get('professorId') ?? ''),
     data: String(formData.get('data') ?? ''),
     motivoOperacional: String(formData.get('motivoOperacional') ?? ''),
     aulas: formData.getAll('aula').map(String),
   };
   const devolver = { motivoOperacional: valores.motivoOperacional, aulas: valores.aulas };
-  const validacao = criarRegistroAusenciaSchema(hojeEmFortaleza()).safeParse(valores);
-  if (!validacao.success) return { erros: z.flattenError(validacao.error).fieldErrors, valores: devolver };
+  const schema = criarRegistroAusenciaSchema(hojeEmFortaleza());
+  const validacao = schema.safeParse(valores);
+  if (!validacao.success) return { erro: { erros: z.flattenError(validacao.error).fieldErrors, valores: devolver } };
   const { professorId, data, motivoOperacional, aulas } = validacao.data;
 
-  const dia = await carregarDia(data);
-  const daProfessor = dia.aulasDoDia.filter((a) => a.professorId === professorId);
-  const grupos = agruparAulasEscolhidas(daProfessor, aulas, dia.blocos);
-  if (grupos.length === 0) {
-    return { mensagem: 'As aulas marcadas não pertencem mais a este professor nesta data. Recarregue a página.', valores: devolver };
-  }
-  const jaRegistradas = new Set(dia.ausencias.map((a) => a.ofertaId));
-  if (grupos.some((g) => jaRegistradas.has(g.ofertaId))) {
-    return { mensagem: 'Já existe ausência registrada para uma das disciplinas marcadas nesta data. Abra-a na lista de ausências.', valores: devolver };
+  // Período (licença de vários dias): cada aula vem com a própria data ("AAAA-MM-DD#oferta|bloco").
+  const periodo = datasDoPeriodo(data, String(formData.get('ate') ?? ''));
+  if (!periodo) return { erro: { mensagem: `Período inválido: use até ${DIAS_MAXIMOS_PERIODO} dias, com o fim depois do início.`, valores: devolver } };
+  const porData = new Map<string, string[]>();
+  for (const k of aulas) {
+    const { data: d, chave } = lerChaveDoPeriodo(k, data);
+    if (!periodo.includes(d) || !schema.shape.data.safeParse(d).success) return { erro: { mensagem: 'Há aula fora do período informado. Recarregue a página.', valores: devolver } };
+    porData.set(d, [...(porData.get(d) ?? []), chave]);
   }
 
-  const codigo = new Map(dia.blocos.map((b) => [b.id, codigoBloco(b)]));
+  const planos: { data: string; grupos: ReturnType<typeof agruparAulasEscolhidas>; codigo: Map<string, string> }[] = [];
+  for (const [d, chaves] of porData) {
+    const dia = await carregarDia(d);
+    const daProfessor = dia.aulasDoDia.filter((a) => a.professorId === professorId);
+    const grupos = agruparAulasEscolhidas(daProfessor, chaves, dia.blocos);
+    if (grupos.length === 0) {
+      return { erro: { mensagem: `As aulas marcadas em ${formatarData(d)} não pertencem mais a este professor. Recarregue a página.`, valores: devolver } };
+    }
+    const jaRegistradas = new Set(dia.ausencias.map((a) => a.ofertaId));
+    if (grupos.some((g) => jaRegistradas.has(g.ofertaId))) {
+      return { erro: { mensagem: `Já existe ausência registrada em ${formatarData(d)} para uma das disciplinas marcadas. Abra-a na lista de ausências.`, valores: devolver } };
+    }
+    planos.push({ data: d, grupos, codigo: new Map(dia.blocos.map((b) => [b.id, codigoBloco(b)])) });
+  }
+
   let criadas: string[];
   try {
     criadas = await prisma.$transaction(async (tx) => {
       const ids: string[] = [];
-      for (const g of grupos) {
-        const a = await tx.ausenciaDocente.create({
-          data: {
-            dataAula: dataParaBanco(data),
-            turmaId: g.turmaId,
-            ofertaId: g.ofertaId,
-            professorAusenteId: professorId,
-            blocosAfetados: g.blocoIds.map((b) => codigo.get(b)).join(','),
-            motivoOperacional,
-          },
-        });
-        ids.push(a.id);
+      for (const p of planos) {
+        for (const g of p.grupos) {
+          const a = await tx.ausenciaDocente.create({
+            data: {
+              dataAula: dataParaBanco(p.data),
+              turmaId: g.turmaId,
+              ofertaId: g.ofertaId,
+              professorAusenteId: professorId,
+              blocosAfetados: g.blocoIds.map((b) => p.codigo.get(b)).join(','),
+              motivoOperacional,
+              informadaPeloDocente: opcoes.informada,
+            },
+          });
+          ids.push(a.id);
+        }
       }
       return ids;
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-      return { mensagem: 'Outra pessoa acabou de registrar esta ausência. Abra-a na lista de ausências.', valores: devolver };
+      return { erro: { mensagem: 'Outra pessoa acabou de registrar esta ausência. Abra-a na lista de ausências.', valores: devolver } };
     }
     throw e;
   }
   for (const id of criadas) {
-    await registrarAuditoria({ userId: editor.id, acao: 'REGISTROU_AUSENCIA', entidade: 'AusenciaDocente', entidadeId: id });
+    await registrarAuditoria({
+      userId: opcoes.autorId,
+      acao: opcoes.informada ? 'INFORMOU_AUSENCIA' : 'REGISTROU_AUSENCIA',
+      entidade: 'AusenciaDocente',
+      entidadeId: id,
+      detalhes: planos.length > 1 ? { periodo: `${periodo[0]}..${periodo.at(-1)}` } : undefined,
+    });
   }
   revalidatePath('/ausencias');
-  redirect(criadas.length === 1 ? `/ausencias/${criadas[0]}?aviso=registrada` : `/ausencias?data=${data}&aviso=registradas`);
+  revalidatePath('/painel');
+  return { criadas, primeiraData: planos[0].data };
+}
+
+export async function registrarAusencia(_estado: EstadoRegistro | undefined, formData: FormData): Promise<EstadoRegistro> {
+  const { usuario: editor } = await exigirPermissao('ausencias:registrar');
+  const r = await criarAusencias(formData, { autorId: editor.id, professorFixo: null, informada: false });
+  if ('erro' in r) return r.erro;
+  redirect(r.criadas.length === 1 ? `/ausencias/${r.criadas[0]}?aviso=registrada` : `/ausencias?data=${r.primeiraData}&aviso=registradas`);
+}
+
+/** RF02-A: o docente informa a própria ausência; a Coordenação dá ciência e decide a cobertura. */
+export async function informarAusencia(_estado: EstadoRegistro | undefined, formData: FormData): Promise<EstadoRegistro> {
+  const { usuario } = await exigirPermissao('ausencias:informar');
+  const r = await criarAusencias(formData, { autorId: usuario.id, professorFixo: usuario.id, informada: true });
+  if ('erro' in r) return r.erro;
+  revalidatePath('/grade/minha');
+  redirect('/grade/minha?aviso=ausencia-informada');
+}
+
+/** O docente desiste da ausência que informou, enquanto a Coordenação ainda não decidiu a cobertura. */
+export async function cancelarAusenciaInformada(_estado: EstadoCancelamento | undefined, formData: FormData): Promise<EstadoCancelamento> {
+  const { usuario } = await exigirPermissao('ausencias:informar');
+  const ausenciaId = String(formData.get('ausenciaId') ?? '');
+  const registro = await prisma.ausenciaDocente.findUnique({
+    where: { id: ausenciaId },
+    select: { id: true, professorAusenteId: true, informadaPeloDocente: true, status: true, _count: { select: { coberturas: true } } },
+  });
+  if (!registro || registro.professorAusenteId !== usuario.id || !registro.informadaPeloDocente) return { mensagem: 'Ausência não encontrada.' };
+  if (registro.status !== 'PENDENTE_DECISAO' || registro._count.coberturas > 0) {
+    return { mensagem: 'A Coordenação já decidiu a cobertura desta ausência. Para desfazer, fale com a Coordenação.' };
+  }
+  // Sem cobertura decidida, não há aviso de refeição ligado a ela: basta apagar.
+  await prisma.ausenciaDocente.delete({ where: { id: ausenciaId } });
+  await registrarAuditoria({ userId: usuario.id, acao: 'CANCELOU_AUSENCIA_INFORMADA', entidade: 'AusenciaDocente', entidadeId: ausenciaId });
+  revalidatePath('/ausencias');
+  revalidatePath('/painel');
+  // O item some da lista ao cancelar: o aviso vai no topo da página, que não muda de lugar.
+  redirect('/grade/minha?aviso=ausencia-cancelada');
 }
 
 export type EstadoDecisao = {
@@ -168,7 +239,7 @@ export async function decidirAusencia(_estado: EstadoDecisao | undefined, formDa
   return { sucesso: true, mensagem: partes.join(' '), valores };
 }
 
-export type EstadoCancelamento = { mensagem?: string };
+export type EstadoCancelamento = { mensagem?: string; sucesso?: boolean };
 
 export async function cancelarAusencia(_estado: EstadoCancelamento | undefined, formData: FormData): Promise<EstadoCancelamento> {
   const { usuario: editor } = await exigirPermissao('ausencias:registrar');

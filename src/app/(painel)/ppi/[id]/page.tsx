@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { temPermissao } from '@/lib/auth/rbac';
 import { dataDoBanco, formatarData } from '@/lib/ausencias/regras';
-import { PERFIS_DOCENTES } from '@/lib/ofertas/regras';
+import { ONDE_DOCENTES } from '@/lib/ofertas/regras';
 import { avaliarProgressoPpi } from '@/lib/ppi-ppe-engines';
 import { formatarHoras, NOME_GRUPO_ROMANO, NOME_STATUS_PPI, totaisPorGrupo } from '@/lib/ppi/regras';
 import { BotaoAtividade, FormularioAtividade, FormularioDecisaoPpi } from '../formularios';
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: 'Solicitação de PPI — SGC-Redes' 
 
 export default async function PaginaSolicitacaoPpi({ params }: { params: Promise<{ id: string }> }) {
   const { usuario } = await exigirPermissao('ppi:ver');
-  const podeGerenciar = temPermissao(usuario.role, 'ppi:gerenciar');
+  const podeGerenciar = temPermissao(usuario, 'ppi:gerenciar');
   const { id } = await params;
   const [s, regras, docentes] = await Promise.all([
     prisma.ppiSolicitacao.findUnique({
@@ -22,7 +22,7 @@ export default async function PaginaSolicitacaoPpi({ params }: { params: Promise
       include: { atividades: { include: { regra: true, orientador: { select: { nome: true } } }, orderBy: [{ dataRealizacao: 'asc' }] } },
     }),
     prisma.ppiRegraCategoria.findMany({ orderBy: [{ grupo: 'asc' }, { descricao: 'asc' }] }),
-    prisma.user.findMany({ where: { ativo: true, role: { in: [...PERFIS_DOCENTES] } }, select: { id: true, nome: true }, orderBy: { nome: 'asc' } }),
+    prisma.user.findMany({ where: ONDE_DOCENTES, select: { id: true, nome: true }, orderBy: { nome: 'asc' } }),
   ]);
   if (!s) notFound();
   const p = avaliarProgressoPpi(s.totalValidado, s.metaHoras);
@@ -43,7 +43,7 @@ export default async function PaginaSolicitacaoPpi({ params }: { params: Promise
         <Link href={`/ppi/${s.id}/ficha`} className="text-if-verde-700 underline underline-offset-2">
           Ficha para assinatura
         </Link>
-        {temPermissao(usuario.role, 'comunicacao:enviar') && (s.status === 'DEFERIDA' || s.status === 'INDEFERIDA') && (
+        {temPermissao(usuario, 'comunicacao:enviar') && (s.status === 'DEFERIDA' || s.status === 'INDEFERIDA') && (
           <>
             {' · '}
             <Link href={`/ppi/${s.id}/comunicar`} className="text-if-verde-700 underline underline-offset-2">

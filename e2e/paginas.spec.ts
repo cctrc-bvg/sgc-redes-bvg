@@ -18,6 +18,10 @@ for (const [perfil, rotas] of Object.entries(PAGINAS) as [Perfil, string[]][]) {
   test(`páginas principais: ${perfil}`, async ({ page }) => {
     const errosJs: string[] = [];
     page.on('pageerror', (e) => errosJs.push(e.message));
+    // Recurso bloqueado pela política de conteúdo (next.config.ts) aparece como erro no console.
+    page.on('console', (m) => {
+      if (m.type() === 'error' && /Content Security Policy/i.test(m.text())) errosJs.push(m.text());
+    });
     await entrar(page, perfil);
     for (const rota of rotas) {
       const resposta = await page.goto(rota);
@@ -37,4 +41,15 @@ test('ausência de demonstração mostra as mensagens prontas', async ({ page })
   await link.click();
   await expect(page).toHaveURL(/\/ausencias\/[^/]+$/);
   await expect(page.getByRole('link', { name: 'Abrir no e-mail' }).first()).toBeVisible();
+});
+
+test('cabeçalhos de segurança nas respostas', async ({ request }) => {
+  const resposta = await request.get('/login');
+  const h = resposta.headers();
+  expect(h['content-security-policy']).toContain("frame-ancestors 'none'");
+  expect(h['content-security-policy']).not.toContain('unsafe-eval');
+  expect(h['x-content-type-options']).toBe('nosniff');
+  expect(h['x-frame-options']).toBe('DENY');
+  expect(h['referrer-policy']).toBe('strict-origin-when-cross-origin');
+  expect(h['x-powered-by']).toBeUndefined();
 });

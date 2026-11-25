@@ -5,7 +5,8 @@ import { Alerta } from '@/components/campo';
 import { SeletorPeriodo } from '@/components/quadro-grade';
 import { prisma } from '@/lib/db';
 import { exigirUsuario } from '@/lib/auth/dal';
-import { temPermissao } from '@/lib/auth/rbac';
+import { acumulaDocencia, temPermissao } from '@/lib/auth/rbac';
+import { AlternarEscopo } from '@/components/escopo';
 import { dataDoBanco, formatarData, hojeEmFortaleza } from '@/lib/ausencias/regras';
 import { aulasEsperadas, NOME_SEMAFORO, ORDEM_SEMAFORO, percentual, semaforo, type Semaforo } from '@/lib/diarios/regras';
 import { anosDoSeletor, periodoDaUrl } from '@/lib/grade/regras';
@@ -13,11 +14,15 @@ import { FormularioPeriodo } from './formularios';
 
 export const metadata: Metadata = { title: 'Diários — SGC-Redes' };
 
-export default async function PaginaDiarios({ searchParams }: { searchParams: Promise<{ ano?: string; sem?: string }> }) {
+export default async function PaginaDiarios({ searchParams }: { searchParams: Promise<{ ano?: string; sem?: string; escopo?: string }> }) {
   const { usuario } = await exigirUsuario();
-  const verTodos = temPermissao(usuario.role, 'diarios:ver-todos');
-  if (!verTodos && !temPermissao(usuario.role, 'diarios:ver-proprios')) redirect('/painel?aviso=sem-permissao');
-  const { anoLetivo, semestreLetivo } = periodoDaUrl(await searchParams);
+  const params = await searchParams;
+  // Quem acumula cargo e docência alterna entre todos os diários e os seus ("Meus diários").
+  const alterna = acumulaDocencia(usuario) && temPermissao(usuario, 'diarios:ver-todos');
+  const meus = alterna && params.escopo === 'meus';
+  const verTodos = temPermissao(usuario, 'diarios:ver-todos') && !meus;
+  if (!verTodos && !temPermissao(usuario, 'diarios:ver-proprios')) redirect('/painel?aviso=sem-permissao');
+  const { anoLetivo, semestreLetivo } = periodoDaUrl(params);
   const hoje = hojeEmFortaleza();
 
   const [ofertas, periodos] = await Promise.all([
@@ -69,8 +74,17 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
       <p className="mt-1 text-slate-700">
         Aulas ministradas × previstas por disciplina e turma (RF08), conforme o diário no sistema acadêmico.
       </p>
+      {alterna && (
+        <AlternarEscopo
+          hrefTodas={`/diarios?ano=${anoLetivo}&sem=${semestreLetivo}`}
+          hrefMinhas={`/diarios?ano=${anoLetivo}&sem=${semestreLetivo}&escopo=meus`}
+          minhas={meus}
+          rotuloTodas="Todos os diários"
+          rotuloMinhas="Meus diários (Docência)"
+        />
+      )}
       <div className="mt-4">
-        <SeletorPeriodo anoLetivo={anoLetivo} semestreLetivo={semestreLetivo} anos={anosDoSeletor(anoLetivo)} />
+        <SeletorPeriodo anoLetivo={anoLetivo} semestreLetivo={semestreLetivo} anos={anosDoSeletor(anoLetivo)} manter={meus ? { escopo: 'meus' } : {}} />
       </div>
 
       {verTodos && (

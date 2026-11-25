@@ -23,6 +23,6 @@ export async function exigirUsuario(opcoes: { permitirSenhaProvisoria?: boolean 
 /** Exige usuário logado com a permissão indicada. */
 export async function exigirPermissao(permissao: Permissao) {
   const sessao = await exigirUsuario();
-  if (!temPermissao(sessao.usuario.role, permissao)) redirect('/painel?aviso=sem-permissao');
+  if (!temPermissao(sessao.usuario, permissao)) redirect('/painel?aviso=sem-permissao');
   return sessao;
 }

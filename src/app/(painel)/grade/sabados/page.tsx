@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Sábados letivos — SGC-Redes' };
 
 export default async function PaginaSabados({ searchParams }: { searchParams: Promise<{ ano?: string; sem?: string }> }) {
   const { usuario } = await exigirPermissao('grade:ver');
-  const podeEditar = temPermissao(usuario.role, 'grade:editar');
+  const podeEditar = temPermissao(usuario, 'grade:editar');
   const { anoLetivo, semestreLetivo } = periodoDaUrl(await searchParams);
   const sabados = await prisma.sabadoLetivo.findMany({
     where: { data: { gte: new Date(Date.UTC(anoLetivo, 0, 1)), lt: new Date(Date.UTC(anoLetivo + 1, 0, 1)) } },

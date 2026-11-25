@@ -7,6 +7,7 @@ import {
   definirModalidade,
   excluirPpe,
   mudarSituacao,
+  registrarEncontros,
   registrarPpe,
   salvarPei,
   type EstadoPpe,
@@ -155,6 +156,45 @@ export function FormularioSituacao({ ppeId, opcoes, permiteProrrogar }: { ppeId:
       )}
       <BotaoSecundario type="submit" disabled={enviando}>
         {enviando ? 'Salvando…' : 'Atualizar situação'}
+      </BotaoSecundario>
+    </form>
+  );
+}
+
+/** Encontros do PEI: o docente marca os já realizados (as datas passadas sem marca aparecem em destaque). */
+export function FormularioEncontros({
+  ppeId,
+  encontros,
+  hoje,
+}: {
+  ppeId: string;
+  encontros: { id: string; data: string; rotuloData: string; conteudo: string; realizado: boolean }[];
+  hoje: string;
+}) {
+  const [estado, acao, enviando] = useActionState<EstadoPpe | undefined, FormData>(registrarEncontros, undefined);
+  return (
+    <form action={acao} className="space-y-3" noValidate>
+      {estado?.mensagem && <Alerta tipo={estado.sucesso ? 'sucesso' : 'erro'}>{estado.mensagem}</Alerta>}
+      <input type="hidden" name="ppeId" value={ppeId} />
+      <fieldset>
+        <legend className="text-sm text-slate-700">Marque os encontros já realizados.</legend>
+        <ul className="mt-2 space-y-1">
+          {encontros.map((e) => {
+            const atrasado = e.data < hoje && !e.realizado;
+            return (
+              <li key={e.id} className={`flex items-start gap-3 rounded-md px-2 py-1 ${atrasado ? 'bg-amber-50' : ''}`}>
+                <input id={`encontro-${e.id}`} name="realizado" value={e.id} type="checkbox" defaultChecked={e.realizado} className="mt-1 size-5 accent-docencia-700" />
+                <label htmlFor={`encontro-${e.id}`} className="text-sm text-slate-800">
+                  <span className="font-semibold tabular-nums">{e.rotuloData}</span> · {e.conteudo}
+                  {atrasado && <span className="ml-1 font-semibold text-amber-900">(já passou: confirme)</span>}
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      </fieldset>
+      <BotaoSecundario type="submit" disabled={enviando}>
+        {enviando ? 'Salvando…' : 'Salvar encontros realizados'}
       </BotaoSecundario>
     </form>
   );

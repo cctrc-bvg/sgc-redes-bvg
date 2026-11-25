@@ -18,6 +18,7 @@ export type ValoresUsuario = {
   siape: string;
   whatsapp: string;
   ativo: boolean;
+  leciona: boolean;
 };
 
 type Props =
@@ -53,6 +54,7 @@ export function FormularioUsuario({ modo, usuarioId, iniciais, proprio }: Props)
   const v = estado?.valores;
   const valor = (campo: keyof ValoresUsuario) => (v?.[campo] ?? (iniciais ? String(iniciais[campo]) : '')) as string;
   const ativo = v ? v.ativo === 'on' : (iniciais?.ativo ?? true);
+  const leciona = v ? v.leciona === 'on' : (iniciais?.leciona ?? false);
 
   return (
     <form action={acao} className="space-y-5" noValidate>
@@ -81,6 +83,25 @@ export function FormularioUsuario({ modo, usuarioId, iniciais, proprio }: Props)
         dica={proprio ? 'Você não pode alterar o seu próprio perfil.' : 'Define o que a pessoa pode ver e fazer (FSD, seção 2).'}
       />
       {proprio && <input type="hidden" name="role" value={iniciais?.role} />}
+      <div className="flex items-start gap-3">
+        <input
+          id="leciona"
+          name="leciona"
+          type="checkbox"
+          defaultChecked={leciona}
+          aria-describedby="leciona-dica"
+          className="mt-1 size-5 accent-docencia-700"
+        />
+        <div>
+          <label htmlFor="leciona" className="font-semibold text-slate-800">
+            Também leciona <span className="font-normal text-docencia-800">(Docência)</span>
+          </label>
+          <p id="leciona-dica" className="text-sm text-slate-600">
+            Para Coordenação, Direção, CTP ou AE que também dão aula: soma ao perfil as funções de docente (Minha grade, convites de substituição, PPE e
+            diários das suas disciplinas), em azul. O perfil Professor sempre leciona. Liga sozinho ao receber uma disciplina em Ofertas.
+          </p>
+        </div>
+      </div>
       <div className="grid gap-5 sm:grid-cols-2">
         <Campo
           id="siape"

@@ -5,7 +5,7 @@ import { LinkExportar, LinkImpressao } from '@/components/barra-impressao';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { temPermissao } from '@/lib/auth/rbac';
 import { formatarData } from '@/lib/ausencias/regras';
-import { DIAS_LETIVOS_ANO, DIAS_POR_ETAPA, MESES, NOME_TIPO_EVENTO, datasEntre, diaDaSemanaISO, nomeEtapa } from '@/lib/calendario/regras';
+import { DIAS_LETIVOS_ANO, DIAS_POR_ETAPA, MESES, NOME_TIPO_EVENTO, datasEntre, diaDaSemanaISO, nomeEtapa, situacaoDasAulas } from '@/lib/calendario/regras';
 import { carregarAno } from '@/lib/calendario/servidor';
 import { NOME_DIA_EXTENSO } from '@/lib/grade/regras';
 import { anoLetivoAtual, lerAnoLetivo } from '@/lib/ofertas/regras';
@@ -37,7 +37,7 @@ const periodo = (i: { inicio: string; fim: string } | null) => (i ? `${formatarD
 
 export default async function PaginaCalendario({ searchParams }: { searchParams: Promise<{ ano?: string; mes?: string; aviso?: string }> }) {
   const { usuario } = await exigirPermissao('calendario:ver');
-  const podeEditar = temPermissao(usuario.role, 'calendario:gerenciar');
+  const podeEditar = temPermissao(usuario, 'calendario:gerenciar');
   const sp = await searchParams;
   const ano = lerAnoLetivo(sp.ano) ?? anoLetivoAtual();
   const mes = /^(?:[1-9]|1[0-2])$/.test(sp.mes ?? '') ? Number(sp.mes) : null;
@@ -95,6 +95,12 @@ export default async function PaginaCalendario({ searchParams }: { searchParams:
           </Link>
         </div>
       )}
+
+      {cal.avisos.map((a) => (
+        <div key={a} className="mt-4">
+          <Alerta tipo="erro">{a}</Alerta>
+        </div>
+      ))}
 
       {!cal.intervalo && (
         <div className="mt-4">
@@ -283,7 +289,7 @@ export default async function PaginaCalendario({ searchParams }: { searchParams:
                         {e.motivo ? ` (${e.motivo})` : ''}
                       </td>
                       <td className="px-3 py-2">
-                        {e.suspendeAulas ? 'Sem aula' : 'Mantidas'}
+                        {situacaoDasAulas(e)}
                         {e.imprevisto ? ' · imprevisto (repor)' : ''}
                       </td>
                     </tr>

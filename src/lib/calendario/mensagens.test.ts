@@ -37,3 +37,14 @@ describe('mensagens de alteração do calendário', () => {
     expect(textoDoEvento(reuniao, 'cae')).toContain('Período:');
   });
 });
+
+describe('avaliações finais', () => {
+  const finais: EventoComunicavel = { tipo: 'AVALIACOES_FINAIS', inicio: '2026-12-17', fim: '2026-12-22', descricao: null, motivo: null, suspendeAulas: true, imprevisto: false };
+  it('dizem que não há aula regular nem dia letivo, com orientação por público', () => {
+    expect(assuntoDoEvento(finais)).toContain('Avaliações finais');
+    expect(textoDoEvento(finais, 'gestao')).toContain('não contam como letivos');
+    expect(textoDoEvento(finais, 'docentes')).toContain('Art. 105');
+    expect(textoDoEvento(finais, 'cae')).toContain('acréscimos');
+    expect(textoDoEvento(finais, 'turmas')).not.toContain('reposição');
+  });
+});
