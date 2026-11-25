@@ -11,7 +11,7 @@
 cd ~/projetos/sgc-redes-bvg
 git status && git log --oneline -6          # branch rod-prazos (a partir de upstream/main)
 gh pr list -R cctrc-bvg/sgc-redes-bvg       # PRs abertos no original
-./scripts/dev.sh testar                     # esperado: typecheck ok + 436 testes passando
+./scripts/dev.sh testar                     # esperado: typecheck ok + 447 testes passando
 ```
 
 Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolvimento com
@@ -43,7 +43,8 @@ Fluxos de uso, com diagramas: [FLUXOS.md](FLUXOS.md). Requisitos e decisões: [F
 - **PR #3** (`e2e-ampliado`): **mesclado em 25/11/2026** (commit `1645fcd`): tela inicial nova, docência acumulada ao
   cargo, revisão dos fluxos, ausência informada pelo docente, avaliações finais, produção segura, FSD e estudo do
   login Google. CI verde.
-- **Branch `rod-prazos`** (a partir de `upstream/main`): documento de retomada e prazos do ROD (reposição, frequência).
+- **Branch `rod-prazos`** (a partir de `upstream/main`): retomada, prazos do ROD (reposição, frequência) e a progressão
+  automática dos diários (RF08-A: regra, migração, telas, conferência). Tudo enviado ao PR #4; confira o CI.
 - **Peça confirmação antes de cada push** (commits novos num branch com PR aberto entram no PR).
 
 **Pronto (Fases 1 e 2 do FSD + extras):**
@@ -68,8 +69,8 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
 ## 3. Pendências que dependem do usuário
 
 - [ ] **Decisões abertas:**
-  - **G25–G28:** progressão automática dos diários e mensagens periódicas (FSD, com sugestões); G25 é o requisito
-    informado pelo usuário em 25/11/2026, falta confirmar G26 a G28.
+  - ~~G25–G28~~ **aceitas em 25/11/2026** (FSD): progressão automática, "em dia" presumido, mensagens periódicas e grade
+    vigente para contar as aulas.
   - **G20–G22:** login Google institucional (`docs/estudos/SSO_GOOGLE.md`): adiado pelo usuário.
   - **Reposição de aulas, diário aberto e prazo da avaliação final** (oportunidades do ROD, na seção 4).
 - [ ] **Com a TI (G17–G19 já aceitos: "o que for solicitado será concedido"):**
@@ -89,31 +90,21 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
 
 ### P1 — próximos passos (em ordem)
 
-1. **PR #4 (`rod-prazos`):** aberto em 25/11/2026 (https://github.com/cctrc-bvg/sgc-redes-bvg/pull/4) com o commit
-   `52fd5a0` (prazos do ROD). O commit seguinte, com o requisito RF08-A, só entra no PR depois de um push (peça
-   confirmação). Acompanhe o CI e a revisão; corrija em commits novos. Antes de dizer que um push entra no PR, confira
+1. **PR #4 (`rod-prazos`):** aberto em 25/11/2026 (https://github.com/cctrc-bvg/sgc-redes-bvg/pull/4) com os prazos do ROD
+   e a progressão automática dos diários (commits enviados em 25/11/2026). Acompanhe o CI e a revisão; corrija em commits novos. Antes de dizer que um push entra no PR, confira
    com `gh pr view 4 --json state` (o PR #3 estava mesclado quando isso falhou).
-2. **Progressão automática dos diários e comunicação como interface (RF08-A, RNF06; requisito do usuário de 25/11/2026):**
-   o docente pode não aderir ao sistema; as aulas são presumidas dadas com o passar dos dias e só as exceções são
-   registradas. **Plano de implementação** (aditivo, sem apagar dados; decisões G25–G28 do FSD, com sugestões):
-   1. *Regra pura* `src/lib/diarios/automatico.ts`: aulas dadas por oferta = células da grade vigente nos dias letivos
-      entre o início do período e hoje (calendário: feriados, suspensões, sábados letivos e avaliações finais ficam de
-      fora; `contarDiasLetivos` e `diaDaGradeNaData`), menos aulas dispensadas sem reposição; substituição e adiantamento
-      contam como dadas. Testes unitários, inclusive sábado letivo e suspensão.
-   2. *Banco* (migração só de acréscimo, política de `docs/IMPLANTACAO.md` §8): `DisciplinaOferta.ministradasManual
-      Boolean @default(false)`. Valor efetivo = manual se marcado; senão o presumido. Decidir se as ofertas que já têm
-      `aulasMinistradas > 0` viram manuais (sugestão: sim, na própria migração).
-   3. *Tela de diários:* mostrar "presumido" com a etiqueta "automático"; a Coordenação corrige (vira manual) e pode
-      "voltar ao automático". "Em dia" presumido; "atrasado" só marcado à mão (G26). O semáforo "atenção" passa a
-      apontar problema estrutural (a grade não comporta as aulas previstas até o fim do período).
-   4. *Tela inicial:* a contagem "diários atrasados" usa só os marcados à mão; novo aviso quando a carga projetada fica
-      abaixo da prevista.
-   5. *Mensagens periódicas* (G27): tipo novo `resumo_semanal` em `src/lib/comunicacao/modelos.ts`, com a página
-      `/comunicacao/periodicas` que monta uma mensagem por docente (aulas da semana, mudanças, prazos calculados pelo
-      calendário: reposição Art. 37, frequência Art. 43, entrega da etapa em 5 dias letivos Art. 171, XIX). A
-      Coordenação revisa e envia pela caixa de mensagem existente; a chave de envio é semanal (não repete).
-   6. *Fechamento:* testes unitários e E2E, Ajuda, `FLUXOS.md`, manual e capturas. Rodar a suíte completa uma vez.
-   Pode começar pelos itens 1 a 4 (sem decisão nova além de G25); G26 a G28 têm sugestão no FSD.
+2. **Mensagens periódicas (RF08-A, G27 aceita; falta implementar):** a progressão automática dos diários já está pronta
+   (`src/lib/diarios/automatico.ts` e `servidor.ts`, coluna `ministradasManual`, etiqueta "automático", "voltar ao
+   automático", aviso "carga projetada abaixo da prevista" e `/diarios/conferencia`). Falta:
+   1. Tipo novo `resumo_semanal` em `src/lib/comunicacao/modelos.ts` e página `/comunicacao/periodicas`, com uma mensagem
+      por docente na sexta-feira (aulas da semana, mudanças, prazos calculados pelo calendário: reposição Art. 37,
+      frequência Art. 43, entrega da etapa em 5 dias letivos Art. 171, XIX). A Coordenação revisa e envia pela caixa de
+      mensagem existente; a chave de envio é semanal (não repete).
+   2. Avisos de fim de etapa (prazo de 5 dias letivos) e de fechamento do período.
+   3. *Fechamento:* testes unitários e E2E (inclusive da conferência e da progressão, ainda sem E2E), Ajuda, `FLUXOS.md`,
+      manual e capturas. Rodar a suíte completa uma vez. Testar `situacoesAutomaticas` com banco.
+   Limites conhecidos: a aula de hoje não conta como dada; dispensas com reposição agendada não saem da conta; a
+   conferência é manual, por amostra.
 2. **Implantação em produção** (depende da TI e do endereço): seguir `docs/IMPLANTACAO.md`.
    - Fazer o **primeiro uso acompanhado** de `./scripts/atualizar.sh` e `./scripts/ensaiar-migracao.sh`, que nunca
      rodaram com Docker.
