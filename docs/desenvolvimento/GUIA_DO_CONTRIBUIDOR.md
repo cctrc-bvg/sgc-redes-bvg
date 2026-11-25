@@ -219,7 +219,9 @@ mensagem (copiar, e-mail, registrar), importação com prévia, páginas princip
 exportação de planilhas (.xlsx/.csv) e modelos, cadastro de turma (erro de validação, edição, exclusão), máscara de
 telefone em Meu contato, suspensão de aulas no calendário (formulário dinâmico, mensagens prontas, remoção),
 ausência com convite de substituição aceito pelo docente em Minha grade, acréscimo de refeição com ciência da
-Assistência Estudantil e diário com lembrete ao docente. Roteiros que gravam dados usam datas futuras e textos únicos
+Assistência Estudantil e diário com lembrete ao docente. O `acessibilidade.spec.ts` roda o axe-core (WCAG 2.1 A/AA,
+base do eMAG) nas páginas principais e de detalhe; o `paginas.spec.ts` falha com violação da política de conteúdo
+(CSP do `next.config.ts`) — recurso externo novo exige ajustar a política. Roteiros que gravam dados usam datas futuras e textos únicos
 por execução e desfazem o que criaram, para rodarem de novo no mesmo banco. Cubra
 regras com Vitest; um roteiro novo só quando o comportamento depende do navegador (JS, área de transferência, menus).
 Ao mudar textos de botões ou rótulos usados nos roteiros, ajuste-os também (eles localizam pelo nome acessível).

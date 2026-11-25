@@ -89,7 +89,8 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 2. **Implantação em produção** (falta só o endereço): seguir `docs/IMPLANTACAO.md` — VM no Proxmox, Docker Compose,
    proxy reverso com HTTPS, `APP_URL`, backup diário (`scripts/backup-banco.sh`) e teste de restauração.
 3. **Ampliar o E2E aos poucos** (branch `e2e-ampliado`, 24/11: +16 testes — exportação, turma, Meu contato,
-   calendário, ausência com convite, alimentação, diários — e correção dos `<select>` que perdiam o valor após erro de validação). Os roteiros Python de `.handoff/e2e/` (sem JS, fora do git) cobrem mais regras que os
+   calendário, ausência com convite, alimentação, diários; depois, cabeçalhos de segurança (CSP) e acessibilidade com
+   axe-core — e correção dos `<select>` que perdiam o valor após erro de validação). Os roteiros Python de `.handoff/e2e/` (sem JS, fora do git) cobrem mais regras que os
    de fumaça; levar ao Playwright só o que depende do navegador. Nesta máquina (Ubuntu 26.04):
    `PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64` e `TMPDIR=~/.cache/sgc-tmp`.
 4. **Prisma 7/8** (em 24/11/2026 o `latest` do npm já é o 8.0.0-rc; o 7 estável é o 7.10.1 — esperar o 8 estável, que
