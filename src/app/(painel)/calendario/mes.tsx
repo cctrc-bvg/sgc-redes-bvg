@@ -26,7 +26,7 @@ function classeDoDia(d: string, info: InfoDia | undefined) {
   if (primeiro) return `${COR_TIPO_EVENTO[primeiro.tipo]} border`;
   if (info?.sabadoRef) return 'bg-if-verde-50 border border-if-verde-700';
   if (info?.letivo) return 'bg-white border border-slate-200';
-  return 'bg-slate-100 border border-slate-100 text-slate-500';
+  return 'bg-slate-100 border border-slate-100 text-slate-600'; // contraste AA (4,5:1) sobre o cinza
 }
 
 /** Mês compacto (visão anual): um quadrado por dia, cor pelo primeiro evento. */

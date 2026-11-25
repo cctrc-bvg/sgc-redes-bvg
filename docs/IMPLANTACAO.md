@@ -94,13 +94,12 @@ sudo apt install -y caddy
 sgc-redes.exemplo.ifce.edu.br {
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:3000
-	header {
-		Strict-Transport-Security "max-age=31536000"
-		X-Content-Type-Options nosniff
-		Referrer-Policy strict-origin-when-cross-origin
-	}
+	header Strict-Transport-Security "max-age=31536000"
 }
 ```
+
+O próprio app já envia a política de conteúdo (CSP), `X-Frame-Options`, `X-Content-Type-Options`,
+`Referrer-Policy` e `Permissions-Policy` (`next.config.ts`). O proxy só acrescenta o HSTS, que depende do HTTPS.
 
 ```bash
 sudo systemctl reload caddy
@@ -108,7 +107,8 @@ sudo systemctl reload caddy
 
 **Opção B — Nginx** com o certificado da TI (ou `certbot --nginx`): `proxy_pass http://127.0.0.1:3000;` com
 `proxy_set_header Host $host;`, `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` e
-`proxy_set_header X-Forwarded-Proto https;`, e `client_max_body_size 2m;` (importação de planilhas, até 1 MB).
+`proxy_set_header X-Forwarded-Proto https;`, `client_max_body_size 2m;` (importação de planilhas, até 1 MB) e
+`add_header Strict-Transport-Security "max-age=31536000" always;`.
 
 Depois do proxy: confira que `APP_URL` no `.env` é exatamente o endereço https e rode `docker compose up -d app` para
 o app ler o valor novo. Os links das mensagens prontas ("Minha grade", ausências) usam esse endereço.
