@@ -71,6 +71,35 @@ export async function voltarAoAutomatico(formData: FormData): Promise<void> {
   revalidatePath(`/diarios/${atual.id}`);
 }
 
+/**
+ * Conferência por amostra (G26): a Coordenação compara com o diário do sistema acadêmico. Valor igual ao presumido
+ * confirma o automático; valor diferente vira lançamento manual. Também marca se o diário está em dia.
+ */
+export async function conferirDiario(formData: FormData): Promise<void> {
+  const { usuario } = await exigirPermissao('diarios:ver-todos');
+  const ofertaId = String(formData.get('ofertaId') ?? '');
+  const texto = String(formData.get('aulasMinistradas') ?? '').trim();
+  if (!/^\d{1,3}$/.test(texto)) return;
+  const informado = Number(texto);
+  const emDia = formData.get('diarioEmDia') === 'on';
+  const atual = await prisma.disciplinaOferta.findUnique({ where: { id: ofertaId } });
+  if (!atual || validarMinistradas(informado, atual.aulasPrevistas)) return;
+  const { presumido } = (await situacoesAutomaticas(atual.anoLetivo, [atual], hojeEmFortaleza())).get(atual.id) ?? { presumido: null };
+  const igual = presumido !== null && informado === presumido;
+  const manual = atual.ministradasManual || !igual;
+  const dados = { aulasMinistradas: manual ? informado : atual.aulasMinistradas, ministradasManual: manual, diarioEmDia: emDia };
+  await prisma.disciplinaOferta.update({ where: { id: atual.id }, data: dados });
+  await registrarAuditoria({
+    userId: usuario.id,
+    acao: 'ATUALIZOU_DIARIO',
+    entidade: 'DisciplinaOferta',
+    entidadeId: atual.id,
+    detalhes: { conferencia: true, informado, presumido, confirmouAutomatico: igual && !atual.ministradasManual, diarioEmDia: emDia },
+  });
+  revalidatePath('/diarios');
+  revalidatePath('/diarios/conferencia');
+}
+
 export type EstadoLembrete = { mensagem?: string; sucesso?: boolean };
 
 /** Registra que o lembrete foi enviado pelo WhatsApp (modo semiautomático). */

@@ -80,6 +80,13 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
       <p className="mt-1 text-slate-700">
         Aulas ministradas × previstas por disciplina e turma (RF08), conforme o diário no sistema acadêmico.
       </p>
+      {verTodos && (
+        <p className="mt-2 text-sm">
+          <Link href={`/diarios/conferencia?ano=${anoLetivo}&sem=${semestreLetivo}`} className="font-semibold text-if-verde-700 underline underline-offset-2">
+            Conferir com o sistema acadêmico
+          </Link>
+        </p>
+      )}
       {alterna && (
         <AlternarEscopo
           hrefTodas={`/diarios?ano=${anoLetivo}&sem=${semestreLetivo}`}
