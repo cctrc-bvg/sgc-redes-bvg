@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  datasDoPeriodo,
+  DIAS_MAXIMOS_PERIODO,
+  lerChaveDoPeriodo,
   agruparAulasEscolhidas,
   blocosOcupadosDepois,
   chaveAula,
@@ -242,5 +245,24 @@ describe('G08: aviso ao grupo da Gestão', () => {
     expect(deveAvisarGestao('AULA_ADIANTADA', true)).toBe(true);
     expect(deveAvisarGestao('PENDENTE_DECISAO', false)).toBe(true);
     expect(deveAvisarGestao('TURMA_DISPENSADA', false)).toBe(true);
+  });
+});
+
+describe('período de ausência (vários dias)', () => {
+  it('lista as datas do período, inclusive as pontas', () => {
+    expect(datasDoPeriodo('2026-11-27', '2026-11-30')).toEqual(['2026-11-27', '2026-11-28', '2026-11-29', '2026-11-30']);
+    expect(datasDoPeriodo('2026-11-27', '')).toEqual(['2026-11-27']);
+    expect(datasDoPeriodo('2026-11-27', '2026-11-27')).toEqual(['2026-11-27']);
+  });
+
+  it('recusa fim antes do início e período acima do máximo', () => {
+    expect(datasDoPeriodo('2026-11-27', '2026-11-26')).toBeNull();
+    expect(datasDoPeriodo('2026-11-01', '2026-11-15')).toHaveLength(DIAS_MAXIMOS_PERIODO);
+    expect(datasDoPeriodo('2026-11-01', '2026-11-16')).toBeNull();
+  });
+
+  it('lê a data da chave da aula, ou usa a data informada', () => {
+    expect(lerChaveDoPeriodo('2026-11-28#of1|b2', '2026-11-27')).toEqual({ data: '2026-11-28', chave: 'of1|b2' });
+    expect(lerChaveDoPeriodo('of1|b2', '2026-11-27')).toEqual({ data: '2026-11-27', chave: 'of1|b2' });
   });
 });

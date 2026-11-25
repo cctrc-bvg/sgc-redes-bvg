@@ -37,7 +37,7 @@ export function periodoDoEvento(e: Pick<EventoComunicavel, 'inicio' | 'fim'>): s
 }
 
 export function assuntoDoEvento(e: EventoComunicavel): string {
-  const o_que = e.suspendeAulas ? 'Sem aulas' : NOME_TIPO_EVENTO[e.tipo];
+  const o_que = e.tipo === 'AVALIACOES_FINAIS' ? 'Avaliações finais' : e.suspendeAulas ? 'Sem aulas' : NOME_TIPO_EVENTO[e.tipo];
   return `[SGC-Redes] ${e.imprevisto ? 'Alteração no calendário: ' : 'Calendário: '}${o_que} — ${e.fim === e.inicio ? formatarData(e.inicio) : `${formatarData(e.inicio)} a ${formatarData(e.fim)}`}`;
 }
 
@@ -48,8 +48,19 @@ export function textoDoEvento(e: EventoComunicavel, publico: PublicoCalendario):
     `*${e.imprevisto ? 'ALTERAÇÃO NO CALENDÁRIO ACADÊMICO' : 'CALENDÁRIO ACADÊMICO'} — COORD. REDES DE COMPUTADORES*`,
     `${e.fim === e.inicio ? 'Data' : 'Período'}: *${periodoDoEvento(e)}*`,
     `Motivo: ${nome}`,
-    e.suspendeAulas ? '*Não haverá aulas* no curso técnico integrado em Redes de Computadores.' : 'As aulas estão *mantidas*.',
   ];
+  // Avaliações finais (ROD, Arts. 32 e 105): fim do ano, fora dos dias letivos, sem aula regular.
+  if (e.tipo === 'AVALIACOES_FINAIS') {
+    linhas.push('Período de *avaliações finais*: não há aulas regulares e os dias não contam como letivos.');
+    if (publico === 'cae') linhas.push('Não há refeições previstas pela grade. Se houver estudantes no campus para as avaliações, a Coordenação informará os acréscimos por dia.');
+    if (publico === 'docentes') linhas.push('Apliquem as avaliações finais conforme o cronograma (no mínimo 3 dias letivos após o registro da média parcial, ROD Art. 105) e entreguem os diários.');
+    if (publico === 'gestao') linhas.push('O período já está fora da contagem de dias letivos (ROD, Art. 32).');
+    if (publico === 'ctp') linhas.push('Período de avaliações finais do ano letivo.');
+    if (publico === 'turmas') linhas.push('Repassem à turma o cronograma das avaliações finais, por favor.');
+    linhas.push('_Calendário atualizado no SGC-Redes._');
+    return linhas.join('\n');
+  }
+  linhas.push(e.suspendeAulas ? '*Não haverá aulas* no curso técnico integrado em Redes de Computadores.' : 'As aulas estão *mantidas*.');
   if (e.suspendeAulas) {
     if (publico === 'cae') linhas.push('As refeições (lanches e almoço) das turmas de Redes não serão necessárias nesse período. Por favor, ajustem a produção.');
     if (publico === 'docentes') linhas.push(e.imprevisto ? 'As aulas serão repostas conforme orientação da Coordenação (sábado letivo ou outra data). Registrem a ocorrência nos diários.' : 'Ajustem o planejamento e os diários.');

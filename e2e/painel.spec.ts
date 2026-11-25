@@ -14,15 +14,39 @@ test('Coordenação: pendências primeiro, funções num menu de um clique e o m
   await funcoes(page).locator('summary').click();
   await expect(funcoes(page)).toHaveAttribute('open', '');
   await expect(funcoes(page).getByRole('link', { name: /Auditoria/ })).toBeVisible();
-  // Agenda: calendário do mês com o dia de hoje marcado.
+  // Agenda da Coordenação que também leciona (dados de demonstração): Hoje, Minha semana e o mês recolhido.
   const agenda = page.locator('aside[aria-labelledby="agenda"]');
-  await expect(agenda.locator('[aria-current="date"]')).toHaveCount(1);
-  await expect(agenda.getByRole('link', { name: 'Abrir calendário' })).toBeVisible();
-  // Acima do mês, as ausências de hoje (ou o aviso de que não há nenhuma).
   const hoje = agenda.locator('section[aria-labelledby="hoje"]');
   await expect(hoje.getByRole('heading', { name: 'Hoje' })).toBeVisible();
   await expect(hoje.getByRole('link', { name: 'Todas as ausências' })).toHaveAttribute('href', '/ausencias');
+  await expect(agenda.getByRole('heading', { name: /Minha semana/ })).toContainText('Docência');
+  const mes = agenda.locator('details', { has: page.locator('summary', { hasText: 'Calendário do mês' }) });
+  await expect(mes).not.toHaveAttribute('open');
+  await mes.locator('summary').click();
+  await expect(mes.getByRole('link', { name: 'Abrir calendário' })).toBeVisible();
 });
+
+test('Coordenação que leciona: o que é da docência aparece em azul e com o nome "Docência"', async ({ page }) => {
+  await entrar(page, 'coordenacao');
+  await expect(page.getByText(/Coordenação e Docência/).first()).toBeVisible();
+  // Menu do cabeçalho próprio da docência, com o recorte "meu" das telas.
+  const docencia = page.getByRole('navigation', { name: 'Menu principal' }).locator('details', { has: page.locator('summary', { hasText: 'Docência' }) });
+  await docencia.locator('summary').click();
+  await expect(docencia.getByRole('link', { name: 'Minha grade' })).toHaveAttribute('href', '/grade/minha');
+  await docencia.getByRole('link', { name: 'Meus diários' }).click();
+  await expect(page).toHaveURL(/\/diarios\?escopo=meus$/);
+  // A tela alterna entre todos (cargo) e os seus (docência), e só lista as disciplinas dela.
+  const escopo = page.getByRole('navigation', { name: 'Escopo da lista' });
+  await expect(escopo.getByRole('link', { name: 'Meus diários (Docência)' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('columnheader', { name: 'Docente' })).toHaveCount(0);
+  await escopo.getByRole('link', { name: 'Todos os diários' }).click();
+  await expect(page.getByRole('columnheader', { name: 'Docente' })).toBeVisible();
+  // No painel, as funções da docência ficam num grupo à parte.
+  await page.goto('/painel');
+  await funcoes(page).locator('summary').click();
+  await expect(funcoes(page).getByRole('region', { name: 'Docência' }).getByRole('link', { name: /Minhas PPE/ })).toHaveAttribute('href', '/ppe?escopo=minhas');
+});
+
 
 test('Assistência Estudantil: refeições previstas para hoje e amanhã', async ({ page }) => {
   await entrar(page, 'cae');

@@ -71,7 +71,7 @@ async function main() {
   const usuarios = new Map<string, string>();
   for (const p of PESSOAS) {
     const u = await prisma.user.create({
-      data: { nome: p.nome, email: p.email, role: p.role, whatsapp: p.whatsapp ?? null, passwordHash: hash, deveTrocarSenha: false },
+      data: { nome: p.nome, email: p.email, role: p.role, leciona: p.role === 'PROFESSOR', whatsapp: p.whatsapp ?? null, passwordHash: hash, deveTrocarSenha: false },
     });
     usuarios.set(p.email, u.id);
   }
@@ -142,6 +142,17 @@ async function main() {
     }
   }
 
+  // A Coordenação da demonstração também leciona (docência acumulada ao cargo): assume uma disciplina que já está
+  // na grade do semestre (de outro professor que não o usado nos testes), para ter aulas na "Minha semana".
+  const daCoordenacao = await prisma.disciplinaOferta.findFirst({
+    where: { anoLetivo: ano, horarios: { some: { semestreLetivo: sem } }, professorId: { not: usuarios.get(`ana.lima@${DOMINIO}`)! } },
+    orderBy: { id: 'desc' },
+  });
+  if (daCoordenacao) {
+    await prisma.disciplinaOferta.update({ where: { id: daCoordenacao.id }, data: { professorId: coordenacao } });
+    await prisma.user.update({ where: { id: coordenacao }, data: { leciona: true } });
+  }
+
   // 5. Calendário acadêmico do ano: etapas, semestres, eventos e um sábado letivo
   const etapas: [string, string][] = [
     [`${ano}-02-09`, `${ano}-04-17`],
@@ -184,7 +195,8 @@ async function main() {
     { tipo: 'FERIADO', inicio: `${ano}-11-20`, descricao: 'Dia da Consciência Negra', suspende: true },
     { tipo: 'REUNIAO', inicio: `${ano}-11-11`, descricao: 'Conselho de classe', suspende: false },
     { tipo: 'SUSPENSAO_AULAS', inicio: `${ano}-09-16`, descricao: '', suspende: true, imprevisto: true, motivo: 'Falta de energia' },
-    { tipo: 'AVALIACOES_FINAIS', inicio: `${ano}-12-07`, fim: `${ano}-12-16`, descricao: 'Avaliações finais e entrega dos diários', suspende: false },
+    // Depois da última semana letiva (fim da N4), inclusive num sábado: fora dos dias letivos (ROD, Art. 32).
+    { tipo: 'AVALIACOES_FINAIS', inicio: `${ano}-12-17`, fim: `${ano}-12-22`, descricao: 'Avaliações finais e entrega dos diários', suspende: true },
   ];
   for (const e of eventos) {
     await prisma.eventoCalendario.create({

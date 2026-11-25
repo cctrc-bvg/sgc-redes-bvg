@@ -26,6 +26,7 @@ export default async function PaginaAusencias({ searchParams }: { searchParams: 
       dataAula: true,
       blocosAfetados: true,
       status: true,
+      informadaPeloDocente: true,
       turma: { select: { nome: true } },
       professorAusente: { select: { nome: true } },
       oferta: { select: { disciplina: { select: { nome: true } } } },
@@ -56,7 +57,10 @@ export default async function PaginaAusencias({ searchParams }: { searchParams: 
                   {formatarData(dataDoBanco(a.dataAula))}
                 </Link>
               </th>
-              <td className="px-4 py-3">{a.professorAusente.nome}</td>
+              <td className="px-4 py-3">
+                {a.professorAusente.nome}
+                {a.informadaPeloDocente && <span className="block text-xs font-semibold text-docencia-800">Informada pelo docente</span>}
+              </td>
               <td className="px-4 py-3">
                 {a.turma.nome}
                 <span className="block text-slate-600">{a.oferta.disciplina.nome}</span>

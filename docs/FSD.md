@@ -36,6 +36,11 @@ O **SGC-Redes** atua como um painel operacional complementar aos sistemas instit
 | **`DIRECAO`** | Visualiza relatórios executivos (faltas, substituições, PPE, PPI) e pautas de gestão. | Sem acesso a anotações privadas sigilosas. |
 | **`ASSISTENCIA_ESTUDANTIL`** | Visualiza **exclusivamente** o painel de previsão e alteração de refeições por turma/horário e dá ciência nos alertas. | **Bloqueado** para notas, PPI, PPE, processos SEI e motivos pessoais/médicos. |
 
+**Docência acumulada (decisão de 25/11/2026):** qualquer cargo pode também lecionar (`User.leciona`, "Também leciona" em
+Usuários; liga sozinho quando a pessoa recebe disciplina pela planilha de ofertas). As permissões de `PROFESSOR` se
+somam às do cargo, e as telas mostram o recorte "meu" (Minha grade, Meus diários, Minhas PPE) à parte, em azul. O
+Professor sempre leciona.
+
 ---
 
 ## 3. Requisitos Funcionais — Fase 1 (Operação, Alimentação e Comunicação)
@@ -54,6 +59,26 @@ O **SGC-Redes** atua como um painel operacional complementar aos sistemas instit
   1. Professores da mesma turma com horário livre naquele turno ou com aula no outro turno passível de **adiantamento** para a janela livre/horário vago.
   2. Possibilidade de cobertura sem dispensa da turma.
 - O campo `motivoOperacional` deve aceitar apenas descrições operacionais não sensíveis (ex: *"Ausência justificada"*, *"Participação em evento"*), sem expor dados médicos no sistema/WhatsApp.
+- **Licença de vários dias:** o registro aceita um período de até 15 dias corridos ("Até"). Cada dia segue a grade vigente e o calendário acadêmico (feriados, sábados letivos), e gera uma ausência por turma, disciplina e dia. *(Implementado em 25/11/2026.)*
+- **Comunicação com o docente ausente (decisão de 25/11/2026):**
+  - Ao dar ciência da ausência, e de novo ao informar a cobertura, a mensagem da Coordenação ao docente orienta:
+    - procurar a **Coordenadoria de Gestão de Pessoas (CGP)** do campus, pelo e-mail `cgp.boaviagem@ifce.edu.br`, informando o motivo;
+    - entregar a ela o comprovante, quando houver (ex.: atestado médico).
+  - Esse contato e a entrega de documentos acontecem **fora do SGC-Redes**, direto entre o docente e a Gestão de
+    Pessoas. O sistema e a Coordenação do curso não recebem nem guardam motivo pessoal ou documento (LGPD).
+  - O texto fica em `ORIENTACAO_GESTAO_PESSOAS` (`src/lib/ausencias/mensagens.ts`) e na variável
+    `{{gestao de pessoas}}` dos textos-padrão. *(Implementado em 25/11/2026.)*
+- **RF02-A — Docente informa a própria ausência** *(decisão G15, implementado em 25/11/2026)*:
+  - **Docente → Coordenação:** o docente informa a data (ou o período) e as aulas, escolhendo um motivo operacional
+    da lista, nunca o motivo pessoal.
+  - O registro entra como "Aguardando decisão", marcado como "informada pelo docente", e aparece na tela inicial da
+    Coordenação.
+  - **Coordenação → docente:** a Coordenação dá ciência e decide a cobertura (RF02). A mensagem ao docente leva a
+    orientação da Gestão de Pessoas acima.
+  - O docente pode cancelar enquanto a Coordenação não decidir.
+  - Telas: Minha grade › "Informar ausência" (`/ausencias/informar`) e "Minhas ausências". A Coordenação vê o selo
+    "Informada pelo docente" na lista e no detalhe, e a contagem na tela inicial.
+  - Para uma ausência no mesmo dia, a tela pede que o docente também ligue para a Coordenação.
 
 ### RF03 — Motor de Impacto Alimentar (Regra Integral)
 - Horários oficiais das refeições no campus (fuso `America/Fortaleza` / `UTC-03:00`):
@@ -97,6 +122,11 @@ O **SGC-Redes** atua como um painel operacional complementar aos sistemas instit
   - **Trava Art. 117 §1º:** Impede salvar PEI com carga horária superior a **30%** da carga horária total da disciplina.
   - **Trava Art. 121:** Se a disciplina exigir conteúdo prático (`exigePratica = true`), exige preenchimento de carga horária prática $> 0$.
   - Suporte a registro de **Prorrogação** dentro do período vigente (Art. 124), **Conclusão Antecipada** mediante desempenho satisfatório (Art. 123 §único) e marcação de **Lançado no Sistema Acadêmico** (Art. 125).
+  - **Acompanhamento do PEI** *(implementado em 25/11/2026)*:
+    - O docente marca os encontros realizados.
+    - A tela inicial do docente avisa os encontros já passados sem registro e o momento de lançar o resultado (fim
+      do cronograma ou do prazo prorrogado).
+    - A tela inicial da Coordenação avisa as PPE com resultado à espera do lançamento no acadêmico.
 - Visibilidade compartilhada com **CTP** e **Conselho de Classe** (Art. 127).
 
 ### RF07 — Calculadora e Auditoria de PPI (40 Horas — Manual 2022)
@@ -115,6 +145,45 @@ O **SGC-Redes** atua como um painel operacional complementar aos sistemas instit
 ### RF09 — Kanban de Processos SEI e Atendimentos
 - Fluxo em 4 colunas (`NOVO` $\rightarrow$ `COM_PROFESSOR` $\rightarrow$ `AGUARDANDO_RETORNO` $\rightarrow$ `CONCLUIDO`) com número SEI, prazo e etiquetas (`Aproveitamento de Disciplina`, `Graduado/Transferido`, `Estágio`, `Orientação/Mediação`, `Outro SEI`).
 - Itens marcados como `sigiloso = true` são visíveis exclusivamente ao perfil `COORDENADOR`.
+
+---
+
+## 4A. Requisitos Não Funcionais
+
+### RNF01 — Capacidade no pico de fim de semestre
+- Atender até **100 docentes** no mesmo período, com picos de 30 acessos no mesmo minuto (por exemplo, logo após um aviso no grupo), sem degradação perceptível: meta de **p95 abaixo de 1 s** por página.
+- Dimensionamento e medição em `docs/IMPLANTACAO.md`, seção 1.1: **4 vCPU, 8 GB de RAM e 80 GB em SSD**, com PostgreSQL ajustado. A carga medida fica em cerca de 0,1 núcleo no pior minuto; a folga cobre o build das atualizações e o crescimento.
+- Consultas acima de 500 ms ficam registradas no log do banco, para encontrar gargalos.
+
+### RNF02 — Disponibilidade
+- Meta de **99,5% no horário letivo**.
+- **Mecanismos:**
+  - reinício automático dos contêineres;
+  - verificação de saúde (`/api/saude`) a cada 30 s;
+  - limite de memória do app;
+  - HA do Proxmox, se houver armazenamento compartilhado;
+  - monitoramento externo pela TI.
+- **Atualizações** fora do horário letivo, com aviso prévio. A indisponibilidade em cada troca é de segundos.
+
+### RNF03 — Segurança dos dados e recuperação
+- **Backup:** diário do banco (`pg_dump` verificado), com 30 dias de retenção e cópia fora da VM, além do backup da VM (vzdump).
+- **No fim de semestre:** backups também ao longo do dia, com **RPO de até 6 h** (perda máxima de dados se a VM se perder).
+- **RTO de até 1 h** (tempo para voltar ao ar), com ensaio de restauração a cada semestre.
+
+### RNF04 — Atualização sem perda de dados
+- Toda atualização segue `scripts/atualizar.sh`:
+  1. backup;
+  2. build com o app no ar;
+  3. **ensaio das migrações numa cópia do banco**;
+  4. troca;
+  5. verificação de saúde;
+  6. **volta automática** se o app novo não ficar saudável.
+- Mudanças de esquema seguem **expandir → migrar dados → contrair**, em versões separadas.
+- Migração destrutiva (apagar, renomear, mudar tipo, tornar obrigatória) só com aprovação explícita no arquivo. Um teste no CI barra as demais (`docs/IMPLANTACAO.md`, seção 8).
+
+### RNF05 — Autenticação institucional (estudo)
+- Login com a conta Google institucional (OpenID Connect, domínio `ifce.edu.br`), mantendo o perfil e a docência no SGC-Redes e a senha local da Coordenação como contingência.
+- Viável, mas depende da TI. Estudo em `docs/estudos/SSO_GOOGLE.md`; decisões G20–G22, adiadas pelo usuário em 25/11/2026.
 
 ---
 
@@ -138,3 +207,13 @@ O **SGC-Redes** atua como um painel operacional complementar aos sistemas instit
 | **G12** | Acesso de estudantes nas Fases 1 e 2: apenas servidores (alunos via Líderes) ou login discente? | Apenas servidores nas Fases 1 e 2 | **Aceito o padrão (24/11/2026):** apenas servidores. |
 | **G13** | Cancelar refeição cujo horário **já passou** (ex.: queda da tarde registrada às 13h, depois do almoço das 12h): avisar a AE? | Não gerar aviso para refeição já servida; mostrar só as refeições futuras afetadas | **Aceito o padrão (24/11/2026).** |
 | **G14** | Sábados letivos seguem a grade de qual dia? | Indicado no calendário acadêmico | **Decidido:** cada sábado letivo segue a grade de um dia da semana, cadastrado por data. |
+| **G15** | O docente pode informar a própria ausência no sistema (RF02-A)? | Sim: o registro entra como "Aguardando decisão", com motivo operacional da lista; a Coordenação dá ciência e decide a cobertura | **Aceito (25/11/2026)** e implementado. |
+| **G16** | Nome e contato da Gestão de Pessoas na orientação ao docente ausente | Nome oficial e e-mail do setor na mensagem | **Decidido (25/11/2026):** Coordenadoria de Gestão de Pessoas (CGP), `cgp.boaviagem@ifce.edu.br` (`GESTAO_PESSOAS` em `src/lib/ausencias/mensagens.ts`). |
+| **G17** | Recursos da VM de produção | 4 vCPU, 8 GB de RAM (balão mínimo de 4 GB), 80 GB em SSD; PostgreSQL ajustado no `.env` | **Aceito (25/11/2026):** o que for solicitado será concedido. |
+| **G18** | Janela de atualização | Fora do horário letivo (depois das 22h ou em sábado sem aula), com aviso no grupo de professores um dia antes; sem atualização na última semana do semestre, salvo correção urgente | **Aceito (25/11/2026).** |
+| **G19** | Backups no fim de semestre e destino da cópia fora da VM | Três backups por dia (02:30, 12:30 e 18:30) o ano todo; cópia diária para um storage da TI com acesso restrito | **Aceito (25/11/2026):** o caminho do storage será informado pela TI na implantação. |
+| **G20** | Adotar o login Google institucional (SSO)? | Sim, quando a TI entregar o projeto e as credenciais OAuth e o domínio público (`docs/estudos/SSO_GOOGLE.md`) | *Pendente* |
+| **G21** | Senha local depois do SSO | Só para a Coordenação, como contingência | *Pendente* |
+| **G22** | Cadastro automático de quem entra pelo Google | Não: só quem a Coordenação cadastrou | *Pendente* |
+| **G23** | Avaliações finais contam como dias letivos? Quando acontecem? | Não contam (ROD, Art. 32: "excetuando-se o período destinado aos exames finais"); sem aula regular pela grade | **Decidido (25/11/2026):** não contam como letivos; só no fim do ano, depois da última semana letiva, inclusive para as disciplinas semestrais; podem cair em sábado. Sempre "sem aula" no calendário (`SEMPRE_NAO_LETIVO`), com aviso se cadastradas antes do último dia letivo. A AF é aplicada no mínimo 3 dias letivos após o registro da média parcial (Art. 105, § 1º). |
+| **G24** | Refeições nos dias de avaliação final | Sem previsão pela grade; a Coordenação lança acréscimos por dia quando houver estudantes no campus para as avaliações (Alimentação › Acrescentar refeição) | *Pendente* |

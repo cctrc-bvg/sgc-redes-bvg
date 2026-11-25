@@ -38,10 +38,12 @@ Sistema web gratuito, de código aberto e auto-hospedado para apoiar a rotina op
 | :--- | :--- |
 | Usuários do sistema | **Ajuda** dentro do sistema (`/ajuda`, com PDF em `/ajuda/manual`) e o [Manual do usuário](docs/MANUAL_DO_USUARIO.md) |
 | Quem quer contribuir | [Como contribuir](CONTRIBUTING.md) e o [Guia do contribuidor](docs/desenvolvimento/GUIA_DO_CONTRIBUIDOR.md) |
+| Fluxos de uso | [Fluxos do sistema](docs/FLUXOS.md): diagramas de cada fluxo, quem faz cada etapa, em que tela e em que parte do código, e a análise de gargalos |
 | Regras de negócio | [Especificação Funcional (FSD)](docs/FSD.md) |
 | Segurança e LGPD | [Arquitetura, Segurança e Conformidade LGPD](docs/ARQUITETURA_LGPD.md) |
 | Interface | [Identidade Visual, Usabilidade (Nielsen) e Acessibilidade (WCAG/eMAG)](docs/IDENTIDADE_VISUAL_UX.md) |
-| Implantação | [Produção: VM, Docker Compose, HTTPS e backup](docs/IMPLANTACAO.md) |
+| Implantação | [Produção: VM e dimensionamento, Docker Compose, HTTPS, backup e atualização segura](docs/IMPLANTACAO.md) |
+| Estudos | [Login institucional com o Google (SSO)](docs/estudos/SSO_GOOGLE.md) |
 | Andamento | [Próximos passos e backlog](docs/PROXIMOS_PASSOS.md) |
 
 ---
@@ -86,12 +88,15 @@ npm run dev               # http://localhost:3000
 | `npm run typecheck` | Verificação de tipos (TypeScript) |
 | `npm test` | Testes unitários (Vitest) |
 | `npm run build` | Build de produção (Next.js standalone) |
-| `npm run db:migrate` | Cria uma nova migração após alterar `prisma/schema.prisma` |
+| `npm run db:migrate` | Cria uma nova migração após alterar `prisma/schema.prisma` (leia o SQL: só acréscimos, ver `docs/IMPLANTACAO.md` §8) |
 | `npm run db:studio` | Interface do Prisma para inspecionar o banco |
 | `npm run db:demo -- --confirmo` | Dados fictícios de demonstração (nunca em produção) |
 | `npm run manual` | Gera `docs/MANUAL_DO_USUARIO.md` a partir do conteúdo da Ajuda |
 | `npm run e2e` | Testes de ponta a ponta (Playwright) sobre os dados de demonstração |
 | `npm run capturas` | Gera as capturas de tela da Ajuda (Playwright; servidor com dados de demonstração) |
+| `./scripts/atualizar.sh` | Produção: atualização segura (backup, ensaio das migrações, troca, volta automática) |
+| `./scripts/ensaiar-migracao.sh` | Produção: aplica as migrações novas numa cópia do último backup |
+| `./scripts/backup-banco.sh` | Produção: backup verificado do banco (e `--restaurar`) |
 
 ---
 

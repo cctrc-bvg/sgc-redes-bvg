@@ -38,7 +38,7 @@ const SITUACAO_HORARIO = {
 
 export default async function PaginaAusencia({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ aviso?: string }> }) {
   const { usuario } = await exigirPermissao('ausencias:registrar');
-  const podeComunicar = temPermissao(usuario.role, 'comunicacao:enviar');
+  const podeComunicar = temPermissao(usuario, 'comunicacao:enviar');
   const { id } = await params;
   const { aviso } = await searchParams;
   const dados = await carregarAusencia(id);
@@ -130,9 +130,20 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
         {registro.turma.nome} · {registro.oferta.disciplina.nome} · {dados.dados.diaSemana}
         {dia.sabadoLetivo ? ' (sábado letivo)' : ''} · Motivo: {registro.motivoOperacional}
       </p>
-      <p className="mt-2">
+      <p className="mt-2 flex flex-wrap items-center gap-2">
         <SituacaoAusencia status={registro.status} />
+        {registro.informadaPeloDocente && (
+          <span className="rounded-full bg-docencia-50 px-2 py-0.5 text-xs font-semibold text-docencia-800">Informada pelo docente</span>
+        )}
       </p>
+      {registro.informadaPeloDocente && registro.status === 'PENDENTE_DECISAO' && (
+        <div className="mt-3">
+          <Alerta tipo="info">
+            O próprio docente informou esta ausência. Envie a ele a &quot;Ciência da sua ausência&quot; (em Comunicar, abaixo), que já traz a orientação
+            da Gestão de Pessoas, e decida a cobertura de cada horário.
+          </Alerta>
+        </div>
+      )}
 
       {aviso === 'registrada' && (
         <div className="mt-4">

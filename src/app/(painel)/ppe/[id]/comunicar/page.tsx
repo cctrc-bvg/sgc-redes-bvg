@@ -64,6 +64,11 @@ export default async function PaginaComunicarPpe({ params, searchParams }: { par
           <Alerta tipo="sucesso">Prazo prorrogado. Agora avise o estudante e a CTP: as mensagens abaixo já estão prontas.</Alerta>
         </div>
       )}
+      {aviso === 'resultado' && (
+        <div className="mt-4">
+          <Alerta tipo="sucesso">Resultado registrado. Agora avise o estudante e a CTP; depois, lance no sistema acadêmico (Art. 125).</Alerta>
+        </div>
+      )}
       {mensagens.length === 0 ? (
         <p className="mt-6 text-slate-700">
           Nenhum destinatário ativo: confira o docente nas{' '}

@@ -13,7 +13,7 @@ export default async function PaginaUsuarios() {
   await exigirPermissao('usuarios:gerenciar');
   const usuarios = await prisma.user.findMany({
     orderBy: [{ ativo: 'desc' }, { nome: 'asc' }],
-    select: { id: true, nome: true, email: true, role: true, ativo: true, deveTrocarSenha: true, ultimoLoginEm: true },
+    select: { id: true, nome: true, email: true, role: true, leciona: true, ativo: true, deveTrocarSenha: true, ultimoLoginEm: true },
   });
   const ativos = usuarios.filter((u) => u.ativo).length;
 
@@ -60,7 +60,10 @@ export default async function PaginaUsuarios() {
                   </Link>
                   <span className="block text-slate-600">{u.email}</span>
                 </th>
-                <td className="px-4 py-3">{NOME_PERFIL[u.role]}</td>
+                <td className="px-4 py-3">
+                  {NOME_PERFIL[u.role]}
+                  {u.leciona && u.role !== 'PROFESSOR' && <span className="ml-1 font-semibold text-docencia-800">+ Docência</span>}
+                </td>
                 <td className="px-4 py-3">
                   {!u.ativo ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-800">

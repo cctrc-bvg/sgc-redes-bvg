@@ -8,7 +8,6 @@ import { exigirPermissao } from '@/lib/auth/dal';
 import type { EstadoImportacao } from '@/lib/importacao/estado';
 import { COLUNAS_OFERTA, planejarImportacaoOfertas } from '@/lib/importacao/ofertas';
 import { avisoColunasDesconhecidas, lerEntrada, serializarDados } from '@/lib/importacao/servidor';
-import { PERFIS_DOCENTES } from '@/lib/ofertas/regras';
 
 export async function importarOfertas(_estado: EstadoImportacao | undefined, formData: FormData): Promise<EstadoImportacao> {
   const { usuario } = await exigirPermissao('ofertas:gerenciar');
@@ -17,7 +16,8 @@ export async function importarOfertas(_estado: EstadoImportacao | undefined, for
   const [turmas, disciplinas, docentes, ofertas] = await Promise.all([
     prisma.turma.findMany({ select: { id: true, codigo: true, anoCurso: true, ativa: true } }),
     prisma.disciplina.findMany({ select: { id: true, codigo: true, nome: true, anoCurso: true, semestreCurso: true, cargaHoraria: true, ativa: true } }),
-    prisma.user.findMany({ where: { ativo: true, role: { in: [...PERFIS_DOCENTES] } }, select: { id: true, email: true, nome: true } }),
+    // Qualquer conta ativa pode receber disciplina pela planilha; quem ainda não lecionava passa a lecionar.
+    prisma.user.findMany({ where: { ativo: true }, select: { id: true, email: true, nome: true } }),
     prisma.disciplinaOferta.findMany({ select: { id: true, anoLetivo: true, turmaId: true, disciplinaId: true, professorId: true } }),
   ]);
   const plano = planejarImportacaoOfertas({ registros: entrada.registros, contexto: { turmas, disciplinas, docentes, ofertas } });
@@ -42,6 +42,10 @@ export async function importarOfertas(_estado: EstadoImportacao | undefined, for
     await prisma.$transaction([
       ...plano.criar.map((o) => prisma.disciplinaOferta.create({ data: o })),
       ...plano.alterar.map((a) => prisma.disciplinaOferta.update({ where: { id: a.id }, data: { professorId: a.professorId } })),
+      prisma.user.updateMany({
+        where: { id: { in: [...new Set([...plano.criar.map((o) => o.professorId), ...plano.alterar.map((a) => a.professorId)])] }, leciona: false },
+        data: { leciona: true },
+      }),
     ]);
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && (e.code === 'P2002' || e.code === 'P2025')) {

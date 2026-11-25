@@ -46,8 +46,35 @@ describe('montarAcoes', () => {
     for (const a of todas) expect(a.href.startsWith('/')).toBe(true);
   });
 
+  it('marca as ações da docência (para quem acumula com o cargo) e aponta para o recorte "meu"', () => {
+    const acoes = montarAcoes({ ...CONTAGENS_ZERADAS, convitesPendentes: 1, ppeParaDefinir: 1, peiParaPreencher: 1, meusDiariosAtrasados: 1, ausenciasPendentes: 1 }, coordenacao);
+    const papel = Object.fromEntries(acoes.map((a) => [a.id, a.papel]));
+    expect(papel).toEqual({ convites: 'docencia', 'ppe-definir': 'docencia', 'pei-preencher': 'docencia', 'meus-diarios': 'docencia', ausencias: 'cargo' });
+    expect(acoes.find((a) => a.id === 'ppe-definir')?.href).toBe('/ppe?escopo=minhas');
+    expect(acoes.find((a) => a.id === 'meus-diarios')?.href).toBe('/diarios?escopo=meus');
+  });
+
+  it('PEI em andamento: encontros a confirmar e resultado a lançar são da docência', () => {
+    const acoes = montarAcoes({ ...CONTAGENS_ZERADAS, encontrosPeiAConfirmar: 3, peiParaConcluir: 1 }, coordenacao);
+    expect(acoes.map((a) => [a.id, a.papel, a.quantidade])).toEqual([
+      ['pei-concluir', 'docencia', 1],
+      ['pei-encontros', 'docencia', 3],
+    ]);
+  });
+
+  it('preparação do ano e fim da PPE pedem ação da Coordenação; o resto ela acompanha', () => {
+    const acoes = montarAcoes(
+      { ...CONTAGENS_ZERADAS, semestreSemDatas: true, disciplinasSemProfessor: 4, turmasSemGrade: 1, ppeParaLancar: 2, ppeAguardandoDocente: 5, processosAVencer: 1 },
+      coordenacao,
+    );
+    const { agir, acompanhar } = separarAcoes(acoes);
+    expect(agir.map((a) => a.id)).toEqual(['ppe-lancar', 'semestre-datas', 'sem-professor', 'sem-grade']);
+    expect(acompanhar.map((a) => a.id)).toEqual(['ppe-aguardando', 'processos-a-vencer']);
+    expect(acoes.every((a) => a.papel === 'cargo')).toBe(true);
+  });
+
   it('ordenarAcoes é estável dentro do mesmo nível', () => {
-    const base = { icone: 'ppe' as const, quantidade: 1, titulo: '', detalhe: '', href: '/', botao: '' };
+    const base = { papel: 'cargo' as const, icone: 'ppe' as const, quantidade: 1, titulo: '', detalhe: '', href: '/', botao: '' };
     const r = ordenarAcoes([
       { ...base, id: 'a', nivel: 'atencao' },
       { ...base, id: 'b', nivel: 'urgente' },

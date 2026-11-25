@@ -1,21 +1,26 @@
 import Link from 'next/link';
 import { exigirUsuario } from '@/lib/auth/dal';
-import { NOME_PERFIL } from '@/lib/auth/rbac';
+import { acumulaDocencia, NOME_PERFIL } from '@/lib/auth/rbac';
 import { FecharMenus } from '@/components/fechar-menus';
 import { Icone } from '@/components/icone';
 import { FUNCOES_DA_CONTA, funcoesDoPerfil, funcoesPorGrupo, type NomeIcone } from '@/lib/navegacao';
 import { sair } from './actions';
 
 const classeLink = 'inline-flex min-h-11 items-center gap-1.5 text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800';
+// Docência acumulada ao cargo: menu em azul, com o nome "Docência" escrito (src/components/papel.tsx).
+const classeLinkDocencia = 'inline-flex min-h-11 items-center gap-1.5 text-docencia-700 underline underline-offset-2 hover:text-docencia-800';
 const classeSummary = `${classeLink} cursor-pointer list-none [&::-webkit-details-marker]:hidden`;
 const classePainelMenu = 'absolute z-20 mt-1 min-w-56 rounded-md border border-slate-200 bg-white p-2 shadow-lg';
 
 /** Item de menu com o mesmo ícone usado no painel. */
-function ItemMenu({ href, rotulo, icone }: { href: string; rotulo: string; icone: NomeIcone }) {
+function ItemMenu({ href, rotulo, icone, docencia = false }: { href: string; rotulo: string; icone: NomeIcone; docencia?: boolean }) {
   return (
     <li>
-      <Link href={href} className={`${classeLink} w-full whitespace-nowrap px-2 no-underline hover:underline`}>
-        <Icone nome={icone} className="size-4 text-slate-500" />
+      <Link
+        href={href}
+        className={`${docencia ? classeLinkDocencia : classeLink} w-full whitespace-nowrap px-2 no-underline hover:underline`}
+      >
+        <Icone nome={icone} className={`size-4 ${docencia ? 'text-docencia-700' : 'text-slate-500'}`} />
         {rotulo}
       </Link>
     </li>
@@ -59,8 +64,8 @@ export default async function LayoutPainel({ children }: { children: React.React
   const { usuario } = await exigirUsuario({ permitirSenhaProvisoria: true });
   // Menus do cabeçalho pela mesma lista do painel (src/lib/navegacao.ts). Com muitas funções, agrupa em menus
   // <details>, que funcionam sem JavaScript.
-  const funcoes = funcoesDoPerfil(usuario.role);
-  const grupos = funcoes.length > 4 ? funcoesPorGrupo(usuario.role) : [];
+  const funcoes = funcoesDoPerfil(usuario);
+  const grupos = funcoes.length > 4 ? funcoesPorGrupo(usuario) : [];
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
@@ -72,7 +77,7 @@ export default async function LayoutPainel({ children }: { children: React.React
             <span className="block text-xl font-bold text-if-verde-800">SGC-Redes</span>
             <span className="block text-sm text-slate-600">IFCE · Campus Boa Viagem</span>
           </Link>
-          <NavConta nome={usuario.nome} perfil={NOME_PERFIL[usuario.role]} />
+          <NavConta nome={usuario.nome} perfil={acumulaDocencia(usuario) ? `${NOME_PERFIL[usuario.role]} e Docência` : NOME_PERFIL[usuario.role]} />
         </div>
         <div className="mx-auto max-w-5xl px-4 pb-1">
           <nav aria-label="Menu principal" className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
@@ -84,12 +89,19 @@ export default async function LayoutPainel({ children }: { children: React.React
               ? grupos.map((g) => (
                   // name: só um menu aberto por vez (nativo, sem JS); FecharMenus fecha ao navegar ou clicar fora.
                   <details key={g.grupo} name="menu-cabecalho" data-menu-cabecalho="" className="relative">
-                    <summary className={classeSummary}>
+                    <summary
+                      className={
+                        g.grupo === 'Docência'
+                          ? `${classeSummary.replace(classeLink, classeLinkDocencia)} rounded-md bg-docencia-50 px-2 font-semibold`
+                          : classeSummary
+                      }
+                    >
+                      {g.grupo === 'Docência' && <Icone nome="minha-grade" className="size-4" />}
                       {g.grupo} <span aria-hidden="true">▾</span>
                     </summary>
-                    <ul className={`${classePainelMenu} left-0`}>
+                    <ul className={`${classePainelMenu} left-0 ${g.grupo === 'Docência' ? 'border-t-4 border-t-docencia-700' : ''}`}>
                       {g.funcoes.map((f) => (
-                        <ItemMenu key={f.id} href={f.href} rotulo={f.rotulo} icone={f.icone} />
+                        <ItemMenu key={f.id} href={f.href} rotulo={f.rotulo} icone={f.icone} docencia={g.grupo === 'Docência'} />
                       ))}
                     </ul>
                   </details>

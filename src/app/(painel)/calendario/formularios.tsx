@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react';
 import type { TipoEventoCalendario } from '@prisma/client';
 import { Alerta, BotaoPrimario } from '@/components/campo';
 import { useVersaoDoEstado } from '@/components/versao-do-estado';
-import { MOTIVOS_SUSPENSAO, NOME_TIPO_EVENTO, SUSPENDE_POR_PADRAO, TIPOS_EVENTO, nomeEtapa } from '@/lib/calendario/regras';
+import { MOTIVOS_SUSPENSAO, NOME_TIPO_EVENTO, SEMPRE_NAO_LETIVO, SUSPENDE_POR_PADRAO, TIPOS_EVENTO, nomeEtapa } from '@/lib/calendario/regras';
 import { atualizarEvento, criarEvento, removerEvento, salvarEtapas, type EstadoEtapas, type EstadoEvento, type EstadoSimples } from './actions';
 
 const entrada = 'mt-1 block w-full rounded-md border border-slate-400 bg-white px-3 py-2 text-slate-900';
@@ -27,6 +27,7 @@ export function FormularioEvento({ inicial }: { inicial: DadosEvento }) {
   const [estado, acao, enviando] = useActionState<EstadoEvento | undefined, FormData>(editar ? atualizarEvento : criarEvento, undefined);
   const v = estado?.valores;
   const [tipo, setTipo] = useState(v?.tipo ?? inicial.tipo);
+  const sempreNaoLetivo = (SEMPRE_NAO_LETIVO as readonly string[]).includes(tipo);
   const [suspende, setSuspende] = useState(v ? v.suspendeAulas === 'on' : inicial.suspendeAulas);
   const [imprevisto, setImprevisto] = useState(v ? v.imprevisto === 'on' : inicial.imprevisto);
   const versao = useVersaoDoEstado(estado);
@@ -100,10 +101,21 @@ export function FormularioEvento({ inicial }: { inicial: DadosEvento }) {
       )}
       <div className="space-y-3">
         <label className="flex items-start gap-3 text-slate-800">
-          <input name="suspendeAulas" type="checkbox" checked={suspende} onChange={(e) => setSuspende(e.target.checked)} className="mt-1 size-5 accent-if-verde-700" />
+          <input
+            name="suspendeAulas"
+            type="checkbox"
+            checked={sempreNaoLetivo || suspende}
+            disabled={sempreNaoLetivo}
+            onChange={(e) => setSuspende(e.target.checked)}
+            className="mt-1 size-5 accent-if-verde-700"
+          />
           <span>
             Sem aula nestes dias
-            <span className="block text-sm text-slate-600">Tira os dias da contagem de dias letivos e da grade (ausências e refeições).</span>
+            <span className="block text-sm text-slate-600">
+              {sempreNaoLetivo
+                ? 'Avaliações finais nunca contam como dias letivos (ROD, Art. 32): ficam fora da contagem e da grade, inclusive aos sábados. Acontecem só no fim do ano, depois da última semana letiva.'
+                : 'Tira os dias da contagem de dias letivos e da grade (ausências e refeições).'}
+            </span>
           </span>
         </label>
         <label className="flex items-start gap-3 text-slate-800">

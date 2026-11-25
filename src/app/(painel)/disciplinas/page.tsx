@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Disciplinas — SGC-Redes' };
 
 export default async function PaginaDisciplinas({ searchParams }: { searchParams: Promise<{ aviso?: string }> }) {
   const { usuario } = await exigirPermissao('disciplinas:ver');
-  const podeGerenciar = temPermissao(usuario.role, 'disciplinas:gerenciar');
+  const podeGerenciar = temPermissao(usuario, 'disciplinas:gerenciar');
   const { aviso } = await searchParams;
   const disciplinas = await prisma.disciplina.findMany({
     // Ordem da matriz: ano, anuais antes das semestrais, semestre, núcleo, nome. Desativadas no fim.

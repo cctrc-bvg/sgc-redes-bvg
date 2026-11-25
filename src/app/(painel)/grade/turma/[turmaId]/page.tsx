@@ -55,7 +55,7 @@ export default async function PaginaGradeTurma({
         </h1>
         <div className="flex flex-wrap gap-3">
         <LinkImpressao href={`/grade/imprimir${periodo}&turma=${turma.id}`} />
-        {temPermissao(usuario.role, 'grade:editar') && (
+        {temPermissao(usuario, 'grade:editar') && (
           <Link
             href={`/grade/turma/${turma.id}/editar${periodo}`}
             className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800"

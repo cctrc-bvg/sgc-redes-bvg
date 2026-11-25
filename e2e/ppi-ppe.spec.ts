@@ -49,4 +49,20 @@ test.describe('Comunicar decisões de PPI e PPE', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Comunicar: PEI pronto' })).toBeVisible();
     await expect(page.getByLabel('Texto da mensagem').first()).toHaveValue(/\*Encontros:\*\n• \d{2}\/\d{2}\/\d{4} — /);
   });
+
+  test('PEI em andamento: marcar e desmarcar encontros realizados', async ({ page }) => {
+    await page.goto('/ppe');
+    await page.locator('main tr', { hasText: 'Em andamento' }).first().locator('a[href^="/ppe/"]').first().click();
+    const secao = page.locator('section[aria-labelledby="encontros"]');
+    const primeiro = secao.getByRole('checkbox').first();
+    await expect(primeiro).toBeVisible();
+    const total = await secao.getByRole('checkbox').count();
+    await primeiro.check();
+    await secao.getByRole('button', { name: 'Salvar encontros realizados' }).click();
+    await expect(secao).toContainText(total === 1 ? 'Todos os encontros realizados' : `1 de ${total} encontro(s) realizado(s).`);
+    // Desfaz, para a próxima execução partir do mesmo estado.
+    await primeiro.uncheck();
+    await secao.getByRole('button', { name: 'Salvar encontros realizados' }).click();
+    await expect(secao).toContainText('0 de');
+  });
 });

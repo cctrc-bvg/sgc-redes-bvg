@@ -57,7 +57,7 @@ export default async function PaginaGrade({ searchParams }: { searchParams: Prom
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <LinkImpressao href={`/grade/imprimir${periodo}`}>Imprimir / PDF de todas as turmas</LinkImpressao>
         <LinkExportar href={`/exportar/grade${periodo}`}>Exportar planilha</LinkExportar>
-        {temPermissao(usuario.role, 'grade:editar') && (
+        {temPermissao(usuario, 'grade:editar') && (
           <Link href={`/grade/importar${periodo}`} className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
             Importar planilha
           </Link>

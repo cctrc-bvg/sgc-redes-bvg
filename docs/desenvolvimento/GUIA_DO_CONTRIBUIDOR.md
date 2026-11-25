@@ -238,6 +238,7 @@ Boas práticas: teste a regra pura (casos de borda, erros com a mensagem que o u
 | :--- | :--- | :--- |
 | Usuários | Sistema → **Ajuda** (`/ajuda`, PDF em `/ajuda/manual`) e [docs/MANUAL_DO_USUARIO.md](../MANUAL_DO_USUARIO.md) | edite `src/lib/ajuda/topicos.ts`, rode `npm run manual` |
 | Capturas de tela | `public/manual/*.jpg` | servidor com `db:demo` + `BASE_URL=http://localhost:3000 npm run capturas [-- id]` |
+| Fluxos | [FLUXOS.md](../FLUXOS.md): diagramas por fluxo com responsável, tela e código | edite à mão ao mudar um fluxo; os diagramas da Ajuda ficam em `topicos.ts` (campo `diagrama`, com `onde`) |
 | Contribuidores | este guia e [CONTRIBUTING.md](../../CONTRIBUTING.md) | edite à mão |
 | Negócio | [FSD.md](../FSD.md), [ARQUITETURA_LGPD.md](../ARQUITETURA_LGPD.md) | edite à mão; decisões novas na tabela de pendências do FSD |
 | Andamento | [PROXIMOS_PASSOS.md](../PROXIMOS_PASSOS.md) | backlog e decisões |

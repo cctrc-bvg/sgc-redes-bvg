@@ -3,10 +3,11 @@
  * Funções puras: a Server Action busca os dados, chama `planejarDistribuicao` e aplica o plano.
  */
 
-import type { Role } from '@prisma/client';
-
-/** Perfis que podem receber disciplinas (a Coordenação também leciona). */
-export const PERFIS_DOCENTES: readonly Role[] = ['PROFESSOR', 'COORDENADOR'];
+/**
+ * Quem pode receber disciplinas e aparece nas listas de docentes: contas ativas que lecionam (o Professor e os
+ * cargos com a docência acumulada, marcada em Usuários ou ligada ao receber uma disciplina pela planilha).
+ */
+export const ONDE_DOCENTES = { ativo: true, leciona: true } as const;
 
 /** Nome do campo do formulário de distribuição: `professor:<disciplinaId>`. */
 export const PREFIXO_CAMPO = 'professor:';

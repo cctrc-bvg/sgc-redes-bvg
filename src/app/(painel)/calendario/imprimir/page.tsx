@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { BarraImpressao } from '@/components/barra-impressao';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { formatarData } from '@/lib/ausencias/regras';
-import { DIAS_LETIVOS_ANO, DIAS_POR_ETAPA, MESES, NOME_TIPO_EVENTO, nomeEtapa } from '@/lib/calendario/regras';
+import { DIAS_LETIVOS_ANO, DIAS_POR_ETAPA, MESES, NOME_TIPO_EVENTO, nomeEtapa, situacaoDasAulas } from '@/lib/calendario/regras';
 import { carregarAno } from '@/lib/calendario/servidor';
 import { NOME_DIA_EXTENSO } from '@/lib/grade/regras';
 import { anoLetivoAtual, lerAnoLetivo } from '@/lib/ofertas/regras';
@@ -88,7 +88,7 @@ export default async function PaginaImprimirCalendario({ searchParams }: { searc
                 inicio: e.inicio,
                 data: e.inicio === e.fim ? formatarData(e.inicio) : `${formatarData(e.inicio)} a ${formatarData(e.fim)}`,
                 evento: `${NOME_TIPO_EVENTO[e.tipo]}${e.descricao ? `: ${e.descricao}` : ''}${e.motivo ? ` (${e.motivo})` : ''}`,
-                aulas: e.suspendeAulas ? 'Sem aula' : 'Mantidas',
+                aulas: situacaoDasAulas(e),
               })),
               ...cal.sabados.map((s) => ({
                 inicio: s.data,

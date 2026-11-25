@@ -37,6 +37,7 @@ export default async function PaginaEditarUsuario({ params }: { params: Promise<
             siape: u.siape ?? '',
             whatsapp: formatarWhatsapp(u.whatsapp),
             ativo: u.ativo,
+            leciona: u.leciona,
           }}
         />
       </section>

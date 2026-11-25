@@ -19,7 +19,7 @@ export default async function PaginaTopico({ params }: { params: Promise<{ topic
   const { usuario } = await exigirUsuario();
   const t = topicoPorId((await params).topico);
   if (!t) notFound();
-  const disponivel = topicoDoPerfil(t, usuario.role);
+  const disponivel = topicoDoPerfil(t, usuario);
   // "Veja também" mostra todos os tópicos relacionados; os de outros perfis são lidos como referência.
   const visiveis = new Set(TOPICOS.map((x) => x.id));
   return (
@@ -45,7 +45,7 @@ export default async function PaginaTopico({ params }: { params: Promise<{ topic
       </div>
       <ConteudoTopico t={t} />
       <LinksRelacionados ids={t.relacionados} visiveis={visiveis} />
-      {topicosDoPerfil(usuario.role).length > 1 && (
+      {topicosDoPerfil(usuario).length > 1 && (
         <p className="mt-6 text-sm print:hidden">
           <Link href="/ajuda" className="text-if-verde-700 underline underline-offset-2">
             ← Todos os tópicos da Ajuda

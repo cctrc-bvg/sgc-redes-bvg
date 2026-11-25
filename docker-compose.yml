@@ -3,6 +3,23 @@ services:
     image: postgres:16-alpine
     container_name: sgc_redes_db
     restart: unless-stopped
+    # Ajuste para a VM de produção (docs/IMPLANTACAO.md, seção 1): os padrões servem a máquinas pequenas;
+    # em produção, defina no .env (ex.: PG_SHARED_BUFFERS=1GB, PG_EFFECTIVE_CACHE_SIZE=4GB).
+    command:
+      - postgres
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-256MB}
+      - -c
+      - effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-768MB}
+      - -c
+      - work_mem=${PG_WORK_MEM:-8MB}
+      - -c
+      - maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-128MB}
+      - -c
+      - max_connections=${PG_MAX_CONNECTIONS:-60}
+      # Registra consultas lentas (acima de 500 ms) para achar gargalos no pico.
+      - -c
+      - log_min_duration_statement=500
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-sgc_redes}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trocar_esta_senha_em_producao}
@@ -19,6 +36,8 @@ services:
 
   # Aplica as migrações do Prisma e o seed inicial; encerra ao terminar.
   migrate:
+    # Imagens com nome: o script de atualização guarda a versão anterior (":anterior") para voltar atrás.
+    image: sgc-redes-migrate:${SGC_TAG:-atual}
     build:
       context: .
       dockerfile: Dockerfile
@@ -36,15 +55,26 @@ services:
       - sgc_internal
 
   app:
+    image: sgc-redes-app:${SGC_TAG:-atual}
     build:
       context: .
       dockerfile: Dockerfile
       target: runner
     container_name: sgc_redes_app
     restart: unless-stopped
+    # Só o proxy reverso (no próprio host) fala com o app: a porta não fica exposta na rede.
     ports:
-      - "3000:3000"
+      - "${APP_PORTA:-127.0.0.1:3000}:3000"
+    # Limite de memória: um vazamento não derruba a VM; o Docker reinicia o app (restart: unless-stopped).
+    mem_limit: ${APP_MEMORIA:-1g}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/saude >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     environment:
+      NODE_OPTIONS: --max-old-space-size=${APP_HEAP_MB:-768}
       DATABASE_URL: postgresql://${POSTGRES_USER:-sgc_redes}:${POSTGRES_PASSWORD:-trocar_esta_senha_em_producao}@db:5432/${POSTGRES_DB:-sgc_redes_ifce}?schema=public
       APP_URL: ${APP_URL:-http://localhost:3000}
       # Opcional: Webhook para Evolution API / n8n (WhatsApp automático no campus)

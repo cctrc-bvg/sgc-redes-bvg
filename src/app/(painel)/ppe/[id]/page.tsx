@@ -10,7 +10,9 @@ import { LINHAS_EXTRAS_CRONOGRAMA, MODALIDADES_DEFINIVEIS, NOME_MODALIDADE, NOME
 import { acessoAoPpe } from '@/lib/ppe/servidor';
 import { situacaoDaPpe, type SituacaoPpe } from '@/lib/ppe/mensagens';
 import { temPermissao } from '@/lib/auth/rbac';
-import { FormularioClonar, FormularioExclusaoPpe, FormularioModalidade, FormularioPei, FormularioSituacao } from '../formularios';
+import { FormularioClonar, FormularioEncontros, FormularioExclusaoPpe, FormularioModalidade, FormularioPei, FormularioSituacao } from '../formularios';
+import { andamentoDoPei } from '@/lib/ppe/andamento';
+import { hojeEmFortaleza } from '@/lib/ausencias/regras';
 
 export const metadata: Metadata = { title: 'PPE — SGC-Redes' };
 
@@ -46,8 +48,16 @@ export default async function PaginaPpeDetalhe({ params, searchParams }: { param
   const teto = calcularTetoPei(ppe.disciplina.cargaHoraria);
   const editavel = acesso.definir && ['EM_ANDAMENTO', 'PRORROGADO'].includes(ppe.status);
   const proximas = TRANSICOES[ppe.status].filter((s) => acesso.gerenciar || s !== 'LANCADO_ACADEMICO');
-  const podeComunicar = temPermissao(usuario.role, 'comunicacao:enviar');
+  const podeComunicar = temPermissao(usuario, 'comunicacao:enviar');
   const situacao = situacaoDaPpe({ modalidade: ppe.modalidade, status: ppe.status, pei: ppe.pei });
+  const hoje = hojeEmFortaleza();
+  const andamento = ppe.pei
+    ? andamentoDoPei(
+        ppe.pei.encontros.map((e) => ({ data: dataDoBanco(e.data), conteudo: e.conteudo, realizado: e.realizado })),
+        ppe.pei.prorrogadoAte ? dataDoBanco(ppe.pei.prorrogadoAte) : null,
+        hoje,
+      )
+    : null;
 
   return (
     <div className="max-w-3xl">
@@ -172,6 +182,33 @@ export default async function PaginaPpeDetalhe({ params, searchParams }: { param
           ) : (
             <p className="mt-2 text-slate-700">PEI ainda não preenchido pelo docente.</p>
           )}
+        </section>
+      )}
+
+      {editavel && ppe.pei && ppe.pei.encontros.length > 0 && (
+        <section aria-labelledby="encontros" className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 id="encontros" className="text-lg font-semibold text-slate-900">Encontros realizados</h2>
+          {andamento?.prontoParaConcluir && (
+            <div className="mt-2">
+              <Alerta tipo="info">
+                {andamento.encontrosAConfirmar === 0 ? 'Cronograma concluído' : `Prazo do PEI encerrado em ${formatarData(andamento.prazoFinal!)}`}: lance o
+                resultado em &quot;Situação&quot;, logo abaixo.
+              </Alerta>
+            </div>
+          )}
+          <div className="mt-3">
+            <FormularioEncontros
+              ppeId={ppe.id}
+              hoje={hoje}
+              encontros={ppe.pei.encontros.map((e) => ({
+                id: e.id,
+                data: dataDoBanco(e.data),
+                rotuloData: formatarData(dataDoBanco(e.data)),
+                conteudo: e.conteudo,
+                realizado: e.realizado,
+              }))}
+            />
+          </div>
         </section>
       )}
 

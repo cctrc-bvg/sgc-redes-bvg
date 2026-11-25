@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: 'Ajuda — SGC-Redes' };
 export default async function PaginaAjuda({ searchParams }: { searchParams: Promise<{ todos?: string }> }) {
   const { usuario } = await exigirUsuario();
   const todos = (await searchParams).todos === '1';
-  const lista = TOPICOS.filter((t) => todos || topicoDoPerfil(t, usuario.role));
+  const lista = TOPICOS.filter((t) => todos || topicoDoPerfil(t, usuario));
   const matriz = matrizDeAcesso();
   return (
     <div className="max-w-4xl">
@@ -48,7 +48,7 @@ export default async function PaginaAjuda({ searchParams }: { searchParams: Prom
                 </Link>
               </h3>
               <p className="mt-1 flex-1 text-sm text-slate-700">{t.resumo}</p>
-              {!topicoDoPerfil(t, usuario.role) && <p className="mt-2 text-xs font-semibold text-slate-600">Não disponível para o seu perfil.</p>}
+              {!topicoDoPerfil(t, usuario) && <p className="mt-2 text-xs font-semibold text-slate-600">Não disponível para o seu perfil.</p>}
             </li>
           ))}
         </ul>

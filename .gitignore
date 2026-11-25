@@ -24,3 +24,6 @@ coverage/
 
 # backups do banco (dados pessoais)
 /backups/
+
+# Versão anterior registrada por scripts/atualizar.sh (produção)
+.versao-anterior

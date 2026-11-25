@@ -40,7 +40,7 @@ export async function criarProcesso(_estado: EstadoProcesso | undefined, formDat
   const valores = ler(formData);
   const validacao = ProcessoSchema.safeParse(valores);
   if (!validacao.success) return { erros: z.flattenError(validacao.error).fieldErrors, valores };
-  if (validacao.data.sigiloso && !temPermissao(usuario.role, 'kanban:ver-sigiloso')) {
+  if (validacao.data.sigiloso && !temPermissao(usuario, 'kanban:ver-sigiloso')) {
     return { erros: { sigiloso: ['Só a Coordenação registra itens sigilosos.'] }, valores };
   }
   const criado = await prisma.processoKanban.create({ data: { ...paraBanco(validacao.data), criadoPorId: usuario.id } });
@@ -62,12 +62,12 @@ async function buscarVisivel(id: string, role: Parameters<typeof temPermissao>[0
 
 export async function atualizarProcesso(_estado: EstadoProcesso | undefined, formData: FormData): Promise<EstadoProcesso> {
   const { usuario } = await exigirPermissao('kanban:gerenciar');
-  const atual = await buscarVisivel(String(formData.get('processoId') ?? ''), usuario.role);
+  const atual = await buscarVisivel(String(formData.get('processoId') ?? ''), usuario);
   if (!atual) return { mensagem: 'Processo não encontrado.' };
   const valores = ler(formData);
   const validacao = ProcessoSchema.safeParse(valores);
   if (!validacao.success) return { erros: z.flattenError(validacao.error).fieldErrors, valores };
-  if (validacao.data.sigiloso && !temPermissao(usuario.role, 'kanban:ver-sigiloso')) {
+  if (validacao.data.sigiloso && !temPermissao(usuario, 'kanban:ver-sigiloso')) {
     return { erros: { sigiloso: ['Só a Coordenação registra itens sigilosos.'] }, valores };
   }
   const dados = paraBanco(validacao.data);
@@ -92,7 +92,7 @@ export type EstadoMovimento = { mensagem?: string };
 /** Botões "← etapa anterior" / "próxima etapa →" do quadro (sem JavaScript). */
 export async function moverProcesso(_estado: EstadoMovimento | undefined, formData: FormData): Promise<EstadoMovimento> {
   const { usuario } = await exigirPermissao('kanban:gerenciar');
-  const atual = await buscarVisivel(String(formData.get('processoId') ?? ''), usuario.role);
+  const atual = await buscarVisivel(String(formData.get('processoId') ?? ''), usuario);
   const destino = String(formData.get('coluna') ?? '') as ColunaKanban;
   if (!atual) return { mensagem: 'Processo não encontrado.' };
   if (!COLUNAS.includes(destino)) return { mensagem: 'Etapa inválida.' };
@@ -106,7 +106,7 @@ export async function moverProcesso(_estado: EstadoMovimento | undefined, formDa
 export async function excluirProcesso(_estado: EstadoMovimento | undefined, formData: FormData): Promise<EstadoMovimento> {
   const { usuario } = await exigirPermissao('kanban:gerenciar');
   if (formData.get('confirmo') !== 'on') return { mensagem: 'Marque a confirmação para excluir.' };
-  const atual = await buscarVisivel(String(formData.get('processoId') ?? ''), usuario.role);
+  const atual = await buscarVisivel(String(formData.get('processoId') ?? ''), usuario);
   if (!atual) return { mensagem: 'Processo não encontrado.' };
   await prisma.processoKanban.delete({ where: { id: atual.id } });
   await registrarAuditoria({ userId: usuario.id, acao: 'EXCLUIU_PROCESSO', entidade: 'ProcessoKanban', entidadeId: atual.id, detalhes: { tipo: atual.tipo } });

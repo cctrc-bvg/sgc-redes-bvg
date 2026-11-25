@@ -39,12 +39,12 @@ export const NOME_TIPO_EVENTO: Record<TipoEventoCalendario, string> = {
   OUTRO: 'Outro',
 };
 
-/** Se o tipo, por padrão, tira o dia do calendário letivo (pode ser mudado em cada evento). */
+/** Se o tipo, por padrão, tira o dia do calendário letivo (pode ser mudado em cada evento, salvo os de SEMPRE_NAO_LETIVO). */
 export const SUSPENDE_POR_PADRAO: Record<TipoEventoCalendario, boolean> = {
   FERIAS_DOCENTES: true,
   MATRICULA: false,
   ENCONTRO_PEDAGOGICO: true,
-  AVALIACOES_FINAIS: false,
+  AVALIACOES_FINAIS: true,
   FERIADO: true,
   PONTO_FACULTATIVO: true,
   ACOLHIDA: false,
@@ -53,6 +53,19 @@ export const SUSPENDE_POR_PADRAO: Record<TipoEventoCalendario, boolean> = {
   SUSPENSAO_AULAS: true,
   OUTRO: false,
 };
+
+/**
+ * Tipos que nunca contam como dias letivos e não têm aula regular pela grade, qualquer que seja a marcação do evento.
+ * Avaliações finais (decisão de 25/11/2026): só no fim do ano, depois da última semana letiva (também nas disciplinas
+ * semestrais), podendo cair em sábado; esses dias não são letivos.
+ */
+export const SEMPRE_NAO_LETIVO: readonly TipoEventoCalendario[] = ['AVALIACOES_FINAIS'];
+
+/** Situação das aulas num evento, para listas e impressão. */
+export function situacaoDasAulas(e: { tipo: TipoEventoCalendario; suspendeAulas: boolean }): string {
+  if (SEMPRE_NAO_LETIVO.includes(e.tipo)) return 'Não letivo (avaliações)';
+  return e.suspendeAulas ? 'Sem aula' : 'Mantidas';
+}
 
 /** Classes de cor (fundo + borda) por tipo; sempre acompanhadas de texto (não só cor). */
 export const COR_TIPO_EVENTO: Record<TipoEventoCalendario, string> = {
@@ -107,7 +120,7 @@ export const EventoSchema = z
     imprevisto: z.boolean(),
     motivo: z.string().trim().max(60),
   })
-  .transform((v) => ({ ...v, fim: v.fim || v.inicio }))
+  .transform((v) => ({ ...v, fim: v.fim || v.inicio, suspendeAulas: SEMPRE_NAO_LETIVO.includes(v.tipo) || v.suspendeAulas }))
   .superRefine((v, ctx) => {
     if (v.fim < v.inicio) ctx.addIssue({ code: 'custom', path: ['fim'], message: 'O término não pode ser antes do início.' });
     else if (diasNoIntervalo(v.inicio, v.fim) > 120) ctx.addIssue({ code: 'custom', path: ['fim'], message: 'Use períodos de até 120 dias.' });
@@ -184,6 +197,23 @@ export function contarDiasLetivos(p: {
   }
   return c;
 }
+
+/**
+ * Avaliações finais fora do lugar: elas acontecem só no fim do ano, depois da última semana letiva. Avisa quando
+ * ainda há dia letivo depois do fim de um período de avaliações finais (ex.: cadastrado no meio do ano).
+ */
+export function avisosAvaliacoesFinais(eventos: readonly (Intervalo & { tipo: TipoEventoCalendario })[], letivos: readonly string[]): string[] {
+  const ultimoLetivo = letivos.length ? letivos[letivos.length - 1] : null;
+  if (!ultimoLetivo) return [];
+  return eventos
+    .filter((e) => e.tipo === 'AVALIACOES_FINAIS' && e.fim < ultimoLetivo)
+    .map(
+      (e) =>
+        `Avaliações finais de ${formatarISO(e.inicio)} a ${formatarISO(e.fim)} estão antes do fim do ano letivo (último dia letivo: ${formatarISO(ultimoLetivo)}). Elas acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais.`,
+    );
+}
+
+const formatarISO = (iso: string) => iso.split('-').reverse().join('/');
 
 /** Dias letivos por mês ("aaaa-mm" → quantidade). */
 export function porMes(letivos: readonly string[]): Map<string, number> {

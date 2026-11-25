@@ -21,6 +21,7 @@ async function main() {
         email: emailCoordenador,
         passwordHash: await bcrypt.hash(senha, 12),
         role: Role.COORDENADOR,
+        leciona: true,
         deveTrocarSenha: true,
       },
     });

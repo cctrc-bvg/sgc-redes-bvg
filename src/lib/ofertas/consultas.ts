@@ -1,6 +1,6 @@
 import 'server-only';
 import { prisma } from '@/lib/db';
-import { PERFIS_DOCENTES } from './regras';
+import { ONDE_DOCENTES } from './regras';
 
 /**
  * Disciplinas que aparecem na distribuição de uma turma num ano letivo: as ativas da matriz do ano
@@ -30,7 +30,7 @@ export function disciplinasDaDistribuicao(turma: { id: string; anoCurso: number 
 /** Docentes ativos que podem receber disciplinas. */
 export function professoresAptos() {
   return prisma.user.findMany({
-    where: { ativo: true, role: { in: [...PERFIS_DOCENTES] } },
+    where: ONDE_DOCENTES,
     orderBy: { nome: 'asc' },
     select: { id: true, nome: true },
   });

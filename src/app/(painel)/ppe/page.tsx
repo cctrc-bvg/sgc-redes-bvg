@@ -3,17 +3,21 @@ import Link from 'next/link';
 import { Alerta, BotaoSecundario, Campo } from '@/components/campo';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
-import { temPermissao } from '@/lib/auth/rbac';
+import { acumulaDocencia, ehDocente, temPermissao, temPermissaoDoCargo } from '@/lib/auth/rbac';
+import { AlternarEscopo } from '@/components/escopo';
 import { anoDoSemestre, FORMATO_SEMESTRE, NOME_MODALIDADE, NOME_STATUS_PPE, semestreAtual } from '@/lib/ppe/regras';
 import { disciplinasDoDocente } from '@/lib/ppe/servidor';
 
 export const metadata: Metadata = { title: 'PPE / PEI — SGC-Redes' };
 
-export default async function PaginaPpe({ searchParams }: { searchParams: Promise<{ semestre?: string; aviso?: string }> }) {
+export default async function PaginaPpe({ searchParams }: { searchParams: Promise<{ semestre?: string; aviso?: string; escopo?: string }> }) {
   const { usuario } = await exigirPermissao('ppe:ver');
-  const gerenciar = temPermissao(usuario.role, 'ppe:gerenciar');
-  const docente = !gerenciar && temPermissao(usuario.role, 'ppe:definir');
+  const gerenciar = temPermissao(usuario, 'ppe:gerenciar');
   const params = await searchParams;
+  // O cargo (Coordenação, CTP) vê todas; a docência, as das disciplinas que leciona. Quem acumula os dois alterna.
+  const cargoVeTodas = gerenciar || temPermissaoDoCargo(usuario, 'ppe:ver');
+  const alterna = cargoVeTodas && acumulaDocencia(usuario);
+  const docente = (!cargoVeTodas && ehDocente(usuario)) || (alterna && params.escopo === 'minhas');
   const semestre = params.semestre && FORMATO_SEMESTRE.test(params.semestre) ? params.semestre : semestreAtual();
   const minhas = docente ? [...(await disciplinasDoDocente(usuario.id, anoDoSemestre(semestre)))] : null;
 
@@ -41,7 +45,18 @@ export default async function PaginaPpe({ searchParams }: { searchParams: Promis
         )}
       </div>
 
+      {alterna && (
+        <AlternarEscopo
+          hrefTodas={`/ppe?semestre=${semestre}`}
+          hrefMinhas={`/ppe?semestre=${semestre}&escopo=minhas`}
+          minhas={docente}
+          rotuloTodas="Todas as PPE"
+          rotuloMinhas="Minhas PPE (Docência)"
+        />
+      )}
+
       <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
+        {docente && alterna && <input type="hidden" name="escopo" value="minhas" />}
         <Campo id="semestre" rotulo="Semestre" defaultValue={semestre} className="w-32" />
         <BotaoSecundario type="submit">Ver</BotaoSecundario>
       </form>

@@ -21,7 +21,7 @@ export default async function PaginaNovoProcesso() {
         <FormularioProcesso
           tipos={TIPOS.map((t) => ({ valor: t, rotulo: NOME_TIPO[t] }))}
           colunas={COLUNAS.map((c) => ({ valor: c, rotulo: NOME_COLUNA[c] }))}
-          podeSigilo={temPermissao(usuario.role, 'kanban:ver-sigiloso')}
+          podeSigilo={temPermissao(usuario, 'kanban:ver-sigiloso')}
         />
       </div>
     </div>

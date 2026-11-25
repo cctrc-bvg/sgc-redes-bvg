@@ -10,6 +10,7 @@ export const PERMISSOES = [
   'grade:ver',
   'grade:editar',
   'ausencias:registrar',
+  'ausencias:informar', // RF02-A: o docente informa a própria ausência
   'substituicao:responder',
   'alimentacao:ver',
   'alimentacao:confirmar', // Assistência Estudantil dá ciência do aviso
@@ -38,21 +39,51 @@ export const PERMISSOES = [
 
 export type Permissao = (typeof PERMISSOES)[number];
 
+/** Permissões da docência: do Professor e de quem, em outro cargo, também leciona. */
+export const PERMISSOES_DOCENCIA: readonly Permissao[] = ['grade:ver', 'substituicao:responder', 'ausencias:informar', 'ppe:ver', 'ppe:definir', 'diarios:ver-proprios', 'disciplinas:ver', 'calendario:ver'];
+
 const PERMISSOES_POR_PERFIL: Record<Role, readonly Permissao[]> = {
   COORDENADOR: PERMISSOES,
-  PROFESSOR: ['grade:ver', 'substituicao:responder', 'ppe:ver', 'ppe:definir', 'diarios:ver-proprios', 'disciplinas:ver', 'calendario:ver'],
+  PROFESSOR: PERMISSOES_DOCENCIA,
   CTP: ['ppe:ver', 'kanban:ver', 'relatorios:ver', 'disciplinas:ver', 'calendario:ver'],
   DIRECAO: ['relatorios:ver', 'disciplinas:ver', 'calendario:ver'],
   // Minimização de dados (LGPD): apenas refeições, sem notas, PPI, PPE, processos ou motivos.
   ASSISTENCIA_ESTUDANTIL: ['alimentacao:ver', 'alimentacao:confirmar', 'calendario:ver'],
 };
 
-export function permissoesDoPerfil(perfil: Role): readonly Permissao[] {
-  return PERMISSOES_POR_PERFIL[perfil];
+/**
+ * Quem tem as permissões: só o perfil (cargo) ou a conta, que pode somar a docência ao cargo (`leciona`).
+ * Passe a conta sempre que a tiver; só o perfil vale como "não leciona" (exceto PROFESSOR).
+ */
+export type Titular = Role | { role: Role; leciona?: boolean | null };
+
+const comoConta = (t: Titular) => (typeof t === 'string' ? { role: t, leciona: false } : t);
+
+/** Leciona: Professor ou outro cargo com a docência acumulada. */
+export function ehDocente(t: Titular): boolean {
+  const c = comoConta(t);
+  return c.role === 'PROFESSOR' || Boolean(c.leciona);
 }
 
-export function temPermissao(perfil: Role, permissao: Permissao): boolean {
-  return PERMISSOES_POR_PERFIL[perfil].includes(permissao);
+/** Acumula dois papéis (cargo + docência): a tela distingue as ações de cada um. */
+export function acumulaDocencia(t: Titular): boolean {
+  return ehDocente(t) && comoConta(t).role !== 'PROFESSOR';
+}
+
+export function permissoesDoPerfil(t: Titular): readonly Permissao[] {
+  const { role } = comoConta(t);
+  if (!acumulaDocencia(t)) return PERMISSOES_POR_PERFIL[role];
+  return PERMISSOES.filter((p) => PERMISSOES_POR_PERFIL[role].includes(p) || PERMISSOES_DOCENCIA.includes(p));
+}
+
+export function temPermissao(t: Titular, permissao: Permissao): boolean {
+  return PERMISSOES_POR_PERFIL[comoConta(t).role].includes(permissao) || (ehDocente(t) && PERMISSOES_DOCENCIA.includes(permissao));
+}
+
+/** Permissão que vem do cargo (sem contar a docência): ex.: a CTP vê todas as PPEs mesmo se também lecionar. */
+export function temPermissaoDoCargo(t: Titular, permissao: Permissao): boolean {
+  const { role } = comoConta(t);
+  return role !== 'PROFESSOR' && PERMISSOES_POR_PERFIL[role].includes(permissao);
 }
 
 /** Perfis na ordem de exibição. */

@@ -129,6 +129,37 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 - **Logo oficial:** `public/marca/ifce-vertical.png` substituído pela assinatura enviada pelo usuário (PNG; trocar por
   SVG se a Comunicação do IFCE fornecer).
 - **PR #3** (`e2e-ampliado`): abrir depois que o PR #2 for mesclado.
+- **Infraestrutura e comunicação (pedido do usuário, 25/11/2026):**
+  - Dimensionamento medido para o pico de fim de semestre: 4 vCPU, 8 GB, 80 GB SSD (`docs/IMPLANTACAO.md`, 1.1).
+  - Atualização segura com `scripts/atualizar.sh` (backup, ensaio das migrações numa cópia, volta automática) e
+    política de migrações testada no CI (seção 8).
+  - Healthcheck em `/api/saude`.
+  - Orientação da Gestão de Pessoas nas mensagens ao docente ausente.
+  - Estudo do login Google em `docs/estudos/SSO_GOOGLE.md`.
+  - Decisões G15–G22 no FSD.
+- **Decisões de 25/11/2026:** G15 aceito e implementado (o docente informa a própria ausência); G16 com o contato da
+  CGP (`cgp.boaviagem@ifce.edu.br`) nas mensagens; G17–G19 aceitos (recursos da VM, janela de atualização, backups).
+- **Calendário (25/11/2026, G23):** avaliações finais sempre fora dos dias letivos e da grade, só no fim do ano
+  (ROD, Art. 32), com aviso se cadastradas antes do último dia letivo. ROD guardado em `docs/referencias/rod-ifce.pdf`.
+- **Oportunidades do ROD (sugestões, ainda não implementadas):**
+  - prazo de reposição de aulas, 15 dias letivos ou o fim da etapa, o que vier primeiro (Art. 37, § 2º): mostrar o
+    prazo nas ausências com turma dispensada e avisar na tela inicial;
+  - diário aberto por 7 dias letivos após a aula (Art. 43): lembrete ao docente antes de o registro fechar;
+  - avaliação final no mínimo 3 dias letivos após o registro da média parcial (Art. 105, § 1º): conferência no
+    cadastro do período de avaliações.
+- **Próximo (depende de decisão):**
+  - refeições nos dias de avaliação final (G24): sugestão de lançar acréscimos por dia;
+  - login Google (G20–G22, adiado pelo usuário);
+  - duas réplicas do app atrás do Caddy, se o pico crescer.
+- **Análise dos fluxos** (pedido do usuário): `docs/FLUXOS.md` com diagramas por fluxo (responsável, tela e código)
+  e a análise de gargalos. Feito: encontros do PEI, avisos de resultado e de lançamento da PPE, ausência por período (até
+  15 dias), preparação do ano na tela inicial, processos a vencer e semana compacta. Pendentes de decisão (com sugestão,
+  na seção 14 de FLUXOS.md): docente informar a própria ausência, importação das aulas ministradas e redefinição de
+  senha por e-mail.
+- **Cargo + docência** (pedido do usuário): quem tem cargo e leciona vê tudo junto, cargo em verde e docência em azul
+  com rótulo; marca "Também leciona" no cadastro, ligada também ao receber disciplina pela planilha; só quem acumula vê
+  as cores; agenda com Hoje + Minha semana e o mês recolhido. Feito — `User.leciona`, `acumulaDocencia` em
+  `src/lib/auth/rbac.ts`, grupo "Docência" em `src/lib/navegacao.ts`.
 
 ### Concluídos em 24/11/2026
 
@@ -181,7 +212,7 @@ do painel ficar sem tópico, se faltar imagem ou se o manual estiver desatualiza
 - **Grade:** por ano + semestre letivo; anuais nos dois semestres, técnicas só no seu. Janelas livres são **calculadas**
   (vago em turno com aula), não gravadas. Choque de professor entre turmas é recusado no servidor.
 - **Acesso:** professores veem a grade de todas as turmas e a própria grade; Professor, CTP e Direção consultam o
-  catálogo; só a Coordenação edita catálogo, ofertas, grade e sábados. Coordenação também leciona (recebe ofertas).
+  catálogo; só a Coordenação edita catálogo, ofertas, grade e sábados. Qualquer cargo pode também lecionar (`User.leciona`); só quem leciona recebe ofertas.
 - **Turmas** valem para todos os anos letivos (as disciplinas de cada ano ficam nas ofertas). `Turma.anoLetivo` é legado:
   recebe o ano da criação e não aparece na tela. Médias de refeição ≤ estudantes ativos (≤ 80). Com ofertas lançadas, o
   ano do curso fica travado; turma usada (ofertas, grade, ausências, avisos) só é desativada, nunca excluída.

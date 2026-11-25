@@ -8,7 +8,8 @@ import { prisma } from '@/lib/db';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao, exigirUsuario } from '@/lib/auth/dal';
 import { temPermissao } from '@/lib/auth/rbac';
-import { dataParaBanco, hojeEmFortaleza } from '@/lib/ausencias/regras';
+import { dataDoBanco, dataParaBanco, hojeEmFortaleza } from '@/lib/ausencias/regras';
+import { manterRealizados } from '@/lib/ppe/andamento';
 import {
   exigeCoordenacao,
   lerCronograma,
@@ -101,9 +102,17 @@ export async function salvarPei(_estado: EstadoPpe | undefined, formData: FormDa
       update: dados,
       create: { ...dados, ppeId: ppe.id, docenteId: usuario.id },
     });
+    // O cronograma é regravado inteiro; o encontro que continua igual (data e conteúdo) mantém a marca de realizado.
+    const antigos = (ppe.pei?.encontros ?? []).map((e) => ({ data: dataDoBanco(e.data), conteudo: e.conteudo, realizado: e.realizado }));
     await tx.peiEncontro.deleteMany({ where: { peiId: pei.id } });
     await tx.peiEncontro.createMany({
-      data: cronograma.encontros.map((e) => ({ peiId: pei.id, data: dataParaBanco(e.data), conteudo: e.conteudo, metodologiaAvaliacao: e.metodologiaAvaliacao })),
+      data: manterRealizados(cronograma.encontros, antigos).map((e) => ({
+        peiId: pei.id,
+        data: dataParaBanco(e.data),
+        conteudo: e.conteudo,
+        metodologiaAvaliacao: e.metodologiaAvaliacao,
+        realizado: e.realizado,
+      })),
     });
   });
   await registrarAuditoria({
@@ -185,8 +194,27 @@ export async function mudarSituacao(_estado: EstadoPpe | undefined, formData: Fo
   await registrarAuditoria({ userId: usuario.id, acao: 'MUDOU_SITUACAO_PPE', entidade: 'RegistroPPE', entidadeId: ppe.id, detalhes: { de: ppe.status, para: destino } });
   revalidatePath(`/ppe/${ppe.id}`);
   revalidatePath('/ppe');
-  if (destino === 'PRORROGADO' && temPermissao(usuario.role, 'comunicacao:enviar')) redirect(`/ppe/${ppe.id}/comunicar?aviso=prorrogado`);
+  if (destino === 'PRORROGADO' && temPermissao(usuario, 'comunicacao:enviar')) redirect(`/ppe/${ppe.id}/comunicar?aviso=prorrogado`);
+  // Resultado lançado por quem comunica (Coordenação): segue direto para avisar o estudante e a CTP.
+  if ((destino === 'APROVADO' || destino === 'REPROVADO') && temPermissao(usuario, 'comunicacao:enviar')) redirect(`/ppe/${ppe.id}/comunicar?aviso=resultado`);
   return { sucesso: true, mensagem: 'Situação atualizada.' };
+}
+
+/** O docente marca os encontros do PEI já realizados (Art. 122): base para lançar o resultado no fim do prazo. */
+export async function registrarEncontros(_estado: EstadoPpe | undefined, formData: FormData): Promise<EstadoPpe> {
+  const { usuario, ppe, acesso } = await carregarComAcesso(String(formData.get('ppeId') ?? ''));
+  if (!ppe?.pei || !acesso.definir) return { mensagem: 'Você não pode registrar os encontros deste PEI.' };
+  if (!['EM_ANDAMENTO', 'PRORROGADO'].includes(ppe.status)) return { mensagem: 'Os encontros só são registrados enquanto o PEI está em andamento.' };
+  const marcados = new Set(formData.getAll('realizado').map(String));
+  const mudancas = ppe.pei.encontros.filter((e) => e.realizado !== marcados.has(e.id));
+  if (mudancas.length === 0) return { sucesso: true, mensagem: 'Nenhuma alteração.' };
+  await prisma.$transaction(mudancas.map((e) => prisma.peiEncontro.update({ where: { id: e.id }, data: { realizado: marcados.has(e.id) } })));
+  const feitos = ppe.pei.encontros.filter((e) => marcados.has(e.id)).length;
+  await registrarAuditoria({ userId: usuario.id, acao: 'REGISTROU_ENCONTROS_PEI', entidade: 'RegistroPPE', entidadeId: ppe.id, detalhes: { realizados: feitos, total: ppe.pei.encontros.length } });
+  revalidatePath(`/ppe/${ppe.id}`);
+  revalidatePath('/painel');
+  const todos = feitos === ppe.pei.encontros.length;
+  return { sucesso: true, mensagem: todos ? 'Todos os encontros realizados: lance o resultado em "Situação".' : `${feitos} de ${ppe.pei.encontros.length} encontro(s) realizado(s).` };
 }
 
 export async function excluirPpe(_estado: EstadoPpe | undefined, formData: FormData): Promise<EstadoPpe> {

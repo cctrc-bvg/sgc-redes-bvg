@@ -37,6 +37,9 @@ foram derivados tons para cumprir o contraste mínimo da WCAG 2.2 AA (4,5:1 para
 | `if-vermelho-700` | `#a3141a` | Derivado | 7,86:1 | Texto de erro sobre fundo `if-vermelho-50`. |
 | `if-vermelho-50` | `#fdecec` | Derivado | — | Fundo de alertas de erro/emergência (vermelho-700 sobre ele: 6,88:1). |
 | `if-preto` | `#000000` | Oficial | 21:1 | Assinatura monocromática; o texto corrido usa cinza-escuro (`slate-900`). |
+| `docencia-700` | `#1d5fb8` | Derivado (azul) | 6,21:1 | Ações e links da **docência** para quem a acumula a outro cargo (ver 2.2). |
+| `docencia-800` | `#174a8f` | Derivado | 8,70:1 | Hover e títulos da docência. |
+| `docencia-50` | `#e8f0fb` | Derivado | — | Fundo suave da docência (docencia-700 sobre ele: 5,41:1). |
 
 > **Atenção — o RGB e o HEX do manual não batem exatamente.** O verde aparece como `R50 G160 B65`
 > (`#32a041`) e como `#2f9e41`; o vermelho, como `R200 G25 B30` (`#c8191e`) e como `#cd191e`. Adotamos
@@ -53,6 +56,14 @@ seja ambígua (e para cumprir o critério WCAG 1.4.1 — *não usar cor como ún
    faz `classificarSla`). Ninguém precisa distinguir cores para entender o status.
 3. Os badges de status usam fundo suave (`-50`) + texto escuro (`-700/800`), visualmente distintos
    dos botões primários (fundo sólido).
+
+### 2.2 Cargo × docência (decisão de 25/11/2026)
+
+Quem tem um cargo (Coordenação, Direção, CTP, AE) e também leciona vê tudo numa tela só, sem trocar de modo.
+O que é do cargo segue em **verde**; o que é da docência, em **azul** (`docencia-*`), sempre com o nome escrito
+("Docência" ou o nome do cargo) — a cor nunca é o único meio (WCAG 1.4.1). As cores de papel só aparecem para quem
+acumula os dois: com um papel só, a tela fica como antes. Componentes: `src/components/papel.tsx` (selo e estilos)
+e `src/components/escopo.tsx` ("Todas | Minhas" nas telas de PPE e Diários).
 
 ## 3. Tipografia
 

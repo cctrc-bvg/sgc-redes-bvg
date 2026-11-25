@@ -8,13 +8,13 @@ const PAGINAS: [Perfil, string[]][] = [
   [
     'coordenacao',
     [
-      '/painel', '/calendario', '/calendario/eventos/novo', '/grade', '/grade/minha', '/ausencias', '/ausencias/nova',
+      '/painel', '/calendario', '/calendario/eventos/novo', '/grade', '/grade/minha', '/diarios?escopo=meus', '/ppe?escopo=minhas', '/ausencias', '/ausencias/nova',
       '/alimentacao', '/alimentacao/adicionar', '/comunicacao', '/comunicacao/modelos', '/usuarios', '/usuarios/importar',
       '/turmas', '/turmas/nova', '/disciplinas', '/ofertas', '/ppe', '/ppi', '/diarios', '/processos', '/relatorios',
       '/auditoria', '/ajuda', '/conta/contato', '/conta/senha',
     ],
   ],
-  ['professor', ['/painel', '/grade/minha']],
+  ['professor', ['/painel', '/grade/minha', '/ausencias/informar']],
   ['cae', ['/painel', '/alimentacao']],
 ];
 

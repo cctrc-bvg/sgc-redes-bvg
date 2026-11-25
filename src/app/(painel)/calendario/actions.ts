@@ -63,7 +63,7 @@ export async function criarEvento(_e: EstadoEvento | undefined, formData: FormDa
   });
   revalidar();
   // Alteração não prevista: leva direto às mensagens prontas para avisar docentes, CAE, nutricionista, Gestão e turmas.
-  if (pedeComunicacao(lido.dados) && temPermissao(usuario.role, 'comunicacao:enviar')) redirect(`/calendario/eventos/${criado.id}/comunicar?aviso=criado`);
+  if (pedeComunicacao(lido.dados) && temPermissao(usuario, 'comunicacao:enviar')) redirect(`/calendario/eventos/${criado.id}/comunicar?aviso=criado`);
   redirect(`/calendario?ano=${lido.dados.inicio.slice(0, 4)}&mes=${Number(lido.dados.inicio.slice(5, 7))}&aviso=criado`);
 }
 
@@ -82,7 +82,7 @@ export async function atualizarEvento(_e: EstadoEvento | undefined, formData: Fo
     detalhes: { tipo: lido.dados.tipo, inicio: lido.dados.inicio, fim: lido.dados.fim, suspendeAulas: lido.dados.suspendeAulas },
   });
   revalidar();
-  if (pedeComunicacao(lido.dados) && temPermissao(usuario.role, 'comunicacao:enviar')) redirect(`/calendario/eventos/${id}/comunicar?aviso=editado`);
+  if (pedeComunicacao(lido.dados) && temPermissao(usuario, 'comunicacao:enviar')) redirect(`/calendario/eventos/${id}/comunicar?aviso=editado`);
   return { sucesso: true, mensagem: 'Evento salvo.', valores: lido.valores };
 }
 

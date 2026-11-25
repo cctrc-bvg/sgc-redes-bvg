@@ -1,5 +1,4 @@
-import type { Role } from '@prisma/client';
-import { temPermissao, type Permissao } from '@/lib/auth/rbac';
+import { acumulaDocencia, temPermissao, type Permissao, type Titular } from '@/lib/auth/rbac';
 
 /** Nome do ícone de cada função (ver src/components/icone.tsx). */
 export type NomeIcone =
@@ -28,7 +27,7 @@ export type NomeIcone =
   | 'relogio'
   | 'ok';
 
-export type GrupoFuncao = 'Operação' | 'Acompanhamento' | 'Cadastros';
+export type GrupoFuncao = 'Operação' | 'Acompanhamento' | 'Cadastros' | 'Docência';
 
 export interface Funcao {
   id: string;
@@ -40,6 +39,8 @@ export interface Funcao {
   grupo: GrupoFuncao;
   /** A função aparece para quem tiver qualquer uma destas permissões. */
   requer: readonly Permissao[];
+  /** Não aparece para quem tem esta permissão (ex.: quem registra ausências não precisa "informar"). */
+  ocultarCom?: Permissao;
 }
 
 /**
@@ -49,6 +50,7 @@ export interface Funcao {
 export const FUNCOES: readonly Funcao[] = [
   { id: 'calendario', href: '/calendario', rotulo: 'Calendário', descricao: 'Dias letivos, feriados, sábados letivos e eventos.', icone: 'calendario', grupo: 'Operação', requer: ['calendario:ver'] },
   { id: 'minha-grade', href: '/grade/minha', rotulo: 'Minha grade', descricao: 'Suas aulas da semana, mudanças e convites de substituição.', icone: 'minha-grade', grupo: 'Operação', requer: ['substituicao:responder'] },
+  { id: 'informar-ausencia', href: '/ausencias/informar', rotulo: 'Informar ausência', descricao: 'Avise a Coordenação de uma ausência sua (um dia ou um período).', icone: 'ausencias', grupo: 'Operação', requer: ['ausencias:informar'], ocultarCom: 'ausencias:registrar' },
   { id: 'grade', href: '/grade', rotulo: 'Grade', descricao: 'Horários das turmas, janelas livres e sábados letivos.', icone: 'grade', grupo: 'Operação', requer: ['grade:ver'] },
   { id: 'ausencias', href: '/ausencias', rotulo: 'Ausências', descricao: 'Registrar faltas de docentes e decidir a cobertura.', icone: 'ausencias', grupo: 'Operação', requer: ['ausencias:registrar'] },
   { id: 'alimentacao', href: '/alimentacao', rotulo: 'Alimentação', descricao: 'Previsão de refeições e avisos à Assistência Estudantil.', icone: 'alimentacao', grupo: 'Operação', requer: ['alimentacao:ver'] },
@@ -74,13 +76,32 @@ export const FUNCOES_DA_CONTA = [
 
 export const GRUPOS: readonly GrupoFuncao[] = ['Operação', 'Acompanhamento', 'Cadastros'];
 
-/** Funções que o perfil pode abrir, na ordem de exibição. */
-export function funcoesDoPerfil(perfil: Role): Funcao[] {
-  return FUNCOES.filter((f) => f.requer.some((p) => temPermissao(perfil, p)));
+/**
+ * Funções da docência para quem a acumula a outro cargo: o recorte "meu" das telas que o cargo vê por inteiro.
+ * (Para o Professor, as próprias funções já são esse recorte.)
+ */
+export const FUNCOES_DOCENCIA: readonly Funcao[] = [
+  { id: 'minha-grade', href: '/grade/minha', rotulo: 'Minha grade', descricao: 'Suas aulas da semana, mudanças e convites de substituição.', icone: 'minha-grade', grupo: 'Docência', requer: ['substituicao:responder'] },
+  { id: 'informar-ausencia', href: '/ausencias/informar', rotulo: 'Informar ausência', descricao: 'Avise a Coordenação de uma ausência sua (um dia ou um período).', icone: 'ausencias', grupo: 'Docência', requer: ['ausencias:informar'] },
+  { id: 'meus-diarios', href: '/diarios?escopo=meus', rotulo: 'Meus diários', descricao: 'Aulas ministradas e diário em dia nas suas disciplinas.', icone: 'diarios', grupo: 'Docência', requer: ['diarios:ver-proprios'] },
+  { id: 'minhas-ppe', href: '/ppe?escopo=minhas', rotulo: 'Minhas PPE / PEI', descricao: 'Definir a modalidade e preencher o PEI das suas disciplinas.', icone: 'ppe', grupo: 'Docência', requer: ['ppe:definir'] },
+];
+
+/** Funções que a conta pode abrir, na ordem de exibição. */
+export function funcoesDoPerfil(conta: Titular): Funcao[] {
+  return FUNCOES.filter((f) => f.requer.some((p) => temPermissao(conta, p)) && !(f.ocultarCom && temPermissao(conta, f.ocultarCom)));
 }
 
-/** Funções do perfil agrupadas, sem grupos vazios. */
-export function funcoesPorGrupo(perfil: Role): { grupo: GrupoFuncao; funcoes: Funcao[] }[] {
-  const minhas = funcoesDoPerfil(perfil);
-  return GRUPOS.map((grupo) => ({ grupo, funcoes: minhas.filter((f) => f.grupo === grupo) })).filter((g) => g.funcoes.length > 0);
+/**
+ * Funções agrupadas, sem grupos vazios. Quem acumula a docência a outro cargo vê os grupos do cargo e, à parte,
+ * o grupo "Docência" (com as funções que só a docência libera, como a Grade para a Direção).
+ */
+export function funcoesPorGrupo(conta: Titular): { grupo: GrupoFuncao; funcoes: Funcao[] }[] {
+  const agrupar = (lista: readonly Funcao[]) =>
+    GRUPOS.map((grupo) => ({ grupo, funcoes: lista.filter((f) => f.grupo === grupo) })).filter((g) => g.funcoes.length > 0);
+  if (typeof conta === 'string' || !acumulaDocencia(conta)) return agrupar(funcoesDoPerfil(conta));
+  const doCargo = funcoesDoPerfil(conta.role).filter((f) => f.id !== 'minha-grade');
+  const cobertas = new Set(['minha-grade', 'informar-ausencia', 'diarios', 'ppe']);
+  const soDaDocencia = funcoesDoPerfil(conta).filter((f) => !doCargo.includes(f) && !cobertas.has(f.id));
+  return [...agrupar(doCargo), { grupo: 'Docência', funcoes: [...FUNCOES_DOCENCIA, ...soDaDocencia.map((f) => ({ ...f, grupo: 'Docência' as const }))] }];
 }

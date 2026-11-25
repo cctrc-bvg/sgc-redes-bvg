@@ -10,6 +10,8 @@ export type NivelAcao = 'urgente' | 'atencao' | 'acompanhar';
 export interface AcaoPrioritaria {
   id: string;
   nivel: NivelAcao;
+  /** De quem é a ação: do cargo ou da docência (distinguidos na tela de quem acumula os dois). */
+  papel: 'cargo' | 'docencia';
   icone: NomeIcone;
   quantidade: number;
   titulo: string;
@@ -25,6 +27,8 @@ export interface ContagensPainel {
   avisosRefeicao: number;
   ausenciasPendentes: number;
   ausenciasHojeOuAmanha: number;
+  /** Das pendentes, quantas o próprio docente informou (RF02-A). */
+  ausenciasInformadas: number;
   convitesPendentes: number;
   ppiEmAnalise: number;
   ppeRetencao: number;
@@ -33,7 +37,23 @@ export interface ContagensPainel {
   diariosAtrasados: number;
   meusDiariosAtrasados: number;
   processosVencidos: number;
+  /** Processos que vencem nos próximos 3 dias. */
+  processosAVencer: number;
   etapasFaltando: boolean;
+  /** Preparação do ano: datas do semestre atual não cadastradas (diários e calendário dependem delas). */
+  semestreSemDatas: boolean;
+  /** Preparação do ano: disciplinas da matriz sem professor nas turmas ativas. */
+  disciplinasSemProfessor: number;
+  /** Preparação do ano: turmas ativas sem nenhuma aula na grade do semestre. */
+  turmasSemGrade: number;
+  /** PPE com resultado (aprovado/reprovado) à espera do lançamento no sistema acadêmico (Art. 125). */
+  ppeParaLancar: number;
+  /** PPE à espera de o docente definir a modalidade (para a Coordenação acompanhar). */
+  ppeAguardandoDocente: number;
+  /** Docente: encontros de PEI com data passada ainda não registrados. */
+  encontrosPeiAConfirmar: number;
+  /** Docente: PEI com cronograma concluído ou prazo encerrado, à espera do resultado. */
+  peiParaConcluir: number;
 }
 
 export const CONTAGENS_ZERADAS: ContagensPainel = {
@@ -41,6 +61,7 @@ export const CONTAGENS_ZERADAS: ContagensPainel = {
   avisosRefeicao: 0,
   ausenciasPendentes: 0,
   ausenciasHojeOuAmanha: 0,
+  ausenciasInformadas: 0,
   convitesPendentes: 0,
   ppiEmAnalise: 0,
   ppeRetencao: 0,
@@ -49,13 +70,24 @@ export const CONTAGENS_ZERADAS: ContagensPainel = {
   diariosAtrasados: 0,
   meusDiariosAtrasados: 0,
   processosVencidos: 0,
+  processosAVencer: 0,
   etapasFaltando: false,
+  semestreSemDatas: false,
+  disciplinasSemProfessor: 0,
+  turmasSemGrade: 0,
+  ppeParaLancar: 0,
+  ppeAguardandoDocente: 0,
+  encontrosPeiAConfirmar: 0,
+  peiParaConcluir: 0,
 };
 
 /** O que muda o texto: quem dá ciência das refeições (AE) ou quem acompanha (Coordenação). */
 export interface PapelNoPainel {
   daCienciaRefeicao: boolean;
 }
+
+/** Ações que são da docência (o resto é do cargo). */
+const DA_DOCENCIA = new Set(['convites', 'ppe-definir', 'pei-preencher', 'pei-encontros', 'pei-concluir', 'meus-diarios']);
 
 const ORDEM: Record<NivelAcao, number> = { urgente: 0, atencao: 1, acompanhar: 2 };
 
@@ -66,8 +98,8 @@ export function ordenarAcoes(acoes: readonly AcaoPrioritaria[]): AcaoPrioritaria
 /** Monta as ações a partir das contagens; só entra o que tem quantidade. */
 export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrioritaria[] {
   const acoes: AcaoPrioritaria[] = [];
-  const add = (a: AcaoPrioritaria) => {
-    if (a.quantidade > 0) acoes.push(a);
+  const add = (a: Omit<AcaoPrioritaria, 'papel'>) => {
+    if (a.quantidade > 0) acoes.push({ ...a, papel: DA_DOCENCIA.has(a.id) ? 'docencia' : 'cargo' });
   };
 
   add(
@@ -109,7 +141,12 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     icone: 'ausencias',
     quantidade: c.ausenciasPendentes,
     titulo: 'Ausências aguardando decisão',
-    detalhe: c.ausenciasHojeOuAmanha > 0 ? `${c.ausenciasHojeOuAmanha} para hoje ou amanhã: decida a cobertura de cada horário.` : 'Decida a cobertura de cada horário.',
+    detalhe: [
+      c.ausenciasHojeOuAmanha > 0 ? `${c.ausenciasHojeOuAmanha} para hoje ou amanhã: decida a cobertura de cada horário.` : 'Decida a cobertura de cada horário.',
+      c.ausenciasInformadas > 0 && `${c.ausenciasInformadas} informada(s) pelo próprio docente: dê ciência a ele.`,
+    ]
+      .filter(Boolean)
+      .join(' '),
     href: '/ausencias',
     botao: 'Decidir',
   });
@@ -143,7 +180,7 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     quantidade: c.ppeParaDefinir,
     titulo: 'PPE aguardando você definir a modalidade',
     detalhe: 'Escolha PEI ou Dependência para cada estudante (Arts. 117–118).',
-    href: '/ppe',
+    href: '/ppe?escopo=minhas',
     botao: 'Definir',
   });
   add({
@@ -153,8 +190,38 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     quantidade: c.peiParaPreencher,
     titulo: 'Planos de Estudo Individual para preencher',
     detalhe: 'Objetivos, conteúdos e o cronograma de encontros.',
-    href: '/ppe',
+    href: '/ppe?escopo=minhas',
     botao: 'Preencher',
+  });
+  add({
+    id: 'pei-concluir',
+    nivel: 'atencao',
+    icone: 'ppe',
+    quantidade: c.peiParaConcluir,
+    titulo: 'PEI prontos para lançar o resultado',
+    detalhe: 'Cronograma concluído ou prazo encerrado: registre aprovação ou reprovação (Art. 123).',
+    href: '/ppe?escopo=minhas',
+    botao: 'Lançar resultado',
+  });
+  add({
+    id: 'pei-encontros',
+    nivel: 'atencao',
+    icone: 'ppe',
+    quantidade: c.encontrosPeiAConfirmar,
+    titulo: 'Encontros de PEI para confirmar',
+    detalhe: 'A data já passou: marque no PEI os encontros realizados.',
+    href: '/ppe?escopo=minhas',
+    botao: 'Confirmar',
+  });
+  add({
+    id: 'ppe-lancar',
+    nivel: 'atencao',
+    icone: 'ppe',
+    quantidade: c.ppeParaLancar,
+    titulo: 'PPE com resultado para lançar no acadêmico',
+    detalhe: 'Aprovação ou reprovação já registrada: lance no sistema acadêmico e marque aqui (Art. 125).',
+    href: '/ppe',
+    botao: 'Lançar',
   });
   add({
     id: 'ppi',
@@ -193,7 +260,7 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     quantidade: c.meusDiariosAtrasados,
     titulo: 'Seus diários marcados como atrasados',
     detalhe: 'Lance frequências e conteúdos no sistema acadêmico.',
-    href: '/diarios',
+    href: '/diarios?escopo=meus',
     botao: 'Ver diários',
   });
   add({
@@ -205,6 +272,56 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     detalhe: 'Disciplinas com diário fora do dia; dá para enviar lembrete ao docente.',
     href: '/diarios',
     botao: 'Ver diários',
+  });
+  add({
+    id: 'ppe-aguardando',
+    nivel: 'acompanhar',
+    icone: 'ppe',
+    quantidade: c.ppeAguardandoDocente,
+    titulo: 'PPE aguardando o docente definir a modalidade',
+    detalhe: 'Se demorar, envie o lembrete pela página da PPE (Comunicar).',
+    href: '/ppe',
+    botao: 'Ver PPE',
+  });
+  add({
+    id: 'processos-a-vencer',
+    nivel: 'acompanhar',
+    icone: 'processos',
+    quantidade: c.processosAVencer,
+    titulo: 'Processos que vencem em até 3 dias',
+    detalhe: 'Prazo próximo no quadro de processos.',
+    href: '/processos',
+    botao: 'Abrir quadro',
+  });
+  add({
+    id: 'semestre-datas',
+    nivel: 'atencao',
+    icone: 'calendario',
+    quantidade: c.semestreSemDatas ? 1 : 0,
+    titulo: 'Datas do semestre não cadastradas',
+    detalhe: 'Sem início e fim do semestre, os diários não calculam as aulas esperadas.',
+    href: '/calendario/etapas',
+    botao: 'Cadastrar',
+  });
+  add({
+    id: 'sem-professor',
+    nivel: 'atencao',
+    icone: 'ofertas',
+    quantidade: c.disciplinasSemProfessor,
+    titulo: 'Disciplinas sem professor no ano',
+    detalhe: 'Distribua as disciplinas da matriz em Ofertas; sem professor, a aula não entra na grade.',
+    href: '/ofertas',
+    botao: 'Distribuir',
+  });
+  add({
+    id: 'sem-grade',
+    nivel: 'atencao',
+    icone: 'grade',
+    quantidade: c.turmasSemGrade,
+    titulo: 'Turmas sem grade no semestre',
+    detalhe: 'Monte a grade pela tela ou por planilha; sem ela, ausências e refeições não funcionam.',
+    href: '/grade',
+    botao: 'Montar grade',
   });
   add({
     id: 'etapas',

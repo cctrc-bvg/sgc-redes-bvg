@@ -38,6 +38,7 @@ No sistema: `/painel` · disponível para todos os perfis.
 - Na tela inicial, ver primeiro o que precisa da sua atenção agora (do mais urgente ao menos), com um botão para resolver cada item.
 - Abrir "Todas as funções" com um clique: cada função tem um ícone, o mesmo do menu do cabeçalho. Sem pendências, o menu já vem aberto.
 - Acompanhar a agenda: o professor vê a própria semana (aulas, feriados, substituições); a Assistência Estudantil, as refeições previstas para hoje e amanhã; os demais perfis, o mês do calendário acadêmico e os próximos eventos (a Coordenação, também as ausências de hoje).
+- Se você tem um cargo (Coordenação, Direção, CTP) e também leciona, ver tudo junto: o que é do cargo em verde e o que é da docência em azul, sempre com o nome "Docência" escrito.
 - Voltar à tela inicial de qualquer página pelo botão "Início" do cabeçalho.
 - Informar seu WhatsApp e dizer se aceita recebê-lo pelo sistema (Meu contato).
 - Sair do sistema em qualquer página (botão Sair). A sessão expira após 8 horas sem uso.
@@ -46,14 +47,21 @@ No sistema: `/painel` · disponível para todos os perfis.
 
 ```mermaid
 flowchart LR
-  E0["Cadastro<br/>Coordenação<br/>cria o usuário e entrega a senha provisória em mensagem privada"]
-  E1["Login<br/>Você<br/>e-mail institucional + senha provisória"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Cadastro</b><br/><i>Coordenação</i><br/>cria o usuário e entrega a senha provisória em mensagem privada<br/>Onde: Cadastros › Usuários"]:::gestao
+  E1["<b>2. Login</b><br/><i>Você</i><br/>e-mail institucional + senha provisória<br/>Onde: Entrada"]:::todos
   E0 --> E1
-  E2["Nova senha<br/>Você<br/>10+ caracteres, com letras e números"]
+  E2["<b>3. Nova senha</b><br/><i>Você</i><br/>10+ caracteres, com letras e números<br/>Onde: Alterar senha"]:::todos
   E1 --> E2
-  E3["Tela inicial<br/>Sistema<br/>o que pede atenção, as funções do seu perfil e a agenda"]
+  E3["<b>4. Tela inicial</b><br/><i>Sistema</i><br/>o que pede atenção, as funções do seu perfil e a agenda<br/>Onde: Início"]:::sistema
   E2 --> E3
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
@@ -69,6 +77,14 @@ flowchart LR
 2. Informe o WhatsApp (a máscara preenche o formato) e marque se aceita que o sistema use esse número.
 3. Sem WhatsApp, todas as mensagens continuam disponíveis para envio pelo e-mail institucional.
 
+**Tenho um cargo e também dou aula** (Coordenação, Direção, CTP ou AE que lecionam)
+
+1. Peça à Coordenação para marcar "Também leciona" no seu cadastro (em Usuários). Ao receber uma disciplina pela planilha de ofertas, a marca liga sozinha.
+2. Na tela inicial, os cartões trazem o selo do papel: "Docência" (azul) para convites de substituição, PPE e diários seus; o nome do cargo (verde) para o resto.
+3. No cabeçalho, o menu "Docência" reúne Minha grade, Meus diários e Minhas PPE / PEI.
+4. Em PPE e Diários, alterne entre "Todas" (o que o cargo acompanha) e "Minhas" (as suas disciplinas).
+5. Na agenda, "Minha semana" mostra as suas aulas; o calendário do mês fica recolhido logo abaixo.
+
 **Esqueci a senha** (Todos)
 
 1. Peça à Coordenação: em Usuários, ela gera uma nova senha provisória para você.
@@ -80,9 +96,9 @@ flowchart LR
 
 *Tela de entrada: e-mail institucional e senha.*
 
-![Tela inicial da Coordenação: cartões "Precisa da sua atenção" com quantidade e botão para resolver, o menu "Todas as funções" fechado e, ao lado, as ausências de hoje, o calendário do mês com o dia de hoje marcado e os próximos eventos.](../public/manual/primeiros-passos-painel.jpg)
+![Tela inicial da Coordenação: cartões "Precisa da sua atenção" com quantidade e botão para resolver, o menu "Todas as funções" fechado e, o selo "Docência" em azul nas ações das disciplinas que a coordenadora leciona; ao lado, as ausências de hoje, a semana de aulas dela e o calendário do mês recolhido.](../public/manual/primeiros-passos-painel.jpg)
 
-*Tela inicial: primeiro o que precisa de atenção; as demais funções num menu de um clique; ao lado, o mês.*
+*Tela inicial da Coordenação que também leciona: o cargo em verde, a docência em azul.*
 
 ![Tela inicial de um professor, com a agenda "Minha semana": aulas de cada dia, feriados e substituições.](../public/manual/primeiros-passos-painel-professor.jpg)
 
@@ -92,6 +108,7 @@ flowchart LR
 
 - **Errei a senha várias vezes e fui bloqueado. E agora?** Depois de 5 tentativas erradas, o login daquele e-mail fica bloqueado por 15 minutos. Espere ou peça uma nova senha à Coordenação.
 - **Um menu que eu esperava não aparece.** Os menus dependem do perfil (veja "Quem vê o quê" no início da Ajuda). Se precisar de outro acesso, fale com a Coordenação.
+- **Por que algumas ações aparecem em azul?** Para quem tem um cargo e também leciona, azul (com o selo "Docência") marca o que é da sua docência; verde, o que é do cargo. Quem tem um papel só não vê essa distinção.
 - **Onde ficaram as outras funções na tela inicial?** Em "Todas as funções", logo abaixo das pendências: clique para abrir. Elas também estão nos menus do cabeçalho.
 - **Preciso usar meu WhatsApp pessoal?** Não. Todas as comunicações funcionam pelo e-mail institucional; o WhatsApp é opcional.
 
@@ -108,6 +125,7 @@ No sistema: `/calendario`.
 - Registrar suspensões não previstas (falta de energia, de água, de transporte, luto oficial, ponto facultativo municipal…) como dias a repor.
 - Cadastrar sábados letivos, cada um seguindo a grade de um dia da semana.
 - Contar os dias letivos por mês, etapa, semestre e ano, comparando com a meta (50 por etapa, 200 no ano).
+- Avaliações finais nunca contam como dias letivos (ROD, Art. 32): ficam fora da contagem e da grade, inclusive aos sábados. Acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais; o sistema avisa se o período for cadastrado antes disso.
 - Ver o ano inteiro ou um mês, imprimir/salvar em PDF e exportar/importar em planilha.
 - Ao registrar uma alteração imprevista, abrir as mensagens prontas para avisar docentes, CAE, nutricionista, Gestão, CTP e turmas.
 
@@ -115,16 +133,23 @@ No sistema: `/calendario`.
 
 ```mermaid
 flowchart LR
-  E0["Etapas e semestres<br/>Coordenação<br/>datas de início e fim de N1–N4"]
-  E1["Eventos<br/>Coordenação<br/>feriados, recesso, reuniões, avaliações"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Etapas e semestres</b><br/><i>Coordenação</i><br/>datas de início e fim de N1–N4 e dos dois semestres<br/>Onde: Calendário › Etapas"]:::gestao
+  E1["<b>2. Eventos</b><br/><i>Coordenação</i><br/>feriados, recesso, reuniões, avaliações<br/>Onde: Calendário › Novo evento"]:::gestao
   E0 --> E1
-  E2["Sábados letivos<br/>Coordenação<br/>data + dia cuja grade vale"]
+  E2["<b>3. Sábados letivos</b><br/><i>Coordenação</i><br/>data + dia cuja grade vale<br/>Onde: Grade › Sábados letivos"]:::gestao
   E1 --> E2
-  E3["Contagem<br/>Sistema<br/>dias letivos por mês, etapa e ano; saldo da meta"]
+  E3["<b>4. Contagem</b><br/><i>Sistema</i><br/>dias letivos por mês, etapa e ano; saldo da meta<br/>Onde: Calendário"]:::sistema
   E2 --> E3
-  E4["Consulta e PDF<br/>Todos<br/>visão anual, mensal e impressão"]
+  E4["<b>5. Consulta e PDF</b><br/><i>Todos</i><br/>visão anual, mensal e impressão<br/>Onde: Calendário › Imprimir"]:::todos
   E3 --> E4
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
@@ -184,6 +209,7 @@ No sistema: `/grade`.
 
 - Consultar a grade de cada turma por ano e semestre, com disciplina e professor em cada horário.
 - Ver a sua grade individual (Minha grade) e responder convites de substituição.
+- Informar a sua ausência à Coordenação (um dia ou um período de até 15 dias) e acompanhar a situação em "Minhas ausências" (docentes).
 - Identificar janelas livres: horários vagos num turno em que a turma tem aula.
 - Conferir se as aulas na grade batem com a carga horária da matriz.
 - Editar a grade com verificação de choque de horário do professor entre turmas (Coordenação).
@@ -194,14 +220,21 @@ No sistema: `/grade`.
 
 ```mermaid
 flowchart LR
-  E0["Ofertas<br/>Coordenação<br/>professor de cada disciplina na turma"]
-  E1["Grade<br/>Coordenação<br/>pela tela ou por planilha"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Ofertas</b><br/><i>Coordenação</i><br/>professor de cada disciplina na turma<br/>Onde: Cadastros › Ofertas"]:::gestao
+  E1["<b>2. Grade</b><br/><i>Coordenação</i><br/>pela tela ou por planilha<br/>Onde: Operação › Grade"]:::gestao
   E0 --> E1
-  E2["Conferência<br/>Sistema<br/>choques de horário e aulas × matriz"]
+  E2["<b>3. Conferência</b><br/><i>Sistema</i><br/>choques de horário e aulas × matriz; a tela inicial avisa turma sem grade<br/>Onde: Grade › Turma"]:::sistema
   E1 --> E2
-  E3["Consulta<br/>Professores<br/>grade da turma e Minha grade"]
+  E3["<b>4. Consulta</b><br/><i>Professores</i><br/>grade da turma e Minha grade<br/>Onde: Minha grade"]:::docencia
   E2 --> E3
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
@@ -222,6 +255,15 @@ flowchart LR
 
 1. Em Grade, clique em "Ver minha grade": aparecem suas aulas em todas as turmas e os sábados letivos.
 2. Se houver convite de substituição, ele aparece no topo: aceite ou recuse.
+
+**Informar minha ausência** (Professor)
+
+1. Em Minha grade, clique em "Informar ausência" (ou use o menu).
+2. Escolha a data; para vários dias, preencha também "Até" (até 15 dias). Aparecem as suas aulas pela grade.
+3. Marque as aulas e escolha um motivo operacional da lista. Nunca escreva o motivo pessoal ou médico.
+4. Envie: a Coordenação recebe o aviso na tela inicial, dá ciência e organiza a cobertura. Se a ausência for hoje, ligue também para a Coordenação.
+5. Acompanhe em "Minhas ausências"; enquanto a Coordenação não decidir, você pode cancelar.
+6. O motivo e o comprovante (ex.: atestado médico) vão direto à Coordenadoria de Gestão de Pessoas (CGP), pelo e-mail cgp.boaviagem@ifce.edu.br, fora do sistema.
 
 ### Telas
 
@@ -251,6 +293,8 @@ No sistema: `/ausencias`.
 ### O que você pode fazer
 
 - Registrar a ausência de um docente numa data: o sistema mostra as aulas dele pela grade vigente.
+- Licença de vários dias: informe também "Até" (até 15 dias) e registre todas as aulas do período de uma vez; feriados e sábados letivos já entram na conta.
+- Receber as ausências que os próprios docentes informam (selo "Informada pelo docente" e contagem na tela inicial) e dar ciência a eles.
 - Para cada horário perdido: substituição por outro docente, adiantamento de uma aula posterior da turma, dispensa da turma ou decidir depois.
 - Sugestões de cobertura priorizando professores da mesma turma e livres no horário.
 - Convidar docentes para substituir; eles aceitam ou recusam em Minha grade.
@@ -261,25 +305,33 @@ No sistema: `/ausencias`.
 
 ```mermaid
 flowchart LR
-  E0["Registro<br/>Coordenação<br/>docente, data e aulas afetadas"]
-  E1["Cobertura<br/>Coordenação<br/>substituir, adiantar, dispensar ou decidir depois"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Registro</b><br/><i>Coordenação</i><br/>docente, data (ou período de até 15 dias) e aulas afetadas<br/>Onde: Ausências › Registrar"]:::gestao
+  E1["<b>2. Cobertura</b><br/><i>Coordenação</i><br/>substituir, adiantar, dispensar ou decidir depois<br/>Onde: Ausências › detalhe"]:::gestao
   E0 --> E1
-  E2["Convites<br/>Professores<br/>aceitam ou recusam em Minha grade"]
+  E2["<b>3. Convites</b><br/><i>Professores</i><br/>aceitam ou recusam em Minha grade (ou pela tela inicial)<br/>Onde: Minha grade"]:::docencia
   E1 --> E2
-  E3["Refeições<br/>Sistema<br/>calcula o impacto e avisa a CAE"]
+  E3["<b>4. Refeições</b><br/><i>Sistema</i><br/>calcula o impacto e avisa a CAE<br/>Onde: Alimentação"]:::sistema
   E2 --> E3
-  E4["Mensagens<br/>Coordenação<br/>envia por e-mail ou WhatsApp e registra"]
+  E4["<b>5. Mensagens</b><br/><i>Coordenação</i><br/>envia por e-mail ou WhatsApp e registra<br/>Onde: Ausências › detalhe › Comunicar"]:::gestao
   E3 --> E4
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
 **Registrar uma ausência** (Coordenação)
 
 1. Em Ausências, clique em "Registrar ausência".
-2. Escolha o docente e a data: aparecem as aulas dele naquele dia.
+2. Escolha o docente e a data: aparecem as aulas dele naquele dia. Para vários dias, preencha também "Até": as aulas aparecem separadas por dia.
 3. Marque as aulas afetadas e informe um motivo operacional, sem dados pessoais ou médicos (ex.: "Participação em evento").
-4. Salve: a página da ausência abre com a situação de cada horário.
+4. Em Comunicar, envie ao docente a "Ciência da sua ausência": ela já orienta a procurar a Gestão de Pessoas com o motivo e o comprovante, fora do sistema.
+5. Salve: a página da ausência abre com a situação de cada horário.
 
 **Decidir a cobertura** (Coordenação)
 
@@ -303,6 +355,8 @@ flowchart LR
 - **Posso registrar uma ausência que já aconteceu?** Sim, até 30 dias para trás, e ausências planejadas até um ano à frente.
 - **O docente avisou que não vai mais faltar.** Na página da ausência, use "Cancelar registro". Os avisos de refeição são desfeitos e a CAE vê que tudo volta ao normal.
 - **Por que não posso escrever o motivo real da falta?** Por privacidade (LGPD): o sistema e as mensagens trazem só um motivo operacional. Atestados e motivos pessoais ficam nos sistemas oficiais.
+- **E o atestado ou o motivo da ausência do docente?** O docente trata direto com a Coordenadoria de Gestão de Pessoas (CGP, cgp.boaviagem@ifce.edu.br): informa o motivo e entrega o comprovante (por exemplo, atestado médico). Isso não passa pelo SGC-Redes nem pela Coordenação do curso; a mensagem de ciência da ausência traz essa orientação.
+- **O que é o selo "Informada pelo docente"?** O próprio docente informou a ausência em Minha grade. Dê ciência a ele pela mensagem pronta e decida a cobertura, como num registro feito pela Coordenação.
 
 ## 5. Alimentação
 
@@ -323,14 +377,21 @@ No sistema: `/alimentacao`.
 
 ```mermaid
 flowchart LR
-  E0["Origem<br/>Sistema/Coordenação<br/>dispensa de turma ou acréscimo manual"]
-  E1["Urgência<br/>Sistema<br/>verde, amarelo ou vermelho pela antecedência"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Origem</b><br/><i>Sistema/Coordenação</i><br/>dispensa de turma ou acréscimo manual<br/>Onde: Ausências ou Alimentação › Acrescentar"]:::sistema
+  E1["<b>2. Urgência</b><br/><i>Sistema</i><br/>verde, amarelo ou vermelho pela antecedência<br/>Onde: Alimentação"]:::sistema
   E0 --> E1
-  E2["Ciência<br/>Assistência Estudantil<br/>confirma no painel"]
+  E2["<b>3. Ciência</b><br/><i>Assistência Estudantil</i><br/>confirma no painel (a tela inicial mostra os pendentes)<br/>Onde: Alimentação"]:::setor
   E1 --> E2
-  E3["Comunicar<br/>Coordenação<br/>CAE, nutricionista, Gestão, turmas"]
+  E3["<b>4. Comunicar</b><br/><i>Coordenação</i><br/>CAE, nutricionista, Gestão, turmas<br/>Onde: Alimentação › Comunicar"]:::gestao
   E2 --> E3
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
@@ -379,14 +440,21 @@ No sistema: `/comunicacao`.
 
 ```mermaid
 flowchart LR
-  E0["Mensagem pronta<br/>Sistema<br/>texto, assunto e destinatário"]
-  E1["Revisar<br/>Você<br/>editar, preencher campos, escolher texto-padrão"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Mensagem pronta</b><br/><i>Sistema</i><br/>texto, assunto e destinatário<br/>Onde: Comunicar (em cada módulo)"]:::sistema
+  E1["<b>2. Revisar</b><br/><i>Você</i><br/>editar, preencher campos, escolher texto-padrão<br/>Onde: Comunicação › Textos-padrão"]:::todos
   E0 --> E1
-  E2["Enviar<br/>Você<br/>e-mail institucional ou WhatsApp"]
+  E2["<b>3. Enviar</b><br/><i>Você</i><br/>e-mail institucional ou WhatsApp<br/>Onde: botões Abrir e-mail / WhatsApp"]:::todos
   E1 --> E2
-  E3["Registrar<br/>Você<br/>'Já enviei: registrar' guarda no histórico"]
+  E3["<b>4. Registrar</b><br/><i>Você</i><br/>'Já enviei: registrar' guarda no histórico<br/>Onde: Comunicação › Histórico"]:::todos
   E2 --> E3
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
@@ -436,6 +504,8 @@ No sistema: `/ppe`.
 - O docente da disciplina define a modalidade: PEI ou Dependência (Arts. 117–118).
 - Preencher o PEI no modelo do campus, com trava de 30% da carga horária (Art. 117 §1º) e prática obrigatória quando a disciplina exige (Art. 121).
 - Cronograma de encontros, com cópia de outro PEI da mesma disciplina (G09).
+- Marcar os encontros realizados: a tela inicial do docente lembra os que já passaram e avisa quando é hora de lançar o resultado (fim do cronograma ou do prazo prorrogado).
+- A Coordenação vê na tela inicial as PPE com resultado à espera do lançamento no sistema acadêmico (Art. 125) e as que aguardam o docente.
 - Acompanhar a situação: em andamento, prorrogado, aprovado, reprovado, lançado no acadêmico. Imprimir o PEI.
 - Visível também à CTP e ao Conselho de Classe (Art. 127).
 - Mensagens prontas de cada momento (Coordenação): pedir ao docente a definição da modalidade; avisar estudante e CTP da modalidade, do PEI pronto (com o cronograma de encontros), da prorrogação do prazo (Art. 124) e do resultado. Ao prorrogar, a Coordenação vai direto às mensagens.
@@ -444,16 +514,27 @@ No sistema: `/ppe`.
 
 ```mermaid
 flowchart LR
-  E0["Registro<br/>Coordenação<br/>estudante e componente pendente"]
-  E1["Modalidade<br/>Professor<br/>PEI ou Dependência"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Registro</b><br/><i>Coordenação</i><br/>estudante e componente pendente<br/>Onde: PPE / PEI › Registrar"]:::gestao
+  E1["<b>2. Modalidade</b><br/><i>Professor</i><br/>PEI ou Dependência (aparece na tela inicial do docente)<br/>Onde: Minhas PPE / PEI"]:::docencia
   E0 --> E1
-  E2["PEI<br/>Professor<br/>objetivos, conteúdos, carga e encontros"]
+  E2["<b>3. PEI</b><br/><i>Professor</i><br/>objetivos, conteúdos, carga e encontros<br/>Onde: PPE › detalhe"]:::docencia
   E1 --> E2
-  E3["Acompanhamento<br/>Coordenação/CTP<br/>situação e prorrogação"]
+  E3["<b>4. Encontros</b><br/><i>Professor</i><br/>marca os realizados; a tela inicial lembra os que já passaram<br/>Onde: PPE › Encontros realizados"]:::docencia
   E2 --> E3
-  E4["Lançamento<br/>Coordenação<br/>marcado como lançado no acadêmico"]
+  E4["<b>5. Resultado</b><br/><i>Professor</i><br/>aprovado ou reprovado ao fim do cronograma (ou prorrogação, Art. 124)<br/>Onde: PPE › Situação"]:::docencia
   E3 --> E4
+  E5["<b>6. Comunicar</b><br/><i>Coordenação</i><br/>estudante e CTP recebem o resultado<br/>Onde: PPE › Comunicar"]:::gestao
+  E4 --> E5
+  E6["<b>7. Lançamento</b><br/><i>Coordenação</i><br/>lança no acadêmico e marca aqui (Art. 125)<br/>Onde: PPE / PEI"]:::gestao
+  E5 --> E6
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
@@ -469,6 +550,13 @@ flowchart LR
 2. Abra o registro e escolha PEI ou Dependência.
 3. No PEI, preencha carga horária (até 30% da disciplina), horas presenciais e práticas, objetivos, conteúdos, critérios e o cronograma.
 4. Salve e use "Imprimir" para gerar o documento para assinatura.
+
+**Acompanhar e encerrar o PEI** (Professor)
+
+1. Depois de cada encontro, abra a PPE e marque-o em "Encontros realizados". A tela inicial lembra os encontros que já passaram sem marca.
+2. Ao fim do cronograma (ou do prazo prorrogado, Art. 124), a tela inicial mostra "PEI prontos para lançar o resultado".
+3. Em "Situação", escolha Aprovado ou Reprovado e informe a nota, se houver.
+4. A Coordenação avisa o estudante e a CTP e, depois de lançar no sistema acadêmico, marca "Lançado no acadêmico" (Art. 125).
 
 **Comunicar a PPE** (Coordenação)
 
@@ -511,14 +599,21 @@ No sistema: `/ppi`.
 
 ```mermaid
 flowchart LR
-  E0["Solicitação<br/>Coordenação<br/>estudante, matrícula e turma"]
-  E1["Atividades<br/>Coordenação<br/>categoria, comprovante, quantidade"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Solicitação</b><br/><i>Coordenação</i><br/>estudante, matrícula e turma<br/>Onde: PPI › Nova"]:::gestao
+  E1["<b>2. Atividades</b><br/><i>Coordenação</i><br/>categoria, comprovante, quantidade<br/>Onde: PPI › detalhe"]:::gestao
   E0 --> E1
-  E2["Tetos<br/>Sistema<br/>horas validadas pelo Manual 2022"]
+  E2["<b>3. Tetos</b><br/><i>Sistema</i><br/>horas validadas pelo Manual 2022<br/>Onde: PPI › detalhe"]:::sistema
   E1 --> E2
-  E3["Decisão e ficha<br/>Coordenação<br/>deferir e imprimir"]
+  E3["<b>4. Decisão e ficha</b><br/><i>Coordenação</i><br/>deferir, avisar e imprimir<br/>Onde: PPI › Comunicar / Ficha"]:::gestao
   E2 --> E3
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
@@ -559,6 +654,28 @@ No sistema: `/diarios`.
 - Registrar a situação do diário e enviar lembrete ao docente por e-mail ou WhatsApp (Coordenação).
 - O professor vê os próprios diários.
 
+### Fluxo: Acompanhar os diários
+
+```mermaid
+flowchart LR
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Datas do semestre</b><br/><i>Coordenação</i><br/>base para as aulas esperadas (a tela inicial avisa se faltar)<br/>Onde: Calendário › Etapas"]:::gestao
+  E1["<b>2. Aulas ministradas</b><br/><i>Coordenação</i><br/>conforme o diário no sistema acadêmico<br/>Onde: Diários"]:::gestao
+  E0 --> E1
+  E2["<b>3. Semáforo</b><br/><i>Sistema</i><br/>em dia, atenção ou atrasado pelo esperado até hoje<br/>Onde: Diários"]:::sistema
+  E1 --> E2
+  E3["<b>4. Lembrete</b><br/><i>Coordenação</i><br/>mensagem pronta ao docente, registrada<br/>Onde: Diários › disciplina"]:::gestao
+  E2 --> E3
+  E4["<b>5. Lançamento</b><br/><i>Professor</i><br/>atualiza o diário no acadêmico; vê os seus em Meus diários<br/>Onde: Meus diários"]:::docencia
+  E3 --> E4
+```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
+
 ### Passo a passo
 
 **Cobrar um diário atrasado** (Coordenação)
@@ -594,14 +711,21 @@ No sistema: `/processos`.
 
 ```mermaid
 flowchart LR
-  E0["Novo<br/>Coordenação"]
-  E1["Com professor<br/>Docente"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Novo</b><br/><i>Coordenação</i><br/>Onde: Processos › Novo"]:::gestao
+  E1["<b>2. Com professor</b><br/><i>Docente</i><br/>Onde: Processos"]:::docencia
   E0 --> E1
-  E2["Aguardando retorno<br/>Interessado/setor"]
+  E2["<b>3. Aguardando retorno</b><br/><i>Interessado/setor</i><br/>a tela inicial avisa prazos em 3 dias e vencidos<br/>Onde: Processos"]:::setor
   E1 --> E2
-  E3["Concluído<br/>Coordenação"]
+  E3["<b>4. Concluído</b><br/><i>Coordenação</i><br/>Onde: Processos"]:::gestao
   E2 --> E3
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
@@ -634,6 +758,24 @@ No sistema: `/relatorios`.
 - Só números agregados, sem nomes de estudantes nem motivos (LGPD).
 - Imprimir/salvar em PDF e exportar em planilha.
 
+### Fluxo: Gerar um relatório
+
+```mermaid
+flowchart LR
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Ano letivo</b><br/><i>Coordenação/CTP/Direção</i><br/>escolhe o ano<br/>Onde: Relatórios"]:::gestao
+  E1["<b>2. Consolidação</b><br/><i>Sistema</i><br/>faltas, substituições, PPE e PPI, sem dados sensíveis<br/>Onde: Relatórios"]:::sistema
+  E0 --> E1
+  E2["<b>3. Saída</b><br/><i>Você</i><br/>PDF para impressão ou planilha (.xlsx/.csv)<br/>Onde: Relatórios › Imprimir"]:::todos
+  E1 --> E2
+```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
+
 ### Passo a passo
 
 **Gerar o relatório do ano** (Coordenação, CTP e Direção)
@@ -664,16 +806,25 @@ No sistema: `/usuarios`.
 
 ```mermaid
 flowchart LR
-  E0["Usuários<br/>Coordenação<br/>professores e setores"]
-  E1["Turmas<br/>Coordenação<br/>confere estudantes e médias"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Usuários</b><br/><i>Coordenação</i><br/>professores, setores e quem também leciona<br/>Onde: Cadastros › Usuários"]:::gestao
+  E1["<b>2. Turmas</b><br/><i>Coordenação</i><br/>confere estudantes e médias<br/>Onde: Cadastros › Turmas"]:::gestao
   E0 --> E1
-  E2["Disciplinas<br/>Coordenação<br/>matriz já vem cadastrada"]
+  E2["<b>3. Disciplinas</b><br/><i>Coordenação</i><br/>matriz já vem cadastrada<br/>Onde: Cadastros › Disciplinas"]:::gestao
   E1 --> E2
-  E3["Ofertas<br/>Coordenação<br/>professor de cada disciplina"]
+  E3["<b>4. Ofertas</b><br/><i>Coordenação</i><br/>professor de cada disciplina (a tela inicial conta as que faltam)<br/>Onde: Cadastros › Ofertas"]:::gestao
   E2 --> E3
-  E4["Grade<br/>Coordenação<br/>horários do semestre"]
+  E4["<b>5. Grade</b><br/><i>Coordenação</i><br/>horários do semestre<br/>Onde: Operação › Grade"]:::gestao
   E3 --> E4
+  E5["<b>6. Calendário</b><br/><i>Coordenação</i><br/>etapas, semestres, eventos e sábados<br/>Onde: Calendário › Etapas"]:::gestao
+  E4 --> E5
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
@@ -718,14 +869,21 @@ Importar e exportar dados em planilha e gerar PDF do calendário, das grades e d
 
 ```mermaid
 flowchart LR
-  E0["Modelo<br/>Você<br/>baixe o .xlsx ou .csv"]
-  E1["Preencher<br/>Você<br/>Excel ou LibreOffice"]
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Modelo</b><br/><i>Você</i><br/>baixe o .xlsx ou .csv<br/>Onde: Importar planilha (em cada cadastro)"]:::todos
+  E1["<b>2. Preencher</b><br/><i>Você</i><br/>Excel ou LibreOffice"]:::todos
   E0 --> E1
-  E2["Prévia<br/>Sistema<br/>criar, alterar, igual ou erro por linha"]
+  E2["<b>3. Prévia</b><br/><i>Sistema</i><br/>criar, alterar, igual ou erro por linha<br/>Onde: Importar planilha"]:::sistema
   E1 --> E2
-  E3["Confirmar<br/>Você<br/>grava tudo ou nada"]
+  E3["<b>4. Confirmar</b><br/><i>Você</i><br/>grava tudo ou nada<br/>Onde: Importar planilha"]:::todos
   E2 --> E3
 ```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 
@@ -766,6 +924,26 @@ Como o sistema protege os dados (LGPD) e o que fica registrado na auditoria.
 - Mensagens e registros usam motivos operacionais, sem dados médicos ou pessoais.
 - Senhas guardadas com criptografia forte; sessões expiram após 8 horas sem uso.
 - Auditoria (Coordenação): quem fez o quê e quando — logins, cadastros, alterações, envios e exportações —, sem guardar nomes ou senhas no registro.
+
+### Fluxo: Proteção dos dados em cada ação
+
+```mermaid
+flowchart LR
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
+  classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
+  E0["<b>1. Acesso</b><br/><i>Sistema</i><br/>cada tela e ação confere o perfil (e a docência) da conta"]:::sistema
+  E1["<b>2. Ação</b><br/><i>Você</i><br/>registra, decide ou envia"]:::todos
+  E0 --> E1
+  E2["<b>3. Auditoria</b><br/><i>Sistema</i><br/>guarda quem fez o quê e quando, sem copiar dados pessoais<br/>Onde: Cadastros › Auditoria"]:::sistema
+  E1 --> E2
+  E3["<b>4. Mensagens</b><br/><i>Sistema</i><br/>textos sem nome de estudante quando não precisam dele"]:::sistema
+  E2 --> E3
+```
+
+*Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
 

@@ -32,9 +32,9 @@ const dataLocal = (d: Date) => hojeEmFortaleza(d);
 
 export default async function PaginaAlimentacao({ searchParams }: { searchParams: Promise<{ data?: string; aviso?: string }> }) {
   const { usuario } = await exigirPermissao('alimentacao:ver');
-  const podeConfirmar = temPermissao(usuario.role, 'alimentacao:confirmar');
-  const podeAjustar = temPermissao(usuario.role, 'alimentacao:gerenciar');
-  const podeComunicar = temPermissao(usuario.role, 'comunicacao:enviar');
+  const podeConfirmar = temPermissao(usuario, 'alimentacao:confirmar');
+  const podeAjustar = temPermissao(usuario, 'alimentacao:gerenciar');
+  const podeComunicar = temPermissao(usuario, 'comunicacao:enviar');
   const hoje = hojeEmFortaleza();
   const { data: dataUrl, aviso } = await searchParams;
   const data = validarDataOuNull(dataUrl) ?? hoje;

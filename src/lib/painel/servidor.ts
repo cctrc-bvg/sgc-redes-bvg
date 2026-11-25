@@ -1,12 +1,13 @@
 import 'server-only';
-import type { Role } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { temPermissao, type Permissao } from '@/lib/auth/rbac';
+import { ehDocente, temPermissao, type Permissao, type Titular } from '@/lib/auth/rbac';
 import { NOME_STATUS, dataDoBanco, dataParaBanco, hojeEmFortaleza, somarDias } from '@/lib/ausencias/regras';
 import { mudancasDoProfessor } from '@/lib/ausencias/servidor';
 import { NOME_TIPO_EVENTO } from '@/lib/calendario/regras';
 import { blocosOrdenados, celulasDoProfessor } from '@/lib/grade/consultas';
 import { anoLetivoAtual } from '@/lib/ofertas/regras';
+import { semestreLetivoAtual } from '@/lib/grade/regras';
+import { andamentoDoPei } from '@/lib/ppe/andamento';
 import { anoDoSemestre, semestreAtual } from '@/lib/ppe/regras';
 import { disciplinasDoDocente } from '@/lib/ppe/servidor';
 import { CONTAGENS_ZERADAS, montarAcoes, type AcaoPrioritaria, type ContagensPainel } from './acoes';
@@ -16,8 +17,8 @@ import { chavePeriodo, inicioDaSemana, montarSemana, tituloDoEvento, type Celula
  * Conta o que pede atenção do usuário. Cada consulta só roda se o perfil tiver a permissão correspondente,
  * e só devolve números (sem nomes de estudantes ou docentes).
  */
-export async function contagensDoPainel(usuario: { id: string; role: Role }, agora: Date = new Date()): Promise<ContagensPainel> {
-  const pode = (p: Permissao) => temPermissao(usuario.role, p);
+export async function contagensDoPainel(usuario: { id: string } & Exclude<Titular, string>, agora: Date = new Date()): Promise<ContagensPainel> {
+  const pode = (p: Permissao) => temPermissao(usuario, p);
   const hojeISO = hojeEmFortaleza(agora);
   const hoje = dataParaBanco(hojeISO);
   const amanha = dataParaBanco(somarDias(hojeISO, 1));
@@ -25,9 +26,10 @@ export async function contagensDoPainel(usuario: { id: string; role: Role }, ago
   const contar = (condicao: boolean, consulta: () => Promise<number>) => (condicao ? consulta() : Promise.resolve(0));
   const refeicaoAberta = { canceladoEm: null, confirmadoAE: false, dataRefeicao: { gte: agora } } as const;
 
-  // PPE do docente: só as das disciplinas que ele leciona no ano do semestre atual (como na lista de PPE).
+  // Docência (Professor ou cargo que também leciona): só o que é dele, como nas telas "Minhas".
+  const docente = ehDocente(usuario);
   const semestre = semestreAtual(agora);
-  const minhasDisciplinas = pode('ppe:definir') && !pode('ppe:gerenciar') ? [...(await disciplinasDoDocente(usuario.id, anoDoSemestre(semestre)))] : [];
+  const minhasDisciplinas = docente ? [...(await disciplinasDoDocente(usuario.id, anoDoSemestre(semestre)))] : [];
   const ppeDoDocente = { semestre, disciplinaId: { in: minhasDisciplinas }, status: { not: 'LANCADO_ACADEMICO' as const } };
 
   const [
@@ -35,6 +37,7 @@ export async function contagensDoPainel(usuario: { id: string; role: Role }, ago
     avisosRefeicao,
     ausenciasPendentes,
     ausenciasHojeOuAmanha,
+    ausenciasInformadas,
     convitesPendentes,
     ppiEmAnalise,
     ppeRetencao,
@@ -44,12 +47,20 @@ export async function contagensDoPainel(usuario: { id: string; role: Role }, ago
     meusDiariosAtrasados,
     processosVencidos,
     etapas,
+    processosAVencer,
+    semestreComDatas,
+    disciplinasSemProfessor,
+    turmasSemGrade,
+    ppeParaLancar,
+    ppeAguardandoDocente,
+    andamentoPeis,
   ] = await Promise.all([
     contar(pode('alimentacao:ver'), () => prisma.alertaAlimentacao.count({ where: { ...refeicaoAberta, nivelSla: 'VERMELHO_MENOS_4H' } })),
     contar(pode('alimentacao:ver'), () => prisma.alertaAlimentacao.count({ where: { ...refeicaoAberta, nivelSla: { not: 'VERMELHO_MENOS_4H' } } })),
     contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { status: 'PENDENTE_DECISAO', dataAula: { gte: hoje } } })),
     contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { status: 'PENDENTE_DECISAO', dataAula: { gte: hoje, lte: amanha } } })),
-    contar(pode('substituicao:responder'), () =>
+    contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { status: 'PENDENTE_DECISAO', dataAula: { gte: hoje }, informadaPeloDocente: true } })),
+    contar(docente, () =>
       prisma.conviteSubstituicao.count({ where: { professorId: usuario.id, status: 'PENDENTE', ausencia: { dataAula: { gte: hoje } } } }),
     ),
     contar(pode('ppi:gerenciar'), () => prisma.ppiSolicitacao.count({ where: { status: 'EM_ANALISE' } })),
@@ -59,13 +70,44 @@ export async function contagensDoPainel(usuario: { id: string; role: Role }, ago
     contar(minhasDisciplinas.length > 0, () => prisma.registroPPE.count({ where: { ...ppeDoDocente, modalidade: 'A_DEFINIR' } })),
     contar(minhasDisciplinas.length > 0, () => prisma.registroPPE.count({ where: { ...ppeDoDocente, modalidade: 'PEI', pei: null } })),
     contar(pode('diarios:ver-todos'), () => prisma.disciplinaOferta.count({ where: { anoLetivo: ano, diarioEmDia: false } })),
-    contar(pode('diarios:ver-proprios') && !pode('diarios:ver-todos'), () =>
+    contar(docente, () =>
       prisma.disciplinaOferta.count({ where: { anoLetivo: ano, professorId: usuario.id, diarioEmDia: false } }),
     ),
     contar(pode('kanban:ver'), () =>
       prisma.processoKanban.count({ where: { coluna: { not: 'CONCLUIDO' }, prazo: { lt: hoje }, ...(pode('kanban:ver-sigiloso') ? {} : { sigiloso: false }) } }),
     ),
     contar(pode('calendario:gerenciar'), () => prisma.etapaLetiva.count({ where: { anoLetivo: ano } })),
+    contar(pode('kanban:ver'), () =>
+      prisma.processoKanban.count({
+        where: { coluna: { not: 'CONCLUIDO' }, prazo: { gte: hoje, lte: dataParaBanco(somarDias(hojeISO, 3)) }, ...(pode('kanban:ver-sigiloso') ? {} : { sigiloso: false }) },
+      }),
+    ),
+    contar(pode('calendario:gerenciar'), () => prisma.periodoLetivo.count({ where: { anoLetivo: ano, semestreLetivo: semestreLetivoAtual(agora) } })),
+    contar(pode('ofertas:gerenciar'), () => disciplinasSemProfessorNoAno(ano)),
+    contar(pode('grade:editar'), () =>
+      prisma.turma.count({
+        where: { ativa: true, anoCurso: { not: null }, gradeHoraria: { none: { anoLetivo: ano, semestreLetivo: semestreLetivoAtual(agora) } } },
+      }),
+    ),
+    contar(pode('ppe:gerenciar'), () => prisma.registroPPE.count({ where: { status: { in: ['APROVADO', 'REPROVADO'] } } })),
+    contar(pode('ppe:gerenciar'), () => prisma.registroPPE.count({ where: { status: 'AGUARDANDO_PROFESSOR' } })),
+    // PEI do docente em andamento: encontros a confirmar e PEI prontos para o resultado.
+    minhasDisciplinas.length > 0
+      ? prisma.planoEstudoIndividual
+          .findMany({
+            where: { ppe: { disciplinaId: { in: minhasDisciplinas }, modalidade: 'PEI', status: { in: ['EM_ANDAMENTO', 'PRORROGADO'] } } },
+            select: { prorrogadoAte: true, encontros: { select: { data: true, conteudo: true, realizado: true } } },
+          })
+          .then((peis) =>
+            peis.map((p) =>
+              andamentoDoPei(
+                p.encontros.map((e) => ({ data: dataDoBanco(e.data), conteudo: e.conteudo, realizado: e.realizado })),
+                p.prorrogadoAte ? dataDoBanco(p.prorrogadoAte) : null,
+                hojeISO,
+              ),
+            ),
+          )
+      : Promise.resolve([]),
   ]);
 
   return {
@@ -74,6 +116,7 @@ export async function contagensDoPainel(usuario: { id: string; role: Role }, ago
     avisosRefeicao,
     ausenciasPendentes,
     ausenciasHojeOuAmanha,
+    ausenciasInformadas,
     convitesPendentes,
     ppiEmAnalise,
     ppeRetencao,
@@ -82,14 +125,34 @@ export async function contagensDoPainel(usuario: { id: string; role: Role }, ago
     diariosAtrasados,
     meusDiariosAtrasados,
     processosVencidos,
+    processosAVencer,
     etapasFaltando: pode('calendario:gerenciar') && etapas === 0,
+    // Com as etapas faltando, o mesmo cadastro já é pedido: não repete o aviso.
+    semestreSemDatas: pode('calendario:gerenciar') && etapas > 0 && semestreComDatas === 0,
+    disciplinasSemProfessor,
+    turmasSemGrade,
+    ppeParaLancar,
+    ppeAguardandoDocente,
+    encontrosPeiAConfirmar: andamentoPeis.reduce((n, a) => n + a.encontrosAConfirmar, 0),
+    peiParaConcluir: andamentoPeis.filter((a) => a.prontoParaConcluir).length,
   };
 }
 
+/** Disciplinas ativas da matriz sem oferta (professor) nas turmas ativas, no ano letivo (como em Ofertas). */
+async function disciplinasSemProfessorNoAno(ano: number): Promise<number> {
+  const [turmas, disciplinas, ofertas] = await Promise.all([
+    prisma.turma.findMany({ where: { ativa: true, anoCurso: { not: null } }, select: { id: true, anoCurso: true } }),
+    prisma.disciplina.findMany({ where: { ativa: true, anoCurso: { not: null } }, select: { id: true, anoCurso: true } }),
+    prisma.disciplinaOferta.findMany({ where: { anoLetivo: ano }, select: { turmaId: true, disciplinaId: true } }),
+  ]);
+  const ofertadas = new Set(ofertas.map((o) => `${o.turmaId}|${o.disciplinaId}`));
+  return turmas.reduce((n, t) => n + disciplinas.filter((d) => d.anoCurso === t.anoCurso && !ofertadas.has(`${t.id}|${d.id}`)).length, 0);
+}
+
 /** Ações prioritárias do usuário, da mais urgente para a menos. */
-export async function acoesDoPainel(usuario: { id: string; role: Role }): Promise<AcaoPrioritaria[]> {
+export async function acoesDoPainel(usuario: { id: string } & Exclude<Titular, string>): Promise<AcaoPrioritaria[]> {
   const c = await contagensDoPainel(usuario);
-  return montarAcoes(c, { daCienciaRefeicao: temPermissao(usuario.role, 'alimentacao:confirmar') && !temPermissao(usuario.role, 'alimentacao:gerenciar') });
+  return montarAcoes(c, { daCienciaRefeicao: temPermissao(usuario, 'alimentacao:confirmar') && !temPermissao(usuario, 'alimentacao:gerenciar') });
 }
 
 /** Semana do docente para a agenda do painel (aulas, sem-aula, eventos, mudanças e ausências dele). */

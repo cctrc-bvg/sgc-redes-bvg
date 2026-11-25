@@ -59,6 +59,7 @@ export const VARIAVEIS = {
   situacao: 'situação da ausência',
   reposicao: 'situação da reposição',
   link: 'endereço do SGC-Redes (Minha grade)',
+  'gestao de pessoas': 'orientação ao docente ausente: motivo e comprovante direto com a Gestão de Pessoas',
 } as const;
 
 export interface ModeloTexto {
@@ -230,6 +231,8 @@ export const MODELOS_TEXTO: readonly ModeloTexto[] = [
     '{{horarios}}',
     '',
     '{{reposicao}}',
+    '',
+    '{{gestao de pessoas}}',
     '',
     'Coordenação do Curso Técnico em Redes de Computadores',
   ]),

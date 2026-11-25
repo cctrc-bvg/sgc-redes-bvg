@@ -146,7 +146,7 @@ export async function decidirSolicitacao(_estado: EstadoSimples | undefined, for
   revalidatePath(`/ppi/${s.id}`);
   revalidatePath('/ppi');
   // Decidida: leva às mensagens prontas para o estudante e a CTP.
-  if ((status === 'DEFERIDA' || status === 'INDEFERIDA') && temPermissao(usuario.role, 'comunicacao:enviar')) redirect(`/ppi/${s.id}/comunicar?aviso=decidida`);
+  if ((status === 'DEFERIDA' || status === 'INDEFERIDA') && temPermissao(usuario, 'comunicacao:enviar')) redirect(`/ppi/${s.id}/comunicar?aviso=decidida`);
   return { sucesso: true, mensagem: 'Situação atualizada.' };
 }
 
