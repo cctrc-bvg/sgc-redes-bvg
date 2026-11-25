@@ -102,11 +102,11 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
      acessibilidade, mas ainda não executado) e testar `situacoesAutomaticas` com banco;
    - **manual e capturas** (`npm run manual` já regenerado; faltam as capturas das telas novas), incluindo as telas novas.
    **Reposição confirmada (G29, 25/11/2026):** feita em `/reposicoes` (informar, anexar formulário opcional, ciência,
-   registro direto, download restrito); falta rodar o E2E (`e2e/reposicoes.spec.ts`) e testar o anexo no banco real.
+   registro direto, download restrito); E2E rodado em 25/11/2026 (`reposicoes.spec.ts`); falta testar o anexo (PDF, JPG, PNG) com arquivo real.
    Atenção: `bodySizeLimit` das Server Actions subiu para 7 MB e o proxy precisa de `client_max_body_size 7m`.
    **Períodos especiais (G30, 25/11/2026):** `/periodos` (jogos internos, encontro dos servidores, eventos externos): grade
    especial por turma, presentes por dia, resumo de refeições. Falta: usar a grade especial em **Minha grade**, na agenda da
-   tela inicial e nas aulas presumidas dos diários; rodar o E2E (`e2e/periodos.spec.ts`).
+   tela inicial e nas aulas presumidas dos diários. E2E de `periodos.spec.ts` passou em 25/11/2026.
    Limites conhecidos: a aula de hoje não conta como dada; a reposição pendente do resumo lista a dispensa recente sem reposição informada (G29: o docente informa em `/reposicoes`, a Coordenação dá ciência); o aviso de etapa vai a todos os docentes com oferta.
 2. **Implantação em produção** (depende da TI e do endereço): seguir `docs/IMPLANTACAO.md`.
    - Fazer o **primeiro uso acompanhado** de `./scripts/atualizar.sh` e `./scripts/ensaiar-migracao.sh`, que nunca
