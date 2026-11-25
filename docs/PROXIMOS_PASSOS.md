@@ -104,7 +104,8 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 
 - Integração com o SUAP (decidido: depois).
 - Envio automático pela Evolution API: o código existe, desligado (decidido: semiautomático).
-- Fase 3 (FSD): laboratórios, estoque/DAP, atas e eventos.
+- **Fase 3 (FSD) — congelada (decisão de 25/11/2026):** laboratórios, estoque/DAP, atas e eventos ficam para
+  implementação posterior; não iniciar sem nova decisão.
 - Menus `<details>` do cabeçalho: já fecham com JS (`FecharMenus`); sem JS continuam abertos ao navegar.
 
 ### Concluídos em 24/11/2026
