@@ -1,7 +1,7 @@
 # Próximos Passos — Retomada do Desenvolvimento
 
-> Atualizado em **25/11/2026**, com os PR #1, #2 e #3 mesclados; trabalho novo no branch `rod-prazos` (PR #4 aberto). Leia este arquivo inteiro antes de continuar: estado do
-> projeto, o que depende do usuário, o backlog, as decisões e as armadilhas já encontradas.
+> Atualizado em **25/11/2026**, com os PR #1, #2 e #3 mesclados; trabalho novo no branch `rod-prazos` (PR #4 aberto). Leia este arquivo inteiro antes de continuar: estado do projeto, o que depende do usuário, o backlog, as decisões e as armadilhas já encontradas.
+> **Roadmap até o semestre 2027.1 (início em 11/01/2027): [ROADMAP_2027_1.md](ROADMAP_2027_1.md).**
 
 ---
 
