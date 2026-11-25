@@ -112,6 +112,23 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
   implementação posterior; não iniciar sem nova decisão.
 - Menus `<details>` do cabeçalho: já fecham com JS (`FecharMenus`); sem JS continuam abertos ao navegar.
 
+### Concluídos em 25/11/2026 (branch `e2e-ampliado`)
+
+- **Tela inicial nova** (pedido do usuário): "Precisa da sua atenção" primeiro (ações por perfil, de urgente a
+  acompanhar, só com quantidades — `src/lib/painel/acoes.ts`), "Todas as funções" num `<details>` de um clique (aberto
+  quando não há pendências), agenda ao lado (semana do docente; mês + próximos 30 dias para os demais), ícones Lucide
+  por função (`src/lib/navegacao.ts`, fonte única com o cabeçalho) e botão **Início** no cabeçalho.
+- Aviso de prazo prorrogado da PPE; PEI impresso no modelo do campus; textos de PPI/PPE validados.
+
+### Decisões pendentes do usuário (com sugestão)
+
+- **Agenda da Coordenação:** hoje mostra o mês. Sugestão: manter o mês e, numa próxima etapa, acrescentar "Hoje" (aulas
+  com ausência e coberturas do dia).
+- **Agenda da Assistência Estudantil:** hoje mostra o mês. Sugestão: trocar pela previsão de refeições de hoje e amanhã.
+- **"Minha grade" para a Coordenação:** aparece porque o perfil tem todas as permissões. Sugestão: manter (coordenador
+  também leciona).
+- **Logo oficial:** trocar `public/marca/ifce-vertical.png` pelo SVG da Comunicação do IFCE.
+
 ### Concluídos em 24/11/2026
 
 Calendário acadêmico e importação por planilha; grade por planilha; relatórios em PDF e planilha; exportação de todas

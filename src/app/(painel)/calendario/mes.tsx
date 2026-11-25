@@ -30,7 +30,7 @@ function classeDoDia(d: string, info: InfoDia | undefined) {
 }
 
 /** Mês compacto (visão anual): um quadrado por dia, cor pelo primeiro evento. */
-export function MesCompacto({ ano, mes, dias, letivos }: { ano: number; mes: number; dias: ReadonlyMap<string, InfoDia>; letivos: number }) {
+export function MesCompacto({ ano, mes, dias, letivos, hoje }: { ano: number; mes: number; dias: ReadonlyMap<string, InfoDia>; letivos: number; hoje?: string }) {
   return (
     <section aria-label={`${MESES[mes - 1]} de ${ano}`} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
       <h3 className="flex items-baseline justify-between">
@@ -57,9 +57,16 @@ export function MesCompacto({ ano, mes, dias, letivos }: { ano: number; mes: num
               {semana.map((d, j) => (
                 <td key={j} className="p-0.5">
                   {d && (
-                    <span title={descricao(d, dias.get(d))} className={`block rounded py-0.5 ${classeDoDia(d, dias.get(d))}`}>
+                    <span
+                      title={descricao(d, dias.get(d))}
+                      aria-current={d === hoje ? 'date' : undefined}
+                      className={`block rounded py-0.5 ${classeDoDia(d, dias.get(d))} ${d === hoje ? 'font-bold ring-2 ring-if-verde-700 ring-offset-1' : ''}`}
+                    >
                       <span aria-hidden="true">{Number(d.slice(8))}</span>
-                      <span className="sr-only">{descricao(d, dias.get(d))}</span>
+                      <span className="sr-only">
+                        {d === hoje ? 'Hoje, ' : ''}
+                        {descricao(d, dias.get(d))}
+                      </span>
                     </span>
                   )}
                 </td>

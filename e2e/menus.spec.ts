@@ -6,13 +6,13 @@ test.describe('Menus do cabeçalho', () => {
   test.beforeEach(async ({ page }) => entrar(page, 'coordenacao'));
 
   const menu = (page: import('@playwright/test').Page, titulo: string) =>
-    page.getByRole('navigation', { name: 'Conta' }).locator('details', { has: page.locator('summary', { hasText: titulo }) });
+    page.getByRole('navigation', { name: 'Menu principal' }).locator('details', { has: page.locator('summary', { hasText: titulo }) });
 
   test('escolher um item navega e fecha o menu', async ({ page }) => {
     const operacao = menu(page, 'Operação');
     await operacao.locator('summary').click();
     await expect(operacao).toHaveAttribute('open', '');
-    await operacao.getByRole('link', { name: 'Grade' }).click();
+    await operacao.getByRole('link', { name: 'Grade', exact: true }).click();
     await expect(page).toHaveURL(/\/grade$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Grade horária' })).toBeVisible();
     await expect(operacao).not.toHaveAttribute('open');
@@ -41,8 +41,9 @@ test.describe('Menus do cabeçalho', () => {
 test.describe('Acesso por perfil', () => {
   test('professor não vê Usuários e é barrado ao abrir o endereço', async ({ page }) => {
     await entrar(page, 'professor');
-    const nav = page.getByRole('navigation', { name: 'Conta' });
-    await expect(nav.getByRole('link', { name: 'Grade' })).toBeVisible();
+    const nav = page.getByRole('navigation', { name: 'Menu principal' });
+    await nav.locator('summary', { hasText: 'Operação' }).click();
+    await expect(nav.getByRole('link', { name: 'Grade', exact: true })).toBeVisible();
     await expect(nav.getByRole('link', { name: 'Usuários' })).toHaveCount(0);
     await page.goto('/usuarios');
     await expect(page).toHaveURL(/\/painel\?aviso=sem-permissao/);

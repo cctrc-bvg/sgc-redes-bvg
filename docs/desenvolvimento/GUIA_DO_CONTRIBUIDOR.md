@@ -160,7 +160,10 @@ sequenceDiagram
 ## 7. Receita: criar um módulo novo
 
 1. **Especifique** na issue: perfis que usam, regras (com artigo do regimento/ROD) e decisões em aberto.
-2. **Permissões** em `rbac.ts` (+ teste em `auth.test.ts`) e o módulo em `MODULOS` / link em `layout.tsx`.
+2. **Permissões** em `rbac.ts` (+ teste em `auth.test.ts`), o módulo em `MODULOS` e a função em `src/lib/navegacao.ts`
+   (rótulo, descrição de uma linha, ícone, grupo): é a fonte única do menu do cabeçalho e de "Todas as funções" no painel.
+   Se o módulo gera pendência para alguém, conte-a em `src/lib/painel/servidor.ts` e descreva a ação (nível, texto,
+   botão) em `src/lib/painel/acoes.ts`, com teste.
 3. **Schema e migração** (seção 8), se houver dados novos.
 4. **Regras puras** em `src/lib/<modulo>/regras.ts` com `regras.test.ts`.
 5. **Consultas** em `src/lib/<modulo>/servidor.ts` (`'server-only'`).

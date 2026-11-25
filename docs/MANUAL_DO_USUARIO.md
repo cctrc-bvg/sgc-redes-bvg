@@ -27,7 +27,7 @@ processos e relatórios. Ele complementa os sistemas oficiais (SUAP/Q-Acadêmico
 
 ## 1. Primeiros passos
 
-Acesso, troca de senha, painel inicial, menus e preferências de contato.
+Acesso, troca de senha, tela inicial, menus e preferências de contato.
 
 No sistema: `/painel` · disponível para todos os perfis.
 
@@ -35,7 +35,10 @@ No sistema: `/painel` · disponível para todos os perfis.
 
 - Entrar com o e-mail institucional e a senha recebida da Coordenação.
 - Trocar a senha provisória no primeiro acesso (obrigatório).
-- Ver no painel só os módulos permitidos ao seu perfil, com as pendências de cada um.
+- Na tela inicial, ver primeiro o que precisa da sua atenção agora (do mais urgente ao menos), com um botão para resolver cada item.
+- Abrir "Todas as funções" com um clique: cada função tem um ícone, o mesmo do menu do cabeçalho. Sem pendências, o menu já vem aberto.
+- Acompanhar a agenda: o professor vê a própria semana (aulas, feriados, substituições); os demais perfis, o mês do calendário acadêmico e os próximos eventos.
+- Voltar à tela inicial de qualquer página pelo botão "Início" do cabeçalho.
 - Informar seu WhatsApp e dizer se aceita recebê-lo pelo sistema (Meu contato).
 - Sair do sistema em qualquer página (botão Sair). A sessão expira após 8 horas sem uso.
 
@@ -48,7 +51,7 @@ flowchart LR
   E0 --> E1
   E2["Nova senha<br/>Você<br/>10+ caracteres, com letras e números"]
   E1 --> E2
-  E3["Painel<br/>Sistema<br/>mostra os módulos do seu perfil"]
+  E3["Tela inicial<br/>Sistema<br/>o que pede atenção, as funções do seu perfil e a agenda"]
   E2 --> E3
 ```
 
@@ -58,11 +61,11 @@ flowchart LR
 
 1. Abra o endereço do sistema e informe seu e-mail institucional e a senha provisória.
 2. O sistema pede uma nova senha: use pelo menos 10 caracteres, com letras e números, diferente da provisória.
-3. Pronto: o painel abre com os módulos do seu perfil.
+3. Pronto: a tela inicial mostra o que precisa da sua atenção, as funções do seu perfil e a sua agenda.
 
 **Ajustar preferências de contato** (Todos)
 
-1. No cabeçalho, clique em "Meu contato".
+1. No cabeçalho, clique no seu nome e escolha "Meu contato".
 2. Informe o WhatsApp (a máscara preenche o formato) e marque se aceita que o sistema use esse número.
 3. Sem WhatsApp, todas as mensagens continuam disponíveis para envio pelo e-mail institucional.
 
@@ -77,18 +80,19 @@ flowchart LR
 
 *Tela de entrada: e-mail institucional e senha.*
 
-![Painel da Coordenação com cartões dos módulos (calendário, grade, alimentação, comunicação, PPE, PPI, diários, processos, relatórios) e pendências.](../public/manual/primeiros-passos-painel.jpg)
+![Tela inicial da Coordenação: cartões "Precisa da sua atenção" com quantidade e botão para resolver, o menu "Todas as funções" fechado e, ao lado, o calendário do mês com o dia de hoje marcado e os próximos eventos.](../public/manual/primeiros-passos-painel.jpg)
 
-*Painel inicial: um cartão por módulo, com as pendências do dia.*
+*Tela inicial: primeiro o que precisa de atenção; as demais funções num menu de um clique; ao lado, o mês.*
 
-![Painel de um professor, com menos módulos: calendário, grade, PPE e diários.](../public/manual/primeiros-passos-painel-professor.jpg)
+![Tela inicial de um professor, com a agenda "Minha semana": aulas de cada dia, feriados e substituições.](../public/manual/primeiros-passos-painel-professor.jpg)
 
-*Cada perfil vê só os seus módulos (aqui, o de um professor).*
+*O professor vê a própria semana; cada perfil vê só as suas funções.*
 
 ### Dúvidas frequentes
 
 - **Errei a senha várias vezes e fui bloqueado. E agora?** Depois de 5 tentativas erradas, o login daquele e-mail fica bloqueado por 15 minutos. Espere ou peça uma nova senha à Coordenação.
 - **Um menu que eu esperava não aparece.** Os menus dependem do perfil (veja "Quem vê o quê" no início da Ajuda). Se precisar de outro acesso, fale com a Coordenação.
+- **Onde ficaram as outras funções na tela inicial?** Em "Todas as funções", logo abaixo das pendências: clique para abrir. Elas também estão nos menus do cabeçalho.
 - **Preciso usar meu WhatsApp pessoal?** Não. Todas as comunicações funcionam pelo e-mail institucional; o WhatsApp é opcional.
 
 ## 2. Calendário acadêmico
