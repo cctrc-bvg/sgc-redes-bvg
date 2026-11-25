@@ -18,7 +18,7 @@ export default async function PaginaPeriodos() {
     <>
       <h1 className="text-2xl font-bold text-slate-900">Períodos especiais</h1>
       <p className="mt-1 max-w-3xl text-slate-700">
-        Jogos internos, encontro dos servidores, Universo e FCE, semanas de cursos, encontros de extensão e de pesquisa e outros eventos mudam a rotina por alguns dias: parte da turma sai, alguns docentes se ausentam. Aqui a
+        Jogos internos, encontro dos servidores, Universo IFCE, semanas de cursos, encontros de extensão e de pesquisa e outros eventos mudam a rotina por alguns dias: parte da turma sai, alguns docentes se ausentam. Aqui a
         Coordenação cria o período, monta a <strong>grade temporária</strong> de cada turma, informa quantos estudantes ficam no campus e gera o
         <strong> resumo de refeições</strong> para a Assistência Estudantil e a nutricionista.
       </p>

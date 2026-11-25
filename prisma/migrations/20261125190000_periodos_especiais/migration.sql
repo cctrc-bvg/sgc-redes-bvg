@@ -1,6 +1,6 @@
 -- Períodos especiais (jogos internos, encontro dos servidores, eventos externos): grade temporária por turma e
 -- quantidade de estudantes presentes por dia, para replanejar aulas e alimentação. Só tabelas novas.
-CREATE TYPE "TipoPeriodoEspecial" AS ENUM ('JOGOS_INTERNOS', 'ENCONTRO_SERVIDORES', 'UNIVERSO_FCE', 'SEMANA_DO_CURSO', 'SEMANA_OUTROS_CURSOS', 'ENCONTRO_EXTENSAO', 'ENCONTRO_PESQUISA', 'EVENTO_EXTERNO', 'OUTRO');
+CREATE TYPE "TipoPeriodoEspecial" AS ENUM ('JOGOS_INTERNOS', 'ENCONTRO_SERVIDORES', 'UNIVERSO_IFCE', 'SEMANA_DO_CURSO', 'SEMANA_OUTROS_CURSOS', 'ENCONTRO_EXTENSAO', 'ENCONTRO_PESQUISA', 'EVENTO_EXTERNO', 'OUTRO');
 
 CREATE TABLE "PeriodoEspecial" (
   "id" TEXT NOT NULL,

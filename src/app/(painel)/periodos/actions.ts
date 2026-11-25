@@ -35,6 +35,28 @@ export async function criarPeriodo(_e: EstadoPeriodo | undefined, formData: Form
   redirect(`/periodos/${criado.id}`);
 }
 
+/** Edita nome, tipo, datas e observação; presenças fora das novas datas são descartadas (a grade especial é mantida). */
+export async function editarPeriodo(_e: EstadoPeriodo | undefined, formData: FormData): Promise<EstadoPeriodo> {
+  const { usuario } = await exigirPermissao('calendario:gerenciar');
+  const id = String(formData.get('periodoId') ?? '');
+  const valores = lerPeriodo(formData);
+  const r = PeriodoSchema.safeParse(valores);
+  if (!r.success) return { erros: z.flattenError(r.error).fieldErrors, valores };
+  const atual = await prisma.periodoEspecial.findUnique({ where: { id }, select: { id: true } });
+  if (!atual) return { mensagem: 'Período não encontrado.' };
+  await prisma.$transaction([
+    prisma.periodoEspecial.update({
+      where: { id },
+      data: { nome: r.data.nome, tipo: r.data.tipo, inicio: dataParaBanco(r.data.inicio), fim: dataParaBanco(r.data.fim), observacao: r.data.observacao ?? null },
+    }),
+    prisma.presencaEspecial.deleteMany({ where: { periodoId: id, OR: [{ data: { lt: dataParaBanco(r.data.inicio) } }, { data: { gt: dataParaBanco(r.data.fim) } }] } }),
+  ]);
+  await registrarAuditoria({ userId: usuario.id, acao: 'EDITOU_PERIODO_ESPECIAL', entidade: 'PeriodoEspecial', entidadeId: id, detalhes: { tipo: r.data.tipo, inicio: r.data.inicio, fim: r.data.fim } });
+  revalidatePath('/periodos');
+  revalidatePath(`/periodos/${id}`);
+  return { sucesso: true, mensagem: 'Período atualizado.', valores };
+}
+
 export async function excluirPeriodo(formData: FormData): Promise<void> {
   const { usuario } = await exigirPermissao('calendario:gerenciar');
   const id = String(formData.get('periodoId') ?? '');

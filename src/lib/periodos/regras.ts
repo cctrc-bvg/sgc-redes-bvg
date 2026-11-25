@@ -11,7 +11,7 @@ import { datasEntre, diasNoIntervalo } from '@/lib/calendario/regras';
 export const TIPOS_PERIODO = [
   'JOGOS_INTERNOS',
   'ENCONTRO_SERVIDORES',
-  'UNIVERSO_FCE',
+  'UNIVERSO_IFCE',
   'SEMANA_DO_CURSO',
   'SEMANA_OUTROS_CURSOS',
   'ENCONTRO_EXTENSAO',
@@ -24,7 +24,7 @@ export type TipoPeriodo = (typeof TIPOS_PERIODO)[number];
 export const NOME_TIPO_PERIODO: Record<TipoPeriodo, string> = {
   JOGOS_INTERNOS: 'Jogos internos',
   ENCONTRO_SERVIDORES: 'Encontro dos servidores',
-  UNIVERSO_FCE: 'Universo e FCE',
+  UNIVERSO_IFCE: 'Universo IFCE',
   SEMANA_DO_CURSO: 'Semana do Curso de Redes',
   SEMANA_OUTROS_CURSOS: 'Semana de outros cursos',
   ENCONTRO_EXTENSAO: 'Encontro de extensão',

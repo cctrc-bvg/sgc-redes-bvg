@@ -4,14 +4,16 @@ import { useActionState } from 'react';
 import { Alerta, AreaTexto, BotaoPrimario, Campo, Selecao } from '@/components/campo';
 import { SeletorModo } from '@/components/seletor-modo';
 import { NOME_TIPO_PERIODO, TIPOS_PERIODO } from '@/lib/periodos/regras';
-import { criarPeriodo, registrarResumoAlimentar, salvarGradeEspecial, salvarPresencas, type EstadoEnvioPeriodo, type EstadoGrade, type EstadoPeriodo } from './actions';
+import { criarPeriodo, editarPeriodo, registrarResumoAlimentar, salvarGradeEspecial, salvarPresencas, type EstadoEnvioPeriodo, type EstadoGrade, type EstadoPeriodo } from './actions';
 
-export function FormularioPeriodo() {
-  const [estado, acao, enviando] = useActionState<EstadoPeriodo | undefined, FormData>(criarPeriodo, undefined);
-  const v = estado?.valores;
+/** Cria um período ou, com `periodo`, edita nome, tipo, datas e observação do existente. */
+export function FormularioPeriodo({ periodo }: { periodo?: { id: string; nome: string; tipo: string; inicio: string; fim: string; observacao: string } }) {
+  const [estado, acao, enviando] = useActionState<EstadoPeriodo | undefined, FormData>(periodo ? editarPeriodo : criarPeriodo, undefined);
+  const v = estado?.valores ?? periodo;
   return (
     <form action={acao} className="space-y-4" noValidate>
-      {estado?.mensagem && <Alerta tipo="erro">{estado.mensagem}</Alerta>}
+      {estado?.mensagem && <Alerta tipo={estado.sucesso ? 'sucesso' : 'erro'}>{estado.mensagem}</Alerta>}
+      {periodo && <input type="hidden" name="periodoId" value={periodo.id} />}
       <div className="grid gap-4 sm:grid-cols-2">
         <Campo id="nome" rotulo="Nome do período" defaultValue={v?.nome} placeholder="Ex.: Jogos internos 2027" erros={estado?.erros?.nome} />
         <Selecao
@@ -26,7 +28,7 @@ export function FormularioPeriodo() {
       </div>
       <AreaTexto id="observacao" rotulo="Observação (opcional)" rows={2} maxLength={300} defaultValue={v?.observacao} erros={estado?.erros?.observacao} />
       <div className="sm:max-w-xs">
-        <BotaoPrimario carregando={enviando}>{enviando ? 'Criando…' : 'Criar período'}</BotaoPrimario>
+        <BotaoPrimario carregando={enviando}>{periodo ? (enviando ? 'Salvando…' : 'Salvar alterações') : enviando ? 'Criando…' : 'Criar período'}</BotaoPrimario>
       </div>
     </form>
   );

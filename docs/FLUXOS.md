@@ -194,7 +194,7 @@ flowchart TB
 
 ## 4A. Períodos especiais (jogos internos, encontro dos servidores)
 
-Todo ano, semanas de evento (jogos internos, encontro dos servidores, Universo e FCE, semana do curso ou de outros cursos, encontros de extensão e de pesquisa) mudam a rotina: parte da turma sai para o evento, alguns docentes se ausentam e a Coordenação
+Todo ano, semanas de evento (jogos internos, encontro dos servidores, Universo IFCE, semana do curso ou de outros cursos, encontros de extensão e de pesquisa) mudam a rotina: parte da turma sai para o evento, alguns docentes se ausentam e a Coordenação
 monta grades temporárias e replaneja as refeições. O período especial reúne tudo isso (G30).
 
 ```mermaid

@@ -10,7 +10,7 @@ describe('períodos especiais', () => {
     expect(PeriodoSchema.safeParse({ ...ok, fim: '2027-05-09' }).success).toBe(false);
     expect(PeriodoSchema.safeParse({ ...ok, nome: 'ab' }).success).toBe(false);
     expect(PeriodoSchema.safeParse({ ...ok, tipo: 'FESTA' }).success).toBe(false);
-    for (const t of ['UNIVERSO_FCE', 'SEMANA_DO_CURSO', 'SEMANA_OUTROS_CURSOS', 'ENCONTRO_EXTENSAO', 'ENCONTRO_PESQUISA']) expect(PeriodoSchema.safeParse({ ...ok, tipo: t }).success, t).toBe(true);
+    for (const t of ['UNIVERSO_IFCE', 'SEMANA_DO_CURSO', 'SEMANA_OUTROS_CURSOS', 'ENCONTRO_EXTENSAO', 'ENCONTRO_PESQUISA']) expect(PeriodoSchema.safeParse({ ...ok, tipo: t }).success, t).toBe(true);
     const longo = PeriodoSchema.safeParse({ ...ok, fim: '2027-05-30' });
     expect(longo.success).toBe(false);
     expect(MAX_DIAS_PERIODO).toBe(15);

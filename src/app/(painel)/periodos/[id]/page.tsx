@@ -11,7 +11,7 @@ import { NOME_DIA, DIAS_SEMANA } from '@/lib/grade/regras';
 import { mensagemPlanoAlimentar, NOME_TIPO_PERIODO } from '@/lib/periodos/regras';
 import { carregarPeriodo } from '@/lib/periodos/servidor';
 import { copiarGradeNormal, excluirPeriodo, removerGradeEspecial } from '../actions';
-import { FormularioEnvioPeriodo, FormularioGradeEspecial, FormularioPresencas } from '../formularios';
+import { FormularioEnvioPeriodo, FormularioGradeEspecial, FormularioPeriodo, FormularioPresencas } from '../formularios';
 
 export const metadata: Metadata = { title: 'Período especial — SGC-Redes' };
 
@@ -45,6 +45,14 @@ export default async function PaginaPeriodo({ params }: { params: Promise<{ id: 
         {NOME_TIPO_PERIODO[periodo.tipo]} · {formatarData(periodo.inicio)} a {formatarData(periodo.fim)} · {d.dias.length} dia(s) de aula
         {periodo.observacao && <> · {periodo.observacao}</>}
       </p>
+      {gerencia && (
+        <details className="mt-3 max-w-3xl rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <summary className="cursor-pointer text-sm font-semibold text-if-verde-700">Editar nome, tipo e datas</summary>
+          <div className="mt-4">
+            <FormularioPeriodo periodo={{ id: periodo.id, nome: periodo.nome, tipo: periodo.tipo, inicio: periodo.inicio, fim: periodo.fim, observacao: periodo.observacao ?? '' }} />
+          </div>
+        </details>
+      )}
       <p className="mt-2 max-w-3xl text-sm text-slate-700">
         Nos dias do período, a <strong>grade especial</strong> de uma turma vale no lugar da grade normal (ausências, refeições e agenda dos docentes). Turmas
         sem grade especial seguem a grade normal.

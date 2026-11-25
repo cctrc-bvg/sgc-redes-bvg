@@ -20,6 +20,16 @@ test('período especial: cria, monta a grade da turma, informa presentes e vê o
   await page.getByRole('button', { name: 'Criar período' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Jogos internos E2E' })).toBeVisible();
 
+  // Edita o nome e o tipo.
+  await page.locator('summary', { hasText: 'Editar nome, tipo e datas' }).click();
+  await page.getByLabel('Nome do período').fill('Universo IFCE E2E');
+  await page.getByLabel('Tipo').selectOption('UNIVERSO_IFCE');
+  await page.getByRole('button', { name: 'Salvar alterações' }).click();
+  await expect(page.locator('main')).toContainText('Período atualizado.');
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1, name: 'Universo IFCE E2E' })).toBeVisible();
+  await expect(page.locator('main')).toContainText('Universo IFCE');
+
   // Grade especial da primeira turma: copia a normal e salva.
   const turma = page.locator('section[aria-labelledby="grades"] li').first();
   await turma.locator('summary').click();
