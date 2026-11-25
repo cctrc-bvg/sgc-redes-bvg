@@ -7,8 +7,11 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao } from '@/lib/auth/dal';
+import { temPermissao } from '@/lib/auth/rbac';
 import { dataDoBanco, dataParaBanco, hojeEmFortaleza } from '@/lib/ausencias/regras';
 import { criarAtividadeSchema, distribuirHoras, META_PPI, SolicitacaoSchema } from '@/lib/ppi/regras';
+import { lerModoEnvio, NOME_MODO } from '@/lib/comunicacao/mensagem';
+import { chaveEnvioPpi, mensagensDaPpi } from '@/lib/ppi/comunicar';
 
 // Auditoria só com ids e horas: nome, matrícula e comprovantes são dados pessoais do estudante.
 
@@ -142,5 +145,28 @@ export async function decidirSolicitacao(_estado: EstadoSimples | undefined, for
   await registrarAuditoria({ userId: usuario.id, acao: 'DECIDIU_PPI', entidade: 'PpiSolicitacao', entidadeId: s.id, detalhes: { de: s.status, para: status, totalValidado: s.totalValidado } });
   revalidatePath(`/ppi/${s.id}`);
   revalidatePath('/ppi');
+  // Decidida: leva às mensagens prontas para o estudante e a CTP.
+  if ((status === 'DEFERIDA' || status === 'INDEFERIDA') && temPermissao(usuario.role, 'comunicacao:enviar')) redirect(`/ppi/${s.id}/comunicar?aviso=decidida`);
   return { sucesso: true, mensagem: 'Situação atualizada.' };
+}
+
+export type EstadoEnvio = { mensagem?: string; sucesso?: boolean };
+
+/** Registra no histórico o envio (manual) de uma mensagem pronta da decisão da PPI. */
+export async function registrarEnvioPpi(_e: EstadoEnvio | undefined, formData: FormData): Promise<EstadoEnvio> {
+  const { usuario } = await exigirPermissao('comunicacao:enviar');
+  const modo = lerModoEnvio(formData.get('modo'));
+  if (!modo) return { mensagem: 'Escolha por onde a mensagem foi enviada.' };
+  const dados = await mensagensDaPpi(String(formData.get('id') ?? ''));
+  if (!dados) return { mensagem: 'Solicitação não encontrada.' };
+  const m = dados.mensagens.find((x) => x.chave === String(formData.get('chave') ?? ''));
+  if (!m || formData.get('situacao') !== dados.solicitacao.status) return { mensagem: 'Esta mensagem não se aplica mais. Recarregue a página.' };
+  const s = dados.solicitacao;
+  const log = await prisma.logComunicacao.create({
+    data: { canal: m.canal, destino: m.destino, chave: chaveEnvioPpi(s.status, m.chave, s.id), assunto: m.assunto, mensagem: m.texto, modoEnvio: modo, sucesso: true, userId: usuario.id },
+  });
+  await registrarAuditoria({ userId: usuario.id, acao: 'REGISTROU_ENVIO_MENSAGEM', entidade: 'LogComunicacao', entidadeId: log.id, detalhes: { canal: m.canal, modo, origem: 'ppi', situacao: s.status } });
+  revalidatePath(`/ppi/${s.id}/comunicar`);
+  revalidatePath('/comunicacao');
+  return { sucesso: true, mensagem: `Envio por ${NOME_MODO[modo].toLowerCase()} registrado no histórico.` };
 }

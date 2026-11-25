@@ -66,7 +66,7 @@ export function FormularioCanal(props: { canalId: string; titulo: string; nomeEx
           name="saudacao"
           rotulo="Como chamar os destinatários"
           defaultValue={props.saudacao}
-          placeholder="equipe da CAE"
+          placeholder="prezados(as) colegas da CTP"
           erros={estado?.erros?.saudacao ? [estado.erros.saudacao] : undefined}
           dica="Usado em &quot;Olá, …!&quot;. Vazio: a mensagem traz um campo para preencher."
         />

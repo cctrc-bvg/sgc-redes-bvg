@@ -21,10 +21,8 @@
     "db:demo": "tsx prisma/demo.ts",
     "db:studio": "prisma studio",
     "capturas": "tsx scripts/capturar-telas.ts",
-    "manual": "tsx scripts/gerar-manual.ts"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "manual": "tsx scripts/gerar-manual.ts",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

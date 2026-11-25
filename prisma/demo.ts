@@ -80,12 +80,12 @@ async function main() {
 
   // 2. Contatos dos grupos e setores (e-mails fictícios)
   const canais: Record<string, [string, string]> = {
-    GRUPO_PROFESSORES: [`professores.redes@${DOMINIO}`, 'professores e professoras'],
-    GRUPO_GESTAO_DIR_COORD: [`gestao.ensino@${DOMINIO}`, 'Direção de Ensino, Direção Geral e Coordenações'],
-    ASSISTENCIA_ESTUDANTIL: [`cae@${DOMINIO}`, 'equipe da CAE'],
-    CTP: [`ctp@${DOMINIO}`, 'equipe técnico-pedagógica'],
-    LIDERES_TURMA: [`lideres.redes@${DOMINIO}`, 'líderes de turma'],
-    NUTRICIONISTA: [`nutricao@${DOMINIO}`, 'nutricionista'],
+    GRUPO_PROFESSORES: [`professores.redes@${DOMINIO}`, 'prezados(as) professores(as)'],
+    GRUPO_GESTAO_DIR_COORD: [`gestao.ensino@${DOMINIO}`, 'prezados(as) gestores(as)'],
+    ASSISTENCIA_ESTUDANTIL: [`cae@${DOMINIO}`, 'prezados(as) colegas da Assistência Estudantil'],
+    CTP: [`ctp@${DOMINIO}`, 'prezados(as) colegas da Coordenação Técnico-Pedagógica'],
+    LIDERES_TURMA: [`lideres.redes@${DOMINIO}`, 'prezados(as) líderes de turma'],
+    NUTRICIONISTA: [`nutricao@${DOMINIO}`, 'prezado(a) nutricionista'],
   };
   for (const [canal, [email, saudacao]] of Object.entries(canais)) {
     await prisma.configuracaoCanal.updateMany({ where: { canal: canal as never }, data: { email, saudacao } });

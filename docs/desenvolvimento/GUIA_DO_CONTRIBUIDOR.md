@@ -30,7 +30,7 @@ fluxo de pull request estão em [CONTRIBUTING.md](../../CONTRIBUTING.md). Para e
 | Dados | Prisma 6 + PostgreSQL 16 |
 | Validação | zod 4 |
 | Planilhas | ExcelJS (.xlsx) e CSV próprio |
-| Testes | Vitest (regras puras); Playwright (capturas da Ajuda) |
+| Testes | Vitest (regras puras); Playwright (E2E de fumaça e capturas da Ajuda) |
 | Implantação | Docker Compose (`db` + `migrate` + `app`), build `standalone` |
 
 > **Atenção:** o Next.js 16 tem mudanças em relação a versões antigas. Antes de usar uma API, consulte o guia em
@@ -193,10 +193,26 @@ sequenceDiagram
 | Regras de negócio | `npm test` (Vitest; arquivos `*.test.ts` ao lado do código) |
 | Build | `NEXT_TELEMETRY_DISABLED=1 npm run build` |
 | Conteúdo da Ajuda | incluído em `npm test`: tópicos, rotas, imagens e manual atualizado |
+| Fumaça de ponta a ponta | `npm run e2e` (Playwright, pasta `e2e/`), sobre os dados de demonstração |
 | Telas | navegador **com e sem JavaScript**, com os dados de demonstração e cada perfil relevante |
 
-O CI (`.github/workflows/ci.yml`) roda typecheck, testes e build em cada push e pull request. Roteiros de ponta a ponta
-com Playwright estão no backlog; até lá, descreva no PR o roteiro manual que você seguiu.
+O CI (`.github/workflows/ci.yml`) roda typecheck, testes e build em cada push e pull request e, num segundo job, os
+roteiros E2E com PostgreSQL de serviço, `db:seed` + `db:demo` e o build standalone. Se falharem, o relatório do
+Playwright fica nos artefatos da execução.
+
+**E2E na sua máquina** (banco descartável: os roteiros gravam envios e importam usuários):
+
+```bash
+npx prisma migrate deploy && npx prisma db seed && npm run db:demo -- --confirmo
+npm run build
+npx playwright install chromium        # uma vez
+npm run e2e                            # sobe o servidor standalone na porta 3123 (ou usa BASE_URL)
+```
+
+Os roteiros são **de fumaça**: login e sessão, menus do cabeçalho, acesso por perfil, mensagem avulsa e caixa de
+mensagem (copiar, e-mail, registrar), importação com prévia e as páginas principais de cada perfil sem erro. Cubra
+regras com Vitest; um roteiro novo só quando o comportamento depende do navegador (JS, área de transferência, menus).
+Ao mudar textos de botões ou rótulos usados nos roteiros, ajuste-os também (eles localizam pelo nome acessível).
 
 Boas práticas: teste a regra pura (casos de borda, erros com a mensagem que o usuário verá); para importações, teste a
 **ida e volta** (exportar → importar → nada muda).

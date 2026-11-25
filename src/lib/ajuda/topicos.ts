@@ -482,7 +482,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       {
         titulo: 'Cadastrar o e-mail de um setor',
         quem: 'Coordenação',
-        passos: ['Em Comunicação, na seção de grupos e setores, informe o e-mail institucional e a saudação ("equipe da CAE").', 'As próximas mensagens já saem com o destinatário e a saudação.'],
+        passos: ['Em Comunicação, na seção de grupos e setores, informe o e-mail institucional e a saudação ("prezados(as) colegas da Assistência Estudantil").', 'As próximas mensagens já saem com o destinatário e a saudação.'],
       },
     ],
     imagens: [
@@ -519,6 +519,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Cronograma de encontros, com cópia de outro PEI da mesma disciplina (G09).',
       'Acompanhar a situação: em andamento, prorrogado, aprovado, reprovado, lançado no acadêmico. Imprimir o PEI.',
       'Visível também à CTP e ao Conselho de Classe (Art. 127).',
+      'Mensagens prontas de cada momento (Coordenação): pedir ao docente a definição da modalidade; avisar estudante e CTP da modalidade, do PEI pronto (com o cronograma de encontros) e do resultado.',
     ],
     diagrama: {
       titulo: 'Ciclo da PPE',
@@ -544,6 +545,16 @@ export const TOPICOS: readonly TopicoAjuda[] = [
           'Abra o registro e escolha PEI ou Dependência.',
           'No PEI, preencha carga horária (até 30% da disciplina), horas presenciais e práticas, objetivos, conteúdos, critérios e o cronograma.',
           'Salve e use "Imprimir" para gerar o documento para assinatura.',
+        ],
+      },
+      {
+        titulo: 'Comunicar a PPE',
+        quem: 'Coordenação',
+        passos: [
+          'Abra a PPE e clique em "Ver mensagens prontas": o sistema escolhe o texto do momento (definir modalidade, modalidade definida, PEI pronto ou resultado).',
+          'Aguardando o docente: a mensagem vai para quem leciona a disciplina no ano, sem o nome do estudante.',
+          'Depois: uma mensagem para o estudante (digite o e-mail dele ou escolha o contato no WhatsApp) e outra para a CTP.',
+          'Registre cada envio. Quando a PPE muda de momento, as mensagens mudam e podem ser enviadas de novo.',
         ],
       },
     ],
@@ -579,6 +590,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Impedir que o mesmo certificado conte duas vezes na solicitação.',
       'Mostrar o progresso até as 40 horas e marcar a solicitação como em análise, deferida ou indeferida.',
       'Gerar a ficha "Solicitação de Prática Profissional Integrada" para assinatura.',
+      'Ao deferir ou indeferir, abrir as mensagens prontas para o estudante e a CTP (e-mail ou WhatsApp), com as horas e o motivo.',
     ],
     diagrama: {
       titulo: 'Auditoria de PPI',
@@ -598,6 +610,16 @@ export const TOPICOS: readonly TopicoAjuda[] = [
           'Em "Lançar atividade", escolha a categoria, informe o comprovante, o código do certificado, a data e a quantidade.',
           'O sistema calcula as horas validadas respeitando os tetos; acompanhe o total até 40h.',
           'Atualize a situação e gere a ficha para assinatura.',
+        ],
+      },
+      {
+        titulo: 'Avisar o estudante e a CTP da decisão',
+        quem: 'Coordenação',
+        passos: [
+          'Ao deferir ou indeferir, o sistema abre "Comunicar a decisão da PPI" (o link também fica no topo da solicitação).',
+          'Na caixa do estudante, digite o e-mail dele (estudantes não têm cadastro) ou abra no WhatsApp e escolha o contato.',
+          'A mensagem da CTP já vem com o e-mail do grupo cadastrado em Comunicação.',
+          'Depois de enviar, clique em "Já enviei: registrar" para guardar no histórico.',
         ],
       },
     ],

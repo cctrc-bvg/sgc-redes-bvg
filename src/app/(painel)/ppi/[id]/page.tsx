@@ -43,6 +43,14 @@ export default async function PaginaSolicitacaoPpi({ params }: { params: Promise
         <Link href={`/ppi/${s.id}/ficha`} className="text-if-verde-700 underline underline-offset-2">
           Ficha para assinatura
         </Link>
+        {temPermissao(usuario.role, 'comunicacao:enviar') && (s.status === 'DEFERIDA' || s.status === 'INDEFERIDA') && (
+          <>
+            {' · '}
+            <Link href={`/ppi/${s.id}/comunicar`} className="text-if-verde-700 underline underline-offset-2">
+              Comunicar a decisão
+            </Link>
+          </>
+        )}
       </p>
 
       <section aria-labelledby="progresso" className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">

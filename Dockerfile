@@ -4,7 +4,7 @@
 FROM node:22-alpine AS deps
 RUN apk add --no-cache openssl libc6-compat
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json prisma.config.ts ./
 COPY prisma ./prisma
 RUN npm ci
 

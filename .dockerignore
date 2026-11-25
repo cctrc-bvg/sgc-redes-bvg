@@ -6,3 +6,7 @@ node_modules
 coverage
 *.tsbuildinfo
 docs
+.handoff
+test-results
+playwright-report
+backups

@@ -112,3 +112,33 @@ export function enderecoDoSistema(caminho: string, appUrl = process.env.APP_URL)
   const base = (appUrl ?? '').trim().replace(/\/+$/, '');
   return /^https?:\/\/\S+$/.test(base) ? `${base}${caminho}` : null;
 }
+
+/**
+ * Mensagem individual para quem não tem cadastro no sistema (ex.: estudante): o e-mail fica para
+ * digitar na caixa e o WhatsApp abre para escolher o contato. O histórico guarda só `destino`.
+ */
+export function mensagemSemCadastro(p: {
+  chave: string;
+  titulo: string;
+  destino: string;
+  nome: string;
+  assunto: string;
+  texto: string;
+  tipo?: TipoInteracao;
+  variaveis?: Readonly<Record<string, string>>;
+}): MensagemPronta {
+  const nome = primeiroNome(p.nome);
+  return {
+    chave: p.chave,
+    titulo: p.titulo,
+    canal: null,
+    destino: p.destino,
+    para: null,
+    whatsapp: null,
+    aceitaWhatsapp: true,
+    assunto: p.assunto,
+    texto: `${saudacao(nome, 'nome')}\n\n${p.texto}`,
+    tipo: p.tipo,
+    variaveis: { ...p.variaveis, nome },
+  };
+}

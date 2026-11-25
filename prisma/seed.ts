@@ -47,14 +47,15 @@ async function main() {
   }
 
   // 3. Grupos e setores para as mensagens (e-mail e saudação editáveis em Comunicação).
+  // Saudação padrão: entra como "Olá, {saudação}!"; prezado(a) no singular, prezados(as) no plural.
   // Sem saudação, a mensagem traz um campo {{...}} para preencher.
   const canais: { canal: CanalWhatsapp; nomeExibicao: string; saudacao?: string }[] = [
-    { canal: 'GRUPO_PROFESSORES', nomeExibicao: 'Grupo Professores - Redes', saudacao: 'professores(as)' },
-    { canal: 'GRUPO_GESTAO_DIR_COORD', nomeExibicao: 'Grupo Gestão (Coord + DE + DG)' },
-    { canal: 'ASSISTENCIA_ESTUDANTIL', nomeExibicao: 'Assistência Estudantil (Refeitório)' },
-    { canal: 'CTP', nomeExibicao: 'CTP - Coord. Técnico-Pedagógica' },
-    { canal: 'LIDERES_TURMA', nomeExibicao: 'Líderes das Turmas de Redes', saudacao: 'líderes de turma' },
-    { canal: 'NUTRICIONISTA', nomeExibicao: 'Nutricionista do campus' },
+    { canal: 'GRUPO_PROFESSORES', nomeExibicao: 'Grupo Professores - Redes', saudacao: 'prezados(as) professores(as)' },
+    { canal: 'GRUPO_GESTAO_DIR_COORD', nomeExibicao: 'Grupo Gestão (Coord + DE + DG)', saudacao: 'prezados(as) gestores(as)' },
+    { canal: 'ASSISTENCIA_ESTUDANTIL', nomeExibicao: 'Assistência Estudantil (Refeitório)', saudacao: 'prezados(as) colegas da Assistência Estudantil' },
+    { canal: 'CTP', nomeExibicao: 'CTP - Coord. Técnico-Pedagógica', saudacao: 'prezados(as) colegas da Coordenação Técnico-Pedagógica' },
+    { canal: 'LIDERES_TURMA', nomeExibicao: 'Líderes das Turmas de Redes', saudacao: 'prezados(as) líderes de turma' },
+    { canal: 'NUTRICIONISTA', nomeExibicao: 'Nutricionista do campus', saudacao: 'prezado(a) nutricionista' },
   ];
   for (const c of canais) {
     await prisma.configuracaoCanal.upsert({

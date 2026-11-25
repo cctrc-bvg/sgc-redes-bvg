@@ -401,7 +401,7 @@ flowchart LR
 
 **Cadastrar o e-mail de um setor** (Coordenação)
 
-1. Em Comunicação, na seção de grupos e setores, informe o e-mail institucional e a saudação ("equipe da CAE").
+1. Em Comunicação, na seção de grupos e setores, informe o e-mail institucional e a saudação ("prezados(as) colegas da Assistência Estudantil").
 2. As próximas mensagens já saem com o destinatário e a saudação.
 
 ### Telas
@@ -434,6 +434,7 @@ No sistema: `/ppe`.
 - Cronograma de encontros, com cópia de outro PEI da mesma disciplina (G09).
 - Acompanhar a situação: em andamento, prorrogado, aprovado, reprovado, lançado no acadêmico. Imprimir o PEI.
 - Visível também à CTP e ao Conselho de Classe (Art. 127).
+- Mensagens prontas de cada momento (Coordenação): pedir ao docente a definição da modalidade; avisar estudante e CTP da modalidade, do PEI pronto (com o cronograma de encontros) e do resultado.
 
 ### Fluxo: Ciclo da PPE
 
@@ -465,6 +466,13 @@ flowchart LR
 3. No PEI, preencha carga horária (até 30% da disciplina), horas presenciais e práticas, objetivos, conteúdos, critérios e o cronograma.
 4. Salve e use "Imprimir" para gerar o documento para assinatura.
 
+**Comunicar a PPE** (Coordenação)
+
+1. Abra a PPE e clique em "Ver mensagens prontas": o sistema escolhe o texto do momento (definir modalidade, modalidade definida, PEI pronto ou resultado).
+2. Aguardando o docente: a mensagem vai para quem leciona a disciplina no ano, sem o nome do estudante.
+3. Depois: uma mensagem para o estudante (digite o e-mail dele ou escolha o contato no WhatsApp) e outra para a CTP.
+4. Registre cada envio. Quando a PPE muda de momento, as mensagens mudam e podem ser enviadas de novo.
+
 ### Telas
 
 ![Lista de PPEs do semestre com estudante, componente, modalidade, situação e alerta de retenção.](../public/manual/ppe-lista.jpg)
@@ -493,6 +501,7 @@ No sistema: `/ppi`.
 - Impedir que o mesmo certificado conte duas vezes na solicitação.
 - Mostrar o progresso até as 40 horas e marcar a solicitação como em análise, deferida ou indeferida.
 - Gerar a ficha "Solicitação de Prática Profissional Integrada" para assinatura.
+- Ao deferir ou indeferir, abrir as mensagens prontas para o estudante e a CTP (e-mail ou WhatsApp), com as horas e o motivo.
 
 ### Fluxo: Auditoria de PPI
 
@@ -515,6 +524,13 @@ flowchart LR
 2. Em "Lançar atividade", escolha a categoria, informe o comprovante, o código do certificado, a data e a quantidade.
 3. O sistema calcula as horas validadas respeitando os tetos; acompanhe o total até 40h.
 4. Atualize a situação e gere a ficha para assinatura.
+
+**Avisar o estudante e a CTP da decisão** (Coordenação)
+
+1. Ao deferir ou indeferir, o sistema abre "Comunicar a decisão da PPI" (o link também fica no topo da solicitação).
+2. Na caixa do estudante, digite o e-mail dele (estudantes não têm cadastro) ou abra no WhatsApp e escolha o contato.
+3. A mensagem da CTP já vem com o e-mail do grupo cadastrado em Comunicação.
+4. Depois de enviar, clique em "Já enviei: registrar" para guardar no histórico.
 
 ### Telas
 

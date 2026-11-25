@@ -1,6 +1,6 @@
 # Próximos Passos — Retomada do Desenvolvimento
 
-> Atualizado em **24/11/2026**, ao abrir o **primeiro pull request** no repositório original. Leia este arquivo inteiro
+> Atualizado em **24/11/2026**, depois da fusão do **PR #1** e com o branch `e2e-playwright` (PR #2) em preparação. Leia este arquivo inteiro
 > antes de continuar: estado do projeto, o que depende do usuário, o backlog e as armadilhas já encontradas.
 
 ---
@@ -9,9 +9,9 @@
 
 ```bash
 cd ~/projetos/sgc-redes-bvg
-git status && git log --oneline -8          # branch minha-contribuicao, sincronizada com o fork
-gh pr view 1 -R cctrc-bvg/sgc-redes-bvg # situação do PR (comentários da revisão)
-./scripts/dev.sh testar                     # esperado: typecheck ok + 380 testes passando
+git status && git log --oneline -8          # branch e2e-playwright (a partir de upstream/main)
+gh pr list -R cctrc-bvg/sgc-redes-bvg       # PRs abertos no original
+./scripts/dev.sh testar                     # esperado: typecheck ok + 392 testes passando
 ```
 
 Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolvimento com
@@ -23,11 +23,13 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 ## 2. Estado atual
 
 **Repositórios:**
-- `origin` = fork `isaacmiranda/sgc-redes-bvg` (público, admin), branch `minha-contribuicao`, CI verde.
-- `cctrc-bvg/sgc-redes-bvg` = original (usuário só tem leitura). Contém só o commit inicial.
-- **PR #1** (https://github.com/cctrc-bvg/sgc-redes-bvg/pull/1, `minha-contribuicao` → `main`): versão inicial completa, 48 commits. O texto está em
-  `.handoff/github/pr-minha-contribuicao.md`.
-- **Novos commits no branch entram automaticamente no PR.** Por isso, peça confirmação antes de cada push.
+- `origin` = fork `isaacmiranda/sgc-redes-bvg` (público, admin). `upstream` = `cctrc-bvg/sgc-redes-bvg` (original, só leitura).
+- **PR #1** (`minha-contribuicao` → `main`, versão inicial completa) foi **mesclado em 24/11/2026**, sem comentários.
+  `minha-contribuicao` está encerrado: trabalho novo sai de `upstream/main` num branch novo.
+- **PR #2** (`e2e-playwright` → `main`, aberto em 24/11/2026): E2E com Playwright no CI, `prisma.config.ts`, mensagens
+  prontas de PPI/PPE, guia de implantação, backup e saudações padrão. CI verde (`verificar` + `e2e` 18/18 no
+  `ubuntu-24.04`); aguarda revisão. Texto em `.handoff/github/pr-e2e-playwright.md`.
+- **Peça confirmação antes de cada push** (commits novos num branch com PR aberto entram no PR).
 
 **Pronto (Fases 1 e 2 do FSD + extras):**
 - Base: login/sessões, RBAC (5 perfis), auditoria, painel com pendências, Meu contato.
@@ -50,7 +52,16 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
   - CONTRIBUTING, guia do contribuidor, modelos de issue/PR;
   - dados de demonstração (`prisma/demo.ts`).
 
-**Verificado em 24/11/2026:**
+**Branch `e2e-playwright` (24/11/2026):**
+- **E2E com Playwright** em `e2e/` (`npm run e2e`), job `e2e` no CI com PostgreSQL de serviço + `db:demo`: login/sessão,
+  menus, acesso por perfil, mensagem avulsa e caixa de mensagem, importação com prévia, páginas por perfil, PPI/PPE.
+- **`prisma.config.ts`** no lugar de `package.json#prisma` (pronto para o Prisma 7); carrega o `.env` com
+  `process.loadEnvFile` sem sobrescrever o ambiente. Dockerfile copia o arquivo; `.dockerignore` exclui `.handoff`.
+- **Mensagens prontas de PPI e PPE:** `/ppi/[id]/comunicar` (deferida/indeferida → estudante e CTP; a decisão redireciona
+  para lá) e `/ppe/[id]/comunicar` (momento calculado: pedir modalidade ao docente; modalidade definida, PEI pronto com
+  cronograma e resultado → estudante e CTP). Textos puros em `src/lib/ppi/mensagens.ts` e `src/lib/ppe/mensagens.ts`.
+
+**Verificado em 24/11/2026 (PR #1):**
 - 380 testes unitários, typecheck e build;
 - roteiros E2E sem JS (16 roteiros em `.handoff/e2e`, local);
 - `docker compose up --build` com migração incremental sobre banco existente;
@@ -61,12 +72,10 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 
 ## 3. Pendências que dependem do usuário
 
-- [ ] **Acompanhar a revisão do PR #1** e responder aos comentários. Correções viram commits novos no mesmo branch,
-      sem reescrever o histórico durante a revisão.
-- [ ] **Antes de reiniciar a máquina:** `sudo TMPDIR=/var/tmp dpkg --configure -a`. O pacote do kernel 7.0.0-44 ficou
-      meio configurado porque o `/tmp` (tmpfs de 512 MB) encheu.
-- [ ] **Cadastrar em Comunicação** o e-mail institucional e a saudação de cada grupo/setor, incluindo a nutricionista.
-- [ ] **Configurar `APP_URL`** (https) no servidor de produção.
+- [ ] **Acompanhar a revisão do PR #2** (o commit das saudações ainda precisa de push, com confirmação).
+- [ ] **Cadastrar em Comunicação** o e-mail institucional de cada grupo/setor, incluindo a nutricionista. Saudações
+      padrão (seed, só bancos novos): "prezados(as) …" no plural e "prezado(a) …" no singular.
+- [ ] **Configurar `APP_URL`** (https) no servidor de produção — ainda sem endereço definido (decisão de 24/11: fica para depois).
 - [ ] **VM de produção no Proxmox** (Docker Compose), com backups do PostgreSQL e HTTPS (proxy reverso).
 - [ ] Testar as planilhas de exemplo com dados reais (`.handoff/planilhas-exemplo/`, fora do git).
 
@@ -76,25 +85,16 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 
 ### P1 — próximos passos (em ordem)
 
-1. **Revisão do PR:** responder aos comentários do repositório original. É prioridade sobre funcionalidade nova.
-2. **Testes E2E versionados com Playwright:**
-   - migrar os roteiros de `.handoff/e2e/` (Python, sem JS, fora do git) para `e2e/` no projeto;
-   - incluir roteiros com JS: caixas de mensagem, formulário de mensagem avulsa, menus;
-   - rodar no CI com PostgreSQL de serviço e `db:demo`.
-   - O Playwright já está instalado (`@playwright/test` 1.56.1). Nesta máquina (Ubuntu 26.04) é preciso
-     `PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64` e `TMPDIR=~/.cache/sgc-tmp`.
-   - Decisão de 24/11: só smoke tests no CI.
-3. **`prisma.config.ts`** (o Prisma 7 remove `package.json#prisma`):
-   - com o arquivo de configuração, o Prisma 6 deixa de carregar o `.env` sozinho (`import 'dotenv/config'`), o que
-     afeta `scripts/dev.sh`, o Dockerfile (`npx prisma db seed`) e o `db:demo`;
-   - testar com `./scripts/dev.sh docker`.
-4. **Mensagens prontas nas decisões de PPI e PPE:** deferimento, modalidade definida, PEI pronto.
-   - Seguir o padrão de `src/lib/calendario/mensagens.ts` e `/calendario/eventos/[id]/comunicar`.
-   - Criar tópico na Ajuda.
-5. **Implantação em produção:**
-   - VM no Proxmox com Docker Compose, HTTPS (proxy reverso) e `APP_URL`;
-   - backup diário do PostgreSQL (`pg_dump`) com retenção;
-   - documentar em `docs/IMPLANTACAO.md`.
+1. **PR #2 (`e2e-playwright`):** CI verde; acompanhar a revisão e corrigir em commits novos (push com confirmação).
+2. **Implantação em produção** (falta só o endereço): seguir `docs/IMPLANTACAO.md` — VM no Proxmox, Docker Compose,
+   proxy reverso com HTTPS, `APP_URL`, backup diário (`scripts/backup-banco.sh`) e teste de restauração.
+3. **Ampliar o E2E aos poucos:** os roteiros Python de `.handoff/e2e/` (sem JS, fora do git) cobrem mais regras que os
+   de fumaça; levar ao Playwright só o que depende do navegador. Nesta máquina (Ubuntu 26.04):
+   `PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64` e `TMPDIR=~/.cache/sgc-tmp`.
+4. **Prisma 7** quando sair do 6.x: o `prisma.config.ts` já existe; falta trocar `url = env(...)` do schema pela
+   configuração do datasource e testar com `./scripts/dev.sh docker`.
+5. **Mensagens prontas:** avaliar com a Coordenação os textos de PPI/PPE; o estudante não tem cadastro (e-mail digitado
+   na caixa) — se o campus quiser, guardar o e-mail do estudante na PPE/PPI.
 6. **Conferir o PEI impresso** com o modelo em papel do campus.
 
 ### P2 — depois
@@ -109,7 +109,8 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 Calendário acadêmico e importação por planilha; grade por planilha; relatórios em PDF e planilha; exportação de todas
 as listagens (.xlsx e .csv, com botões); textos-padrão editáveis; mensagem avulsa com vários destinatários e grupos de
 docentes; nutricionista; comunicar alterações da alimentação e do calendário; Ajuda, manual e guia do contribuidor;
-dados de demonstração; impressão do PEI; convites de substituição; CI.
+dados de demonstração; impressão do PEI; convites de substituição; CI. Depois do PR #1: E2E com Playwright no CI,
+`prisma.config.ts`, mensagens prontas de PPI/PPE, guia de implantação e script de backup.
 
 ### Decisões de 24/11/2026 (sugestões aceitas pelo usuário)
 

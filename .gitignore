@@ -21,3 +21,6 @@ coverage/
 # Playwright (capturas da Ajuda)
 /test-results/
 /playwright-report/
+
+# backups do banco (dados pessoais)
+/backups/

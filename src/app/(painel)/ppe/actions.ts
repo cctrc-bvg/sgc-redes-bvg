@@ -19,6 +19,8 @@ import {
   travasPei,
 } from '@/lib/ppe/regras';
 import { acessoAoPpe, recalcularRetencao } from '@/lib/ppe/servidor';
+import { lerModoEnvio, NOME_MODO } from '@/lib/comunicacao/mensagem';
+import { chaveEnvioPpe, mensagensDaPpe } from '@/lib/ppe/comunicar';
 
 // Auditoria só com ids, modalidade e situação: nome e matrícula são dados pessoais do estudante.
 
@@ -200,3 +202,23 @@ export async function excluirPpe(_estado: EstadoPpe | undefined, formData: FormD
   redirect(`/ppe?semestre=${ppe.semestre}&aviso=excluida`);
 }
 
+
+export type EstadoEnvio = { mensagem?: string; sucesso?: boolean };
+
+/** Registra no histórico o envio (manual) de uma mensagem pronta da PPE. */
+export async function registrarEnvioPpe(_e: EstadoEnvio | undefined, formData: FormData): Promise<EstadoEnvio> {
+  const { usuario } = await exigirPermissao('comunicacao:enviar');
+  const modo = lerModoEnvio(formData.get('modo'));
+  if (!modo) return { mensagem: 'Escolha por onde a mensagem foi enviada.' };
+  const dados = await mensagensDaPpe(String(formData.get('id') ?? ''));
+  if (!dados) return { mensagem: 'PPE não encontrada.' };
+  const m = dados.mensagens.find((x) => x.chave === String(formData.get('chave') ?? ''));
+  if (!m || formData.get('situacao') !== dados.situacao) return { mensagem: 'Esta mensagem não se aplica mais. Recarregue a página.' };
+  const log = await prisma.logComunicacao.create({
+    data: { canal: m.canal, destino: m.destino, chave: chaveEnvioPpe(dados.situacao, m.chave, dados.id), assunto: m.assunto, mensagem: m.texto, modoEnvio: modo, sucesso: true, userId: usuario.id },
+  });
+  await registrarAuditoria({ userId: usuario.id, acao: 'REGISTROU_ENVIO_MENSAGEM', entidade: 'LogComunicacao', entidadeId: log.id, detalhes: { canal: m.canal, modo, origem: 'ppe', situacao: dados.situacao } });
+  revalidatePath(`/ppe/${dados.id}/comunicar`);
+  revalidatePath('/comunicacao');
+  return { sucesso: true, mensagem: `Envio por ${NOME_MODO[modo].toLowerCase()} registrado no histórico.` };
+}
