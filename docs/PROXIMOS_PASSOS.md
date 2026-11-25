@@ -100,7 +100,9 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
    ficha da PPI assinada na Coordenação, motivo do indeferimento ao estudante, nome + matrícula para a CTP, pedido ao
    docente sem o nome do estudante, artigos do ROD também para o estudante, "aprovado(a)/não aprovado(a)/concluída" e
    e-mail do estudante **não** guardado. Acrescentado o aviso de **prazo prorrogado** (estudante e CTP).
-6. **Conferir o PEI impresso** com o modelo em papel do campus.
+6. ~~**Conferir o PEI impresso** com o modelo em papel do campus~~ — **feito em 25/11/2026**: impressão refeita no
+   modelo (`docs/referencias/modelo-pei-campus-boa-viagem.pdf`). Pendente só trocar o logo extraído do modelo pelo SVG
+   oficial da Comunicação (`public/marca/`).
 
 ### P2 — depois
 

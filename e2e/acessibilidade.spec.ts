@@ -55,6 +55,7 @@ test('acessibilidade: páginas de detalhe e de comunicação', async ({ page }) 
     if (hrefs.length === 0) continue;
     const rotas = [hrefs[0]];
     if (base === '/ppe' || base === '/ppi') rotas.push(`${hrefs[0]}/comunicar`);
+    if (base === '/ppe') rotas.push(...hrefs.map((h) => `${h}/imprimir`)); // só as PPE com PEI abrem a impressão
     for (const rota of rotas) {
       const resposta = await page.goto(rota);
       if ((resposta?.status() ?? 500) >= 400) continue;
