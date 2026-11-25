@@ -38,8 +38,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      // Upload de planilhas: arquivos de até 1 MB + sobra para o multipart.
-      bodySizeLimit: '2mb',
+      // Upload de planilhas (até 1 MB) e de formulários de reposição (até 5 MB, conferidos no servidor) + sobra para o multipart.
+      bodySizeLimit: '7mb',
     },
   },
 };

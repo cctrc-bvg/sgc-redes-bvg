@@ -83,6 +83,13 @@ describe('montarAcoes', () => {
     expect(breve.nivel).toBe('atencao');
   });
 
+  it('reposição: ciência para a Coordenação e "informar" para a docência', () => {
+    const c = montarAcoes({ ...CONTAGENS_ZERADAS, reposicoesParaCiencia: 2, reposicoesAInformar: 1 }, coordenacao);
+    expect(c.find((a) => a.id === 'reposicoes-ciencia')).toMatchObject({ quantidade: 2, papel: 'cargo', href: '/reposicoes' });
+    expect(c.find((a) => a.id === 'reposicoes-informar')).toMatchObject({ quantidade: 1, papel: 'docencia', href: '/reposicoes' });
+    expect(montarAcoes(CONTAGENS_ZERADAS, coordenacao).some((a) => a.id.startsWith('reposicoes-'))).toBe(false);
+  });
+
   it('ordenarAcoes é estável dentro do mesmo nível', () => {
     const base = { papel: 'cargo' as const, icone: 'ppe' as const, quantidade: 1, titulo: '', detalhe: '', href: '/', botao: '' };
     const r = ordenarAcoes([

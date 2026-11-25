@@ -289,18 +289,49 @@ model AusenciaDocente {
   motivoOperacional   String          // Texto curto e não sensível (LGPD)
   // RF02-A: o próprio docente informou a ausência (a Coordenação dá ciência e decide a cobertura).
   informadaPeloDocente Boolean        @default(false)
+  // Reposição das aulas dispensadas (ROD, Art. 37): o docente informa que repôs (com formulário opcional) e a
+  // Coordenação dá ciência; ou a Coordenação registra direto. Nada aqui é obrigatório.
+  reposicaoEm          DateTime?       @db.Date // data em que a aula foi reposta
+  reposicaoOrigem      OrigemReposicao?
+  reposicaoObservacao  String?
+  reposicaoInformadaEm DateTime?
+  reposicaoCienteEm    DateTime?       // ciência da Coordenação (imediata quando ela mesma registra)
+  reposicaoCientePorId String?
   status              StatusAusencia  @default(PENDENTE_DECISAO)
   // Registro obrigatório quando a dispensa gera aviso de emergência à AE (RF04, < 4h)
   justificativa       String?
   decididaEm          DateTime?
   createdAt           DateTime        @default(now())
 
+  anexosReposicao     AnexoReposicao[]
   alertasAlimentacao  AlertaAlimentacao[]
   coberturas          CoberturaBloco[]
   convites            ConviteSubstituicao[]
 
   @@unique([dataAula, ofertaId])
   @@index([dataAula])
+}
+
+enum OrigemReposicao {
+  DOCENTE
+  COORDENACAO
+}
+
+// Formulário de reposição de aula enviado pelo sistema (opcional; o docente também pode enviar pelo e-mail institucional).
+// Fica no próprio banco (PDF, JPG ou PNG, até 5 MB), para entrar no mesmo backup. Pode conter assinaturas de estudantes:
+// só a Coordenação e o docente da ausência baixam.
+model AnexoReposicao {
+  id          String          @id @default(cuid())
+  ausenciaId  String
+  ausencia    AusenciaDocente @relation(fields: [ausenciaId], references: [id], onDelete: Cascade)
+  nome        String
+  tipoMime    String
+  tamanho     Int
+  conteudo    Bytes
+  enviadoPorId String
+  criadoEm    DateTime        @default(now())
+
+  @@index([ausenciaId])
 }
 
 enum TipoCobertura {

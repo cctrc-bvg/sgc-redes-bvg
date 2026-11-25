@@ -10,7 +10,7 @@ const PAGINAS: [Perfil, string[]][] = [
     [
       '/painel', '/calendario', '/calendario/eventos/novo', '/grade', '/grade/minha', '/diarios?escopo=meus', '/ppe?escopo=minhas', '/ausencias', '/ausencias/nova',
       '/alimentacao', '/alimentacao/adicionar', '/comunicacao', '/comunicacao/modelos', '/comunicacao/periodicas', '/usuarios', '/usuarios/importar',
-      '/turmas', '/turmas/nova', '/disciplinas', '/ofertas', '/ppe', '/ppi', '/diarios', '/diarios/conferencia', '/processos', '/relatorios',
+      '/turmas', '/turmas/nova', '/disciplinas', '/ofertas', '/ppe', '/ppi', '/diarios', '/diarios/conferencia', '/reposicoes', '/processos', '/relatorios',
       '/auditoria', '/ajuda', '/conta/contato', '/conta/senha',
     ],
   ],

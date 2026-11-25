@@ -31,6 +31,10 @@ export interface ContagensPainel {
   reposicoesVencidas: number;
   /** Reposições ainda não agendadas cujo prazo vence nos próximos 5 dias. */
   reposicoesAVencer: number;
+  /** Reposições informadas pelo docente que aguardam a ciência da Coordenação. */
+  reposicoesParaCiencia: number;
+  /** Aulas dispensadas do próprio docente que ainda não tiveram a reposição informada. */
+  reposicoesAInformar: number;
   /** Das pendentes, quantas o próprio docente informou (RF02-A). */
   ausenciasInformadas: number;
   convitesPendentes: number;
@@ -69,6 +73,8 @@ export const CONTAGENS_ZERADAS: ContagensPainel = {
   ausenciasHojeOuAmanha: 0,
   reposicoesVencidas: 0,
   reposicoesAVencer: 0,
+  reposicoesParaCiencia: 0,
+  reposicoesAInformar: 0,
   ausenciasInformadas: 0,
   convitesPendentes: 0,
   ppiEmAnalise: 0,
@@ -96,7 +102,7 @@ export interface PapelNoPainel {
 }
 
 /** Ações que são da docência (o resto é do cargo). */
-const DA_DOCENCIA = new Set(['convites', 'ppe-definir', 'pei-preencher', 'pei-encontros', 'pei-concluir', 'meus-diarios']);
+const DA_DOCENCIA = new Set(['reposicoes-informar', 'convites', 'ppe-definir', 'pei-preencher', 'pei-encontros', 'pei-concluir', 'meus-diarios']);
 
 const ORDEM: Record<NivelAcao, number> = { urgente: 0, atencao: 1, acompanhar: 2 };
 
@@ -172,8 +178,28 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     ]
       .filter(Boolean)
       .join(' '),
-    href: '/ausencias',
-    botao: 'Agendar',
+    href: '/reposicoes',
+    botao: 'Ver reposições',
+  });
+  add({
+    id: 'reposicoes-ciencia',
+    nivel: 'atencao',
+    icone: 'ausencias',
+    quantidade: c.reposicoesParaCiencia,
+    titulo: 'Reposições informadas para dar ciência',
+    detalhe: 'O docente informou que repôs a aula (com ou sem formulário): confira e dê ciência.',
+    href: '/reposicoes',
+    botao: 'Dar ciência',
+  });
+  add({
+    id: 'reposicoes-informar',
+    nivel: 'atencao',
+    icone: 'ausencias',
+    quantidade: c.reposicoesAInformar,
+    titulo: 'Reposições de aulas para informar',
+    detalhe: 'Se você já repôs a aula, informe a data (o formulário é opcional; também pode ir pelo e-mail institucional).',
+    href: '/reposicoes',
+    botao: 'Informar reposição',
   });
   add(
     papel.daCienciaRefeicao

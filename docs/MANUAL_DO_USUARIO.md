@@ -295,6 +295,7 @@ No sistema: `/ausencias`.
 - Registrar a ausência de um docente numa data: o sistema mostra as aulas dele pela grade vigente.
 - Licença de vários dias: informe também "Até" (até 15 dias) e registre todas as aulas do período de uma vez; feriados e sábados letivos já entram na conta.
 - Acompanhar o prazo de reposição das aulas dispensadas (15 dias letivos ou o fim da etapa, o que vier primeiro, ROD Art. 37): aparece na ausência e, quando está vencido ou perto de vencer sem data agendada, na tela inicial.
+- Reposição de aulas (menu da tela inicial ou "Reposição de aulas"): o docente informa a data em que repôs, com o formulário em anexo se quiser (PDF, JPG ou PNG, até 5 MB), e a Coordenação dá ciência; a Coordenação também pode registrar direto. O formulário pode ir só pelo e-mail institucional: o anexo no sistema é opcional.
 - Receber as ausências que os próprios docentes informam (selo "Informada pelo docente" e contagem na tela inicial) e dar ciência a eles.
 - Para cada horário perdido: substituição por outro docente, adiantamento de uma aula posterior da turma, dispensa da turma ou decidir depois.
 - Sugestões de cobertura priorizando professores da mesma turma e livres no horário.
@@ -333,6 +334,19 @@ flowchart LR
 3. Marque as aulas afetadas e informe um motivo operacional, sem dados pessoais ou médicos (ex.: "Participação em evento").
 4. Em Comunicar, envie ao docente a "Ciência da sua ausência": ela já orienta a procurar a Gestão de Pessoas com o motivo e o comprovante, fora do sistema.
 5. Salve: a página da ausência abre com a situação de cada horário.
+
+**Informar que repôs uma aula** (Professor)
+
+1. Na tela inicial, abra "Reposições de aulas para informar" (ou acesse /reposicoes).
+2. Na aula reposta, clique em "Informar que repus" e escolha a data. O formulário em anexo e a observação são opcionais.
+3. Se preferir, envie o formulário pelo seu e-mail institucional para a Coordenação (cctrc.boaviagem@ifce.edu.br): vale do mesmo jeito.
+4. A Coordenação dá ciência; a aula sai da lista de pendências e passa a contar como dada no diário.
+
+**Conferir as reposições** (Coordenação)
+
+1. Na tela inicial, abra "Reposições informadas para dar ciência" ou entre em Reposição de aulas.
+2. Confira a data e baixe o formulário, se houver, e clique em "Dar ciência".
+3. Para uma reposição que o docente não informou, use "Registrar reposição"; use "Desfazer registro" se foi por engano.
 
 **Decidir a cobertura** (Coordenação)
 

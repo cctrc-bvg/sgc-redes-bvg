@@ -3,6 +3,7 @@
  * seguinte, as mudanças e os prazos calculados pelo calendário. Regras puras; os dados vêm de `periodicas-servidor`.
  */
 import { diaDaSemanaISO, somarDiasISO } from '@/lib/calendario/regras';
+import { COORDENACAO_CURSO } from '@/lib/reposicao/regras';
 
 /** Prazo para lançar a frequência de aula substituída (ROD, Art. 43). */
 export const DIAS_LETIVOS_FREQUENCIA = 7;
@@ -91,6 +92,7 @@ export function resumoSemanal(d: DadosResumo): { assunto: string; texto: string 
     ),
   ];
   if (prazos.length > 0) L.push('', '*Prazos*', ...prazos.map((p) => `- ${p}`));
+  if (d.reposicoes.length > 0) L.push(`  Já repôs? Informe no SGC-Redes (Reposição de aulas) ou envie o formulário pelo e-mail institucional para ${COORDENACAO_CURSO.email}.`);
 
   L.push('', 'Qualquer dúvida, é só responder. Obrigado!', 'Coordenação do Curso Técnico em Redes de Computadores');
   return { assunto: `[SGC-Redes] Resumo da semana — ${br(d.segunda)} a ${br(sexta)}`, texto: L.join('\n') };

@@ -42,6 +42,8 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     ausenciasHojeOuAmanha,
     ausenciasInformadas,
     reposicoes,
+    reposicoesParaCiencia,
+    reposicoesAInformar,
     convitesPendentes,
     ppiEmAnalise,
     ppeRetencao,
@@ -66,6 +68,10 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { status: 'PENDENTE_DECISAO', dataAula: { gte: hoje, lte: amanha } } })),
     contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { status: 'PENDENTE_DECISAO', dataAula: { gte: hoje }, informadaPeloDocente: true } })),
     pode('ausencias:registrar') ? reposicoesSemData(hojeISO) : Promise.resolve({ vencidas: 0, aVencer: 0 }),
+    contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { reposicaoEm: { not: null }, reposicaoCienteEm: null } })),
+    contar(docente, () =>
+      prisma.ausenciaDocente.count({ where: { professorAusenteId: usuario.id, reposicaoEm: null, status: { in: ['TURMA_DISPENSADA', 'REPOSICAO_AGENDADA'] }, dataAula: { gte: dataParaBanco(somarDias(hojeISO, -120)), lte: dataParaBanco(hojeISO) } } }),
+    ),
     contar(docente, () =>
       prisma.conviteSubstituicao.count({ where: { professorId: usuario.id, status: 'PENDENTE', ausencia: { dataAula: { gte: hoje } } } }),
     ),
@@ -126,6 +132,8 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     ausenciasInformadas,
     reposicoesVencidas: reposicoes.vencidas,
     reposicoesAVencer: reposicoes.aVencer,
+    reposicoesParaCiencia,
+    reposicoesAInformar,
     convitesPendentes,
     ppiEmAnalise,
     ppeRetencao,
@@ -154,7 +162,7 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
  */
 async function reposicoesSemData(hojeISO: string): Promise<{ vencidas: number; aVencer: number }> {
   const dispensadas = await prisma.ausenciaDocente.findMany({
-    where: { status: 'TURMA_DISPENSADA', dataAula: { gte: dataParaBanco(somarDias(hojeISO, -90)), lte: dataParaBanco(hojeISO) } },
+    where: { status: 'TURMA_DISPENSADA', reposicaoEm: null, dataAula: { gte: dataParaBanco(somarDias(hojeISO, -90)), lte: dataParaBanco(hojeISO) } },
     select: { dataAula: true },
   });
   if (dispensadas.length === 0) return { vencidas: 0, aVencer: 0 };

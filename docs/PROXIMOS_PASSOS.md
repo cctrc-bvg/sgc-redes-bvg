@@ -101,8 +101,10 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
    - **rodar o E2E** (escrito em `e2e/diarios.spec.ts`, `e2e/periodicas.spec.ts` e nas listas de páginas e
      acessibilidade, mas ainda não executado) e testar `situacoesAutomaticas` com banco;
    - **manual e capturas** (`npm run manual` já regenerado; faltam as capturas das telas novas), incluindo as telas novas.
-   Limites conhecidos: a aula de hoje não conta como dada; a reposição pendente do resumo lista toda dispensa recente
-   com prazo em aberto (não sabe se já foi reposta); o aviso de etapa vai a todos os docentes com oferta.
+   **Reposição confirmada (G29, 25/11/2026):** feita em `/reposicoes` (informar, anexar formulário opcional, ciência,
+   registro direto, download restrito); falta rodar o E2E (`e2e/reposicoes.spec.ts`) e testar o anexo no banco real.
+   Atenção: `bodySizeLimit` das Server Actions subiu para 7 MB e o proxy precisa de `client_max_body_size 7m`.
+   Limites conhecidos: a aula de hoje não conta como dada; a reposição pendente do resumo lista a dispensa recente sem reposição informada (G29: o docente informa em `/reposicoes`, a Coordenação dá ciência); o aviso de etapa vai a todos os docentes com oferta.
 2. **Implantação em produção** (depende da TI e do endereço): seguir `docs/IMPLANTACAO.md`.
    - Fazer o **primeiro uso acompanhado** de `./scripts/atualizar.sh` e `./scripts/ensaiar-migracao.sh`, que nunca
      rodaram com Docker.

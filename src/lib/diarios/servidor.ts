@@ -33,7 +33,7 @@ export async function situacoesAutomaticas(ano: number, ofertas: readonly Oferta
     carregarAno(ano),
     prisma.gradeHorario.findMany({ where: { ofertaId: { in: ids }, anoLetivo: ano }, select: { ofertaId: true, diaSemana: true, semestreLetivo: true } }),
     prisma.coberturaBloco.findMany({
-      where: { tipo: 'DISPENSA', ausencia: { ofertaId: { in: ids }, dataAula: { lt: dataParaBanco(hojeISO) }, status: { not: 'REPOSICAO_AGENDADA' } } },
+      where: { tipo: 'DISPENSA', ausencia: { ofertaId: { in: ids }, dataAula: { lt: dataParaBanco(hojeISO) }, status: { not: 'REPOSICAO_AGENDADA' }, reposicaoEm: null } },
       select: { ausencia: { select: { ofertaId: true } } },
     }),
   ]);

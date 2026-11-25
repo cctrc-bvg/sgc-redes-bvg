@@ -155,7 +155,7 @@ sudo systemctl reload caddy
 
 **Opção B — Nginx** com o certificado da TI (ou `certbot --nginx`): `proxy_pass http://127.0.0.1:3000;` com
 `proxy_set_header Host $host;`, `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` e
-`proxy_set_header X-Forwarded-Proto https;`, `client_max_body_size 2m;` (importação de planilhas, até 1 MB) e
+`proxy_set_header X-Forwarded-Proto https;`, `client_max_body_size 7m;` (importação de planilhas, até 1 MB, e formulários de reposição, até 5 MB) e
 `add_header Strict-Transport-Security "max-age=31536000" always;`.
 
 Depois do proxy: confira que `APP_URL` no `.env` é exatamente o endereço https e rode `docker compose up -d app` para
@@ -211,7 +211,7 @@ a perda máxima de dados se a VM se perder, cai de 24 para cerca de 6 horas. O c
 | :--- | :--- |
 | Login volta para a tela de login sem erro | Acesso por `http://` ou por outro endereço com `APP_URL` em https (cookie `Secure`). |
 | `migrate` termina com erro | Veja `docker compose logs migrate`; banco sem espaço ou senha do `.env` diferente da do volume já criado. |
-| Importação de planilha falha no proxy | Limite de upload do proxy abaixo de 2 MB (`client_max_body_size`). |
+| Importação de planilha falha no proxy | Limite de upload do proxy abaixo de 7 MB (`client_max_body_size`). |
 | Horários um dia antes/depois | Fuso da VM; o app usa `America/Fortaleza` nas regras, mas os logs e o cron usam o fuso da VM. |
 
 ---

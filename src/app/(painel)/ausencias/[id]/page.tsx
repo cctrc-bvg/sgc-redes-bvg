@@ -6,6 +6,7 @@ import { exigirPermissao } from '@/lib/auth/dal';
 import { temPermissao } from '@/lib/auth/rbac';
 import {
   descreverBloco,
+  dataDoBanco,
   formatarData,
   hojeEmFortaleza,
   NOME_STATUS_CONVITE,
@@ -152,6 +153,8 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
                 ? ' O prazo já passou e a reposição ainda não foi agendada.'
                 : ' Combine a data com a turma (pelo menos 75% de acordo, com registro assinado) e marque "reposição agendada" na decisão.'
               : ' Reposição já agendada.'}
+            {registro.reposicaoEm && ` Aula reposta em ${formatarData(dataDoBanco(registro.reposicaoEm))}.`}{' '}
+            <Link href="/reposicoes" className="font-semibold underline underline-offset-2">Registrar ou conferir a reposição</Link>.
           </Alerta>
         </div>
       )}

@@ -42,7 +42,7 @@ export async function resumosDaSemana(segunda: string, hojeISO: string): Promise
       select: { dataAula: true, status: true, professorAusenteId: true, oferta: { select: { disciplina: { select: { nome: true } }, turma: { select: { codigo: true } } } } },
     }),
     prisma.ausenciaDocente.findMany({
-      where: { status: 'TURMA_DISPENSADA', dataAula: { gte: dataParaBanco(somarDiasISO(hojeISO, -90)), lte: dataParaBanco(hojeISO) } },
+      where: { status: 'TURMA_DISPENSADA', reposicaoEm: null, dataAula: { gte: dataParaBanco(somarDiasISO(hojeISO, -90)), lte: dataParaBanco(hojeISO) } },
       select: { dataAula: true, professorAusenteId: true, oferta: { select: { disciplina: { select: { nome: true } }, turma: { select: { codigo: true } } } } },
     }),
     prisma.logComunicacao.findMany({ where: { chave: { startsWith: `resumo:${segunda}:` }, sucesso: true }, select: { chave: true } }),
