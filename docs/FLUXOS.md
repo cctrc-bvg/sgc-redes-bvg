@@ -192,6 +192,33 @@ flowchart TB
 
 ---
 
+## 4A. Períodos especiais (jogos internos, encontro dos servidores)
+
+Todo ano, semanas de evento (jogos internos, encontro dos servidores, Universo e FCE, semana do curso ou de outros cursos, encontros de extensão e de pesquisa) mudam a rotina: parte da turma sai para o evento, alguns docentes se ausentam e a Coordenação
+monta grades temporárias e replaneja as refeições. O período especial reúne tudo isso (G30).
+
+```mermaid
+flowchart LR
+  classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
+  classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
+  P["1. Criar o período<br/>nome, tipo, datas (até 15 dias)"]:::gestao --> G["2. Grade especial por turma<br/>copiada da normal e editada"]:::gestao --> Q["3. Estudantes no campus<br/>quantidade por turma e dia"]:::gestao --> R["4. Resumo de refeições<br/>regra do campus × presentes"]:::sistema --> M["5. Mensagem à AE e à nutricionista<br/>enviar e registrar"]:::gestao
+  G --> A["Ausências e refeições<br/>usam a grade especial nos dias do período"]:::sistema
+```
+
+| # | Etapa | Responsável | Parte do sistema |
+| :-- | :-- | :-- | :-- |
+| 1 | Criar o período | Coordenação | `src/app/(painel)/periodos/actions.ts` (`criarPeriodo`), `src/lib/periodos/regras.ts` (`PeriodoSchema`) |
+| 2 | Grade especial | Coordenação | `copiarGradeNormal`, `salvarGradeEspecial` (avisa conflito de professor), modelo `GradeEspecial` |
+| 3 | Presentes por dia | Coordenação | `salvarPresencas`, modelo `PresencaEspecial` (só a quantidade, sem nomes) |
+| 4 | Resumo de refeições | Sistema | `planoAlimentar` (só manhã: lanche da manhã; só tarde: lanche da tarde; integral: os três) |
+| 5 | Mensagem e registro | Coordenação | `mensagemPlanoAlimentar`, `registrarResumoAlimentar`; chave `periodo:<id>:<canal>` |
+| — | Grade que vale no dia | Sistema | `aplicarGradeEspecial` (ausências e refeições) e o resumo semanal dos docentes |
+
+Turmas sem grade especial seguem a grade normal. Ainda usam a grade normal: Minha grade, a agenda da tela inicial e as
+aulas presumidas dos diários (a Coordenação corrige se a semana especial mudar a contagem).
+
+---
+
 ## 5. Alimentação
 
 ```mermaid

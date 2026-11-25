@@ -169,6 +169,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Cadastrar eventos: férias docentes, matrícula, encontro pedagógico, acolhida, feriados, pontos facultativos, PITs/RITs, reuniões, avaliações finais e outros.',
       'Registrar suspensões não previstas (falta de energia, de água, de transporte, luto oficial, ponto facultativo municipal…) como dias a repor.',
       'Cadastrar sábados letivos, cada um seguindo a grade de um dia da semana.',
+      'Períodos especiais (jogos internos, encontro dos servidores, Universo e FCE, semana do curso ou de outros cursos, encontros de extensão e de pesquisa, eventos externos): criar o período, montar a grade temporária de cada turma, informar quantos estudantes ficam no campus em cada dia e gerar o resumo de refeições para a Assistência Estudantil e a nutricionista. Nos dias do período, a grade especial vale no lugar da normal.',
       'Contar os dias letivos por mês, etapa, semestre e ano, comparando com a meta (50 por etapa, 200 no ano).',
       'Avaliações finais nunca contam como dias letivos (ROD, Art. 32; refeições nesses dias só por acréscimo lançado na Alimentação): ficam fora da contagem e da grade, inclusive aos sábados. Acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais; o sistema avisa se o período for cadastrado antes disso e, enquanto elas não estiverem cadastradas, sugere começar no dia seguinte ao último dia letivo. Os prazos entre as avaliações são combinados com os docentes.',
       'Ver o ano inteiro ou um mês, imprimir/salvar em PDF e exportar/importar em planilha.',
@@ -185,6 +186,16 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       ],
     },
     fluxos: [
+      {
+        titulo: 'Montar um período especial (jogos internos, encontro dos servidores)',
+        quem: 'Coordenação',
+        passos: [
+          'No Calendário, abra "Períodos especiais" e crie o período com nome, tipo e datas (até 15 dias).',
+          'Para cada turma afetada, clique em "Montar a grade especial": copie a grade normal como ponto de partida e reorganize as disciplinas.',
+          'Em "Estudantes no campus", informe quantos estudantes de cada turma ficam em cada dia (só a quantidade).',
+          'Em "Resumo de refeições", confira as quantidades por dia, copie a mensagem para a Assistência Estudantil e a nutricionista, envie e registre.',
+        ],
+      },
       {
         titulo: 'Cadastrar as etapas do ano',
         quem: 'Coordenação',

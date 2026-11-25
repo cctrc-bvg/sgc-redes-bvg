@@ -87,6 +87,9 @@ export default async function PaginaCalendario({ searchParams }: { searchParams:
           <Link href={`/calendario/etapas?ano=${ano}`} className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
             Etapas e semestres
           </Link>
+          <Link href="/periodos" className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
+            Períodos especiais
+          </Link>
           <Link href="/grade/sabados" className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
             Sábados letivos
           </Link>

@@ -4,7 +4,7 @@ import { entrar } from './apoio';
 test('diário: validação, atualização e lembrete ao docente', async ({ page }) => {
   await entrar(page, 'coordenacao');
   await page.goto('/diarios');
-  await page.locator('main a[href^="/diarios/"]').first().click();
+  await page.locator('main a[href^="/diarios/"]:not([href^="/diarios/conferencia"])').first().click();
   await expect(page).toHaveURL(/\/diarios\/[^/?]+$/);
 
   const ministradas = page.getByLabel(/^Aulas ministradas/);
@@ -51,14 +51,16 @@ test('conferência: valor igual ao presumido mantém o automático; diferente vi
   await expect(linha).toBeVisible();
   const campo = linha.getByRole('textbox');
   const original = await campo.inputValue();
+  const disciplina = await linha.getByRole('link').first().innerText();
 
   await campo.fill(String(Number(original) + 3));
   await linha.getByRole('button', { name: 'Conferir' }).click();
-  await page.goto('/diarios/conferencia');
-  await expect(page.locator('tbody tr').first().getByText('manual').first()).toBeVisible();
+  // A linha pode mudar de posição (a lista ordena por diferença): procura pela disciplina.
+  const mesma = page.locator('tbody tr', { hasText: disciplina }).first();
+  await expect(mesma).toContainText('manual');
 
   // Devolve o automático pelo detalhe do diário.
-  await page.locator('tbody tr').first().getByRole('link').click();
+  await mesma.getByRole('link').first().click();
   const voltar = page.getByRole('button', { name: 'Voltar ao automático' });
   if (await voltar.isVisible()) await voltar.click();
 });

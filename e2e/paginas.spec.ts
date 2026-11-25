@@ -5,7 +5,7 @@ import { entrar, type Perfil } from './apoio';
 const PAGINAS: Record<Perfil, string[]> = {
   coordenacao: [
     '/painel', '/calendario', '/grade', '/grade/minha', '/grade/sabados', '/ausencias', '/alimentacao', '/comunicacao',
-    '/comunicacao/modelos', '/comunicacao/periodicas', '/usuarios', '/turmas', '/disciplinas', '/ofertas', '/auditoria', '/ppe', '/ppi', '/diarios', '/diarios/conferencia', '/reposicoes',
+    '/comunicacao/modelos', '/comunicacao/periodicas', '/usuarios', '/turmas', '/disciplinas', '/ofertas', '/auditoria', '/ppe', '/ppi', '/diarios', '/diarios/conferencia', '/reposicoes', '/periodos',
     '/processos', '/relatorios', '/ajuda', '/conta/contato',
   ],
   professor: ['/painel', '/grade', '/grade/minha', '/calendario', '/disciplinas', '/ppe', '/diarios', '/reposicoes', '/ajuda'],
@@ -16,6 +16,7 @@ const PAGINAS: Record<Perfil, string[]> = {
 
 for (const [perfil, rotas] of Object.entries(PAGINAS) as [Perfil, string[]][]) {
   test(`páginas principais: ${perfil}`, async ({ page }) => {
+    test.setTimeout(150_000);
     const errosJs: string[] = [];
     page.on('pageerror', (e) => errosJs.push(e.message));
     // Recurso bloqueado pela política de conteúdo (next.config.ts) aparece como erro no console.

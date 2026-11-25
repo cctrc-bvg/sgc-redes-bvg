@@ -14,6 +14,7 @@
 | Cadastros | Usuários, turmas, disciplinas (matriz do PPC), ofertas, importação e exportação por planilha |
 | Operação | Calendário acadêmico (dias letivos, sábados letivos, avaliações finais), grade e janelas livres, ausências (inclusive informadas pelo docente), convites e substituição, alimentação com SLA |
 | Comunicação | Semiautomática por e-mail/WhatsApp, textos-padrão, histórico, **resumo semanal dos docentes** (novo) |
+| Períodos especiais e reposição | **Grade temporária e resumo de refeições** para jogos internos e encontros (G30, novo); **reposição de aulas confirmada** pelo docente, com formulário opcional (G29, novo) |
 | Gestão | PPE/PEI, PPI, **diários automáticos com conferência** (novo), processos SEI, relatórios, PDFs |
 | Prazos do ROD | Reposição (Art. 37), frequência do substituto (Art. 43), avaliação final sem dia letivo (Art. 32) |
 | Produção | `/api/saude`, backup, `atualizar.sh` com ensaio de migração e volta automática, política de migrações no CI, guia `IMPLANTACAO.md` |

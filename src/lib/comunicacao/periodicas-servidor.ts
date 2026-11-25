@@ -26,13 +26,18 @@ export async function resumosDaSemana(segunda: string, hojeISO: string): Promise
   const sabadosLetivos = new Map(cal.sabados.map((s) => [s.data, s.diaSemanaReferente]));
   const semestre = cal.semestres[0] && segunda <= cal.semestres[0].fim ? 1 : cal.semestres[0] || cal.semestres[1] ? 2 : Number(segunda.slice(5, 7)) <= 6 ? 1 : 2;
 
-  const [docentes, ofertas, celulas, coberturas, ausencias, dispensadas, enviados] = await Promise.all([
+  const [docentes, ofertas, celulas, periodosEspeciais, coberturas, ausencias, dispensadas, enviados] = await Promise.all([
     prisma.user.findMany({ where: ONDE_DOCENTES, select: { id: true, nome: true, email: true, whatsapp: true, usaWhatsapp: true }, orderBy: { nome: 'asc' } }),
     prisma.disciplinaOferta.findMany({
       where: { anoLetivo: ano, OR: [{ semestreLetivo: null }, { semestreLetivo: semestre }] },
       select: { id: true, professorId: true, disciplina: { select: { nome: true } }, turma: { select: { codigo: true } } },
     }),
-    prisma.gradeHorario.findMany({ where: { anoLetivo: ano, semestreLetivo: semestre, ofertaId: { not: null } }, select: { ofertaId: true, diaSemana: true } }),
+    prisma.gradeHorario.findMany({ where: { anoLetivo: ano, semestreLetivo: semestre, ofertaId: { not: null } }, select: { ofertaId: true, diaSemana: true, turmaId: true } }),
+    prisma.periodoEspecial.findMany({
+      where: { inicio: { lte: dataParaBanco(sexta) }, fim: { gte: dataParaBanco(segunda) } },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, inicio: true, fim: true, grades: { select: { ofertaId: true, diaSemana: true, turmaId: true } } },
+    }),
     prisma.coberturaBloco.findMany({
       where: { tipo: 'SUBSTITUICAO', substitutoId: { not: null }, ausencia: { dataAula: { gte: dataParaBanco(segunda), lte: dataParaBanco(sexta) } } },
       select: { substitutoId: true, ausencia: { select: { dataAula: true, oferta: { select: { disciplina: { select: { nome: true } }, turma: { select: { codigo: true } } } } } } },
@@ -61,8 +66,12 @@ export async function resumosDaSemana(segunda: string, hojeISO: string): Promise
         return { data, semAula: e ? e.descricao ?? NOME_TIPO_EVENTO[e.tipo] : 'fora do período letivo', aulas: [] };
       }
       const dia = diaDaGradeNaData(data, sabadosLetivos);
+      // Período especial na data: a grade especial vale nas turmas que a têm (jogos internos etc.).
+      const especial = periodosEspeciais.find((p) => dataDoBanco(p.inicio) <= data && data <= dataDoBanco(p.fim));
+      const turmasEspeciais = new Set(especial?.grades.map((g) => g.turmaId));
+      const doDia = especial ? [...celulas.filter((c) => !turmasEspeciais.has(c.turmaId)), ...especial.grades.filter((g) => g.ofertaId)] : celulas;
       const contagem = new Map<string, number>();
-      for (const c of celulas) if (c.diaSemana === dia && porOferta.has(c.ofertaId!)) contagem.set(c.ofertaId!, (contagem.get(c.ofertaId!) ?? 0) + 1);
+      for (const c of doDia) if (c.diaSemana === dia && porOferta.has(c.ofertaId!)) contagem.set(c.ofertaId!, (contagem.get(c.ofertaId!) ?? 0) + 1);
       return { data, semAula: null, aulas: [...contagem].map(([id, quantidade]) => ({ disciplina: porOferta.get(id)!.disciplina.nome, turma: porOferta.get(id)!.turma.codigo, quantidade })) };
     });
     const substituicoes = coberturas

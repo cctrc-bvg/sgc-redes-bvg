@@ -121,6 +121,8 @@ model Turma {
   ofertas             DisciplinaOferta[]
   ausencias           AusenciaDocente[]
   alertasRefeicao     AlertaAlimentacao[]
+  gradesEspeciais     GradeEspecial[]
+  presencasEspeciais  PresencaEspecial[]
 }
 
 model Disciplina {
@@ -162,6 +164,7 @@ model DisciplinaOferta {
   observacaoDiario String?
 
   horarios      GradeHorario[]
+  horariosEspeciais GradeEspecial[]
   ausencias     AusenciaDocente[]
 
   // Uma disciplina é ofertada uma vez por ano letivo em cada turma.
@@ -180,6 +183,7 @@ model BlocoHorario {
   horaFim    String // ex: "08:20"
 
   grades     GradeHorario[]
+  gradesEspeciais GradeEspecial[]
   coberturas CoberturaBloco[] @relation("BlocoCoberto")
   adiantamentosOrigem CoberturaBloco[] @relation("BlocoOrigemAdiantamento")
   convites   ConviteSubstituicao[]
@@ -637,4 +641,67 @@ model ProcessoKanban {
   criadoPor    User         @relation(fields: [criadoPorId], references: [id])
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+}
+// ==========================================
+// PERÍODOS ESPECIAIS (jogos internos, encontro dos servidores, eventos externos)
+// ==========================================
+
+enum TipoPeriodoEspecial {
+  JOGOS_INTERNOS
+  ENCONTRO_SERVIDORES
+  UNIVERSO_FCE
+  SEMANA_DO_CURSO
+  SEMANA_OUTROS_CURSOS
+  ENCONTRO_EXTENSAO
+  ENCONTRO_PESQUISA
+  EVENTO_EXTERNO
+  OUTRO
+}
+
+// Intervalo de datas em que a rotina muda: parte da turma vai a um evento, alguns docentes se ausentam e a Coordenação
+// monta grades temporárias e replaneja a alimentação. Nos dias do período, a grade especial de uma turma vale no
+// lugar da grade normal (se ela tiver grade especial); fora do período, nada muda.
+model PeriodoEspecial {
+  id          String              @id @default(cuid())
+  nome        String
+  tipo        TipoPeriodoEspecial
+  inicio      DateTime            @db.Date
+  fim         DateTime            @db.Date
+  observacao  String?
+  createdAt   DateTime            @default(now())
+
+  grades      GradeEspecial[]
+  presencas   PresencaEspecial[]
+
+  @@index([inicio, fim])
+}
+
+// Célula da grade temporária de uma turma no período (mesma ideia de GradeHorario, sem ano e semestre).
+model GradeEspecial {
+  id         String          @id @default(cuid())
+  periodoId  String
+  periodo    PeriodoEspecial @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  turmaId    String
+  turma      Turma           @relation(fields: [turmaId], references: [id])
+  diaSemana  Int             // 1=Segunda ... 5=Sexta
+  blocoId    String
+  bloco      BlocoHorario    @relation(fields: [blocoId], references: [id])
+  ofertaId   String?
+  oferta     DisciplinaOferta? @relation(fields: [ofertaId], references: [id], onDelete: SetNull)
+  sala       String?
+
+  @@unique([periodoId, turmaId, diaSemana, blocoId])
+}
+
+// Quantos estudantes da turma ficam no campus em cada dia do período (só a quantidade, nunca nomes).
+model PresencaEspecial {
+  id         String          @id @default(cuid())
+  periodoId  String
+  periodo    PeriodoEspecial @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  turmaId    String
+  turma      Turma           @relation(fields: [turmaId], references: [id])
+  data       DateTime        @db.Date
+  qtdAlunos  Int
+
+  @@unique([periodoId, turmaId, data])
 }

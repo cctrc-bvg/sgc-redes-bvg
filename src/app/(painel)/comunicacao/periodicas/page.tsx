@@ -66,7 +66,7 @@ export default async function PaginaPeriodicas({ searchParams }: { searchParams:
                   {r.enviado ? '✔ Envio registrado.' : r.temAvisos ? 'Tem mudanças ou prazos nesta semana.' : 'Só a grade da semana.'}
                 </p>
                 <CaixaMensagem mensagem={r.mensagem} mostrarWhatsapp={usuario.usaWhatsapp}>
-                  {!r.enviado && <FormularioResumo segunda={segunda} docenteId={r.mensagem.chave.split(':')[2]!} mostrarWhatsapp={usuario.usaWhatsapp} />}
+                  <FormularioResumo segunda={segunda} docenteId={r.mensagem.chave.split(':')[2]!} mostrarWhatsapp={usuario.usaWhatsapp} enviado={r.enviado} />
                 </CaixaMensagem>
               </li>
             ))}
