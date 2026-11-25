@@ -11,6 +11,7 @@ import { prazoDeReposicao } from '@/lib/calendario/regras';
 import { semestreLetivoAtual } from '@/lib/grade/regras';
 import { andamentoDoPei } from '@/lib/ppe/andamento';
 import { anoDoSemestre, semestreAtual } from '@/lib/ppe/regras';
+import { diariosComGradeCurta } from '@/lib/diarios/servidor';
 import { disciplinasDoDocente } from '@/lib/ppe/servidor';
 import { CONTAGENS_ZERADAS, montarAcoes, type AcaoPrioritaria, type ContagensPainel } from './acoes';
 import { chavePeriodo, inicioDaSemana, montarSemana, tituloDoEvento, type CelulaAgenda } from './agenda';
@@ -47,6 +48,7 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     ppeParaDefinir,
     peiParaPreencher,
     diariosAtrasados,
+    diariosGradeCurta,
     meusDiariosAtrasados,
     processosVencidos,
     etapas,
@@ -74,6 +76,7 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     contar(minhasDisciplinas.length > 0, () => prisma.registroPPE.count({ where: { ...ppeDoDocente, modalidade: 'A_DEFINIR' } })),
     contar(minhasDisciplinas.length > 0, () => prisma.registroPPE.count({ where: { ...ppeDoDocente, modalidade: 'PEI', pei: null } })),
     contar(pode('diarios:ver-todos'), () => prisma.disciplinaOferta.count({ where: { anoLetivo: ano, diarioEmDia: false } })),
+    contar(pode('diarios:ver-todos'), () => diariosComGradeCurta(ano, semestreLetivoAtual(agora), hojeISO)),
     contar(docente, () =>
       prisma.disciplinaOferta.count({ where: { anoLetivo: ano, professorId: usuario.id, diarioEmDia: false } }),
     ),
@@ -129,6 +132,7 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     ppeParaDefinir,
     peiParaPreencher,
     diariosAtrasados,
+    diariosGradeCurta,
     meusDiariosAtrasados,
     processosVencidos,
     processosAVencer,

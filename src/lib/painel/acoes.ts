@@ -39,6 +39,8 @@ export interface ContagensPainel {
   ppeParaDefinir: number;
   peiParaPreencher: number;
   diariosAtrasados: number;
+  /** Ofertas cuja grade não comporta as aulas previstas até o fim do período (RF08-A). */
+  diariosGradeCurta: number;
   meusDiariosAtrasados: number;
   processosVencidos: number;
   /** Processos que vencem nos próximos 3 dias. */
@@ -74,6 +76,7 @@ export const CONTAGENS_ZERADAS: ContagensPainel = {
   ppeParaDefinir: 0,
   peiParaPreencher: 0,
   diariosAtrasados: 0,
+  diariosGradeCurta: 0,
   meusDiariosAtrasados: 0,
   processosVencidos: 0,
   processosAVencer: 0,
@@ -292,6 +295,16 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     quantidade: c.diariosAtrasados,
     titulo: 'Diários atrasados',
     detalhe: 'Disciplinas com diário fora do dia; dá para enviar lembrete ao docente.',
+    href: '/diarios',
+    botao: 'Ver diários',
+  });
+  add({
+    id: 'diarios-grade-curta',
+    nivel: 'acompanhar',
+    icone: 'diarios',
+    quantidade: c.diariosGradeCurta,
+    titulo: 'Carga projetada abaixo da prevista',
+    detalhe: 'A grade não comporta todas as aulas previstas até o fim do período: ajuste a grade ou programe reposições.',
     href: '/diarios',
     botao: 'Ver diários',
   });

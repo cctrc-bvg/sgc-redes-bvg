@@ -9,6 +9,8 @@ import { acumulaDocencia, temPermissao } from '@/lib/auth/rbac';
 import { AlternarEscopo } from '@/components/escopo';
 import { dataDoBanco, formatarData, hojeEmFortaleza } from '@/lib/ausencias/regras';
 import { aulasEsperadas, NOME_SEMAFORO, ORDEM_SEMAFORO, percentual, semaforo, type Semaforo } from '@/lib/diarios/regras';
+import { deficitProjetado } from '@/lib/diarios/automatico';
+import { situacoesAutomaticas } from '@/lib/diarios/servidor';
 import { anosDoSeletor, periodoDaUrl } from '@/lib/grade/regras';
 import { FormularioPeriodo } from './formularios';
 
@@ -37,6 +39,7 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
         semestreLetivo: true,
         aulasPrevistas: true,
         aulasMinistradas: true,
+        ministradasManual: true,
         diarioEmDia: true,
         ultimaCobranca: true,
         turma: { select: { codigo: true } },
@@ -59,11 +62,14 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
     return p ? { inicio: dataDoBanco(p.inicio), fim: dataDoBanco(p.fim) } : null;
   };
 
+  const automaticas = await situacoesAutomaticas(anoLetivo, ofertas, hoje);
   const linhas = ofertas
-    .map((o) => {
+    .map((o0) => {
+      const auto = automaticas.get(o0.id);
+      const o = { ...o0, aulasMinistradas: auto?.efetivas ?? o0.aulasMinistradas };
       const j = janela(o.semestreLetivo);
       const esperadas = j ? aulasEsperadas(o.aulasPrevistas, j.inicio, j.fim, hoje) : null;
-      return { ...o, esperadas, situacao: semaforo(o, esperadas) };
+      return { ...o, esperadas, automatico: !o0.ministradasManual && auto?.presumido != null, situacao: semaforo(o, esperadas, auto?.restantes != null ? deficitProjetado({ ministradas: o.aulasMinistradas, restantesNaGrade: auto.restantes, previstas: o.aulasPrevistas }) : 0) };
     })
     .sort((a, b) => ORDEM_SEMAFORO[a.situacao] - ORDEM_SEMAFORO[b.situacao] || a.turma.codigo.localeCompare(b.turma.codigo) || a.disciplina.nome.localeCompare(b.disciplina.nome, 'pt-BR'));
   const contagem = (s: Semaforo) => linhas.filter((l) => l.situacao === s).length;
@@ -154,6 +160,7 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
                         <span className="tabular-nums">
                           {l.aulasMinistradas} de {l.aulasPrevistas} ({pct}%)
                         </span>
+                        {l.automatico && <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">automático</span>}
                         <span className="mt-1 block h-2 w-32 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
                           <span className="block h-full bg-if-verde-700" style={{ width: `${pct}%` }} />
                         </span>

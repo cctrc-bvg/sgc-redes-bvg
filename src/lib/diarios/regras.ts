@@ -24,9 +24,11 @@ export const folga = (previstas: number) => Math.max(2, Math.ceil(previstas * 0.
  * Situação de uma oferta. `esperadas`: aulas que já deveriam ter sido dadas até hoje (null quando não há
  * referência de calendário — aí só valem o "diário em dia" e a carga cumprida).
  */
-export function semaforo(o: { aulasPrevistas: number; aulasMinistradas: number; diarioEmDia: boolean }, esperadas: number | null): Semaforo {
+export function semaforo(o: { aulasPrevistas: number; aulasMinistradas: number; diarioEmDia: boolean }, esperadas: number | null, deficitProjetado = 0): Semaforo {
   if (o.aulasPrevistas > 0 && o.aulasMinistradas >= o.aulasPrevistas) return 'concluida';
   if (!o.diarioEmDia) return 'atrasado';
+  // Problema estrutural: a grade não comporta as aulas previstas até o fim do período.
+  if (deficitProjetado > 0) return 'atencao';
   if (esperadas !== null && o.aulasMinistradas < esperadas - folga(o.aulasPrevistas)) return 'atencao';
   return 'em-dia';
 }

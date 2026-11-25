@@ -155,6 +155,8 @@ model DisciplinaOferta {
   // Controle de Diários e Carga Horária (Art. 22, VI e VII)
   aulasPrevistas  Int      @default(0)
   aulasMinistradas Int     @default(0)
+  // RF08-A: false = vale o presumido (grade × dias letivos); true = a Coordenação lançou o valor à mão.
+  ministradasManual Boolean @default(false)
   diarioEmDia     Boolean  @default(true)
   ultimaCobranca  DateTime?
   observacaoDiario String?

@@ -15,6 +15,12 @@ describe('semáforo de diários (RF08)', () => {
     expect(semaforo(o(0), null)).toBe('em-dia'); // sem referência de calendário
   });
 
+  it('déficit projetado da grade acende o amarelo, mas não vence atraso nem carga cumprida', () => {
+    expect(semaforo(o(40), 40, 5)).toBe('atencao');
+    expect(semaforo(o(40, false), 40, 5)).toBe('atrasado');
+    expect(semaforo(o(80), 80, 5)).toBe('concluida');
+  });
+
   it('percentual limitado a 100%', () => {
     expect(percentual(40, 80)).toBe(50);
     expect(percentual(90, 80)).toBe(100);
