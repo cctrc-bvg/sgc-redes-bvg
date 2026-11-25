@@ -187,6 +187,7 @@ flowchart TB
 | 4 | Responder o convite | Docente | Minha grade | `responderConvite` | Aceitar cria a substituição se o horário ainda está aberto e o docente livre |
 | 5 | Refeições | Sistema | Alimentação | `recalcularAlertasDaTurma`, `src/lib/alimentacao-engine.ts` | Avisos de cancelamento com urgência verde, amarela ou vermelha |
 | 6 | Comunicar | Coordenação | Ausências › detalhe › Comunicar | `src/lib/ausencias/mensagens.ts` (`mensagensDaAusencia`) | Mensagens prontas por público, registradas no histórico |
+| 5a | Prazo de reposição (ROD, Art. 37, § 2º) | Sistema | Ausências › detalhe; tela inicial | `prazoDeReposicao` (`src/lib/calendario/regras.ts`), `reposicoesSemData` (`src/lib/painel/servidor.ts`) | Turma dispensada: prazo de 15 dias letivos ou fim da etapa; a tela inicial avisa as reposições vencidas ou a vencer em 5 dias, sem data agendada |
 | 6a | Ciência ao docente ausente | Coordenação | Ausências › detalhe › Comunicar | `mensagensDaAusencia` (chave `ciencia:`), `ORIENTACAO_GESTAO_PESSOAS` | Antes da cobertura: confirma o registro e orienta a tratar o motivo e o comprovante (ex.: atestado) **direto com a Coordenadoria de Gestão de Pessoas (CGP, cgp.boaviagem@ifce.edu.br), fora do sistema**. A mensagem da cobertura repete a orientação. |
 
 ---

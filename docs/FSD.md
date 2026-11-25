@@ -68,6 +68,7 @@ Professor sempre leciona.
     Pessoas. O sistema e a Coordenação do curso não recebem nem guardam motivo pessoal ou documento (LGPD).
   - O texto fica em `ORIENTACAO_GESTAO_PESSOAS` (`src/lib/ausencias/mensagens.ts`) e na variável
     `{{gestao de pessoas}}` dos textos-padrão. *(Implementado em 25/11/2026.)*
+- **Prazo de reposição (ROD, Art. 37, § 2º; implementado em 25/11/2026):** as aulas dispensadas devem ser repostas em até 15 dias letivos ou até o fim da etapa, o que ocorrer primeiro (`prazoDeReposicao`, `src/lib/calendario/regras.ts`). O prazo aparece no detalhe da ausência; a tela inicial da Coordenação avisa as reposições sem data agendada com prazo vencido (urgente) ou a vencer em 5 dias. A data deve ser combinada com pelo menos 75% da turma, com registro assinado (Art. 37, § 3º).
 - **RF02-A — Docente informa a própria ausência** *(decisão G15, implementado em 25/11/2026)*:
   - **Docente → Coordenação:** o docente informa a data (ou o período) e as aulas, escolhendo um motivo operacional
     da lista, nunca o motivo pessoal.

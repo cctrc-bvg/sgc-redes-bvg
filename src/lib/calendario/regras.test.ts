@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { avisosAvaliacoesFinais, contarDiasLetivos, dentro, EventoSchema, situacaoDasAulas, intervaloDoAno, porMes, semanasDoMes, suspensaoNaData, validarSequencia } from './regras';
+import { avisosAvaliacoesFinais, inicioSugeridoAvaliacoes, contarDiasLetivos, datasEntre, dentro, diaDaSemanaISO, prazoDeReposicao, textoPrazoReposicao, EventoSchema, situacaoDasAulas, intervaloDoAno, porMes, semanasDoMes, suspensaoNaData, validarSequencia } from './regras';
 
 const ev = (inicio: string, fim: string, suspendeAulas = true, imprevisto = false) => ({ inicio, fim, suspendeAulas, imprevisto });
 
@@ -120,5 +120,38 @@ describe('avaliações finais (ROD, Arts. 32 e 105)', () => {
     const meio = avisosAvaliacoesFinais([{ ...ev, inicio: '2026-07-01', fim: '2026-07-03' }], ['2026-07-06', '2026-12-16']);
     expect(meio).toHaveLength(1);
     expect(meio[0]).toContain('último dia letivo: 16/12/2026');
+  });
+});
+
+describe('prazo de reposição (ROD, Art. 37, § 2º)', () => {
+  // Dias letivos de segunda a sexta de 01/03 a 30/04/2027 (sem feriados, para simplificar).
+  const letivos = [...datasEntre('2027-03-01', '2027-04-30')].filter((d) => ![0, 6].includes(diaDaSemanaISO(d)));
+  const etapas = [{ inicio: '2027-03-01', fim: '2027-03-31' }, { inicio: '2027-04-01', fim: '2027-04-30' }, null, null];
+
+  it('15 dias letivos depois da aula, quando a etapa dura mais que isso', () => {
+    const p = prazoDeReposicao('2027-03-02', letivos, etapas);
+    expect(p).toEqual({ prazo: '2027-03-23', motivo: 'dias' });
+    expect(textoPrazoReposicao(p!)).toBe('até 23/03/2027 (15 dias letivos)');
+  });
+
+  it('o fim da etapa vence quando vem antes dos 15 dias letivos', () => {
+    const p = prazoDeReposicao('2027-03-25', letivos, etapas);
+    expect(p).toEqual({ prazo: '2027-03-31', motivo: 'etapa', etapa: 1 });
+    expect(textoPrazoReposicao(p!)).toBe('até 31/03/2027 (fim da N1)');
+  });
+
+  it('sem etapa cadastrada vale a contagem de dias; sem dias letivos depois, o último dia letivo; sem nada, nulo', () => {
+    expect(prazoDeReposicao('2027-03-02', letivos, [null, null, null, null])?.motivo).toBe('dias');
+    expect(prazoDeReposicao('2027-04-28', letivos, [null, null, null, null])).toEqual({ prazo: '2027-04-30', motivo: 'fim-do-ano' });
+    expect(prazoDeReposicao('2027-05-10', letivos, [null, null, null, null])).toBeNull();
+  });
+});
+
+describe('início sugerido das avaliações finais', () => {
+  it('é o dia seguinte ao último dia letivo; domingo passa para segunda; sem dias letivos, nulo', () => {
+    expect(inicioSugeridoAvaliacoes(['2026-12-15', '2026-12-16'])).toBe('2026-12-17');
+    expect(inicioSugeridoAvaliacoes(['2026-12-18'])).toBe('2026-12-19'); // sábado: avaliações podem cair no sábado
+    expect(inicioSugeridoAvaliacoes(['2026-12-19'])).toBe('2026-12-21'); // domingo → segunda
+    expect(inicioSugeridoAvaliacoes([])).toBeNull();
   });
 });

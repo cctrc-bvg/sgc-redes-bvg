@@ -27,6 +27,10 @@ export interface ContagensPainel {
   avisosRefeicao: number;
   ausenciasPendentes: number;
   ausenciasHojeOuAmanha: number;
+  /** Reposições (ROD, Art. 37, § 2º) com prazo vencido, a repor e ainda não agendadas. */
+  reposicoesVencidas: number;
+  /** Reposições ainda não agendadas cujo prazo vence nos próximos 5 dias. */
+  reposicoesAVencer: number;
   /** Das pendentes, quantas o próprio docente informou (RF02-A). */
   ausenciasInformadas: number;
   convitesPendentes: number;
@@ -61,6 +65,8 @@ export const CONTAGENS_ZERADAS: ContagensPainel = {
   avisosRefeicao: 0,
   ausenciasPendentes: 0,
   ausenciasHojeOuAmanha: 0,
+  reposicoesVencidas: 0,
+  reposicoesAVencer: 0,
   ausenciasInformadas: 0,
   convitesPendentes: 0,
   ppiEmAnalise: 0,
@@ -149,6 +155,22 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
       .join(' '),
     href: '/ausencias',
     botao: 'Decidir',
+  });
+  add({
+    id: 'reposicoes',
+    nivel: c.reposicoesVencidas > 0 ? 'urgente' : 'atencao',
+    icone: 'ausencias',
+    quantidade: c.reposicoesVencidas + c.reposicoesAVencer,
+    titulo: 'Reposições de aulas sem data agendada',
+    detalhe: [
+      c.reposicoesVencidas > 0 && `${c.reposicoesVencidas} com o prazo vencido.`,
+      c.reposicoesAVencer > 0 && `${c.reposicoesAVencer} vencem em até 5 dias.`,
+      'Prazo: 15 dias letivos ou o fim da etapa (ROD, Art. 37).',
+    ]
+      .filter(Boolean)
+      .join(' '),
+    href: '/ausencias',
+    botao: 'Agendar',
   });
   add(
     papel.daCienciaRefeicao

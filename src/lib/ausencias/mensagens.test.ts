@@ -160,6 +160,7 @@ describe('mensagensDaAusencia (e-mail e WhatsApp)', () => {
     expect(sub.whatsapp).toBeNull();
     expect(sub.texto).toContain('- Manhã A (no lugar de Redes de Computadores)');
     expect(sub.texto).not.toContain('evento');
+    expect(sub.texto).toContain('7 dias letivos (ROD, Art. 43)');
     expect(msgs[1].texto).toContain('sua aula de BD (Tarde A) passa para Manhã B.');
     expect(msgs[4].texto).toContain('Combine com a Coordenação a reposição');
     expect(msgs[4].texto).toContain(ORIENTACAO_GESTAO_PESSOAS);

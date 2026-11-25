@@ -81,6 +81,16 @@ test('ausência: registrar, convidar substituto, aceitar em Minha grade e cancel
   await expect(page).toHaveURL(/\/ausencias\?.*aviso=cancelada/);
 });
 
+test('turma dispensada mostra o prazo de reposição do ROD (15 dias letivos ou fim da etapa)', async ({ page }) => {
+  await entrar(page, 'coordenacao');
+  await page.goto('/ausencias');
+  const linha = page.locator('tr', { hasText: 'Turma dispensada' }).first();
+  await expect(linha).toBeVisible();
+  await linha.getByRole('link').first().click();
+  await expect(page.getByText(/Reposição das aulas dispensadas: até \d{2}\/\d{2}\/\d{4} \((15 dias letivos|fim da N\d)\)/)).toBeVisible();
+  await expect(page.getByText('Art. 37, § 2º')).toBeVisible();
+});
+
 test('licença de vários dias: um registro só para o período inteiro', async ({ page }) => {
   await entrar(page, 'coordenacao');
   // Mais à frente que o teste acima, mas ainda dentro do semestre de demonstração.

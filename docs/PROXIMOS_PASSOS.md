@@ -1,6 +1,6 @@
 # Próximos Passos — Retomada do Desenvolvimento
 
-> Atualizado em **25/11/2026**, com o **PR #3** aberto. Leia este arquivo inteiro antes de continuar: estado do
+> Atualizado em **25/11/2026**, com os PR #1, #2 e #3 mesclados; trabalho novo no branch `rod-prazos`. Leia este arquivo inteiro antes de continuar: estado do
 > projeto, o que depende do usuário, o backlog, as decisões e as armadilhas já encontradas.
 
 ---
@@ -9,8 +9,8 @@
 
 ```bash
 cd ~/projetos/sgc-redes-bvg
-git status && git log --oneline -6          # branch e2e-ampliado (a partir de upstream/main)
-gh pr view 3 -R cctrc-bvg/sgc-redes-bvg     # PR aberto: estado, revisão e CI
+git status && git log --oneline -6          # branch rod-prazos (a partir de upstream/main)
+gh pr list -R cctrc-bvg/sgc-redes-bvg       # PRs abertos no original
 ./scripts/dev.sh testar                     # esperado: typecheck ok + 436 testes passando
 ```
 
@@ -40,9 +40,10 @@ Fluxos de uso, com diagramas: [FLUXOS.md](FLUXOS.md). Requisitos e decisões: [F
 - `origin` = fork `isaacmiranda/sgc-redes-bvg` (público, admin). `upstream` = `cctrc-bvg/sgc-redes-bvg` (original, só leitura).
 - **PR #1** (versão inicial) e **PR #2** (E2E, mensagens de PPI/PPE, guia de implantação e backup) foram **mesclados em
   24 e 25/11/2026**.
-- **PR #3** (`e2e-ampliado` → `main`), aberto em 25/11/2026, commits `84846c9` e `96fded8`: tela inicial nova, docência
-  acumulada ao cargo, revisão dos fluxos, ausência informada pelo docente, avaliações finais, produção segura, FSD e
-  estudo do login Google. CI do primeiro commit: verde. Texto em `.handoff/github/pr-e2e-ampliado.md` (local).
+- **PR #3** (`e2e-ampliado`): **mesclado em 25/11/2026** (commit `1645fcd`): tela inicial nova, docência acumulada ao
+  cargo, revisão dos fluxos, ausência informada pelo docente, avaliações finais, produção segura, FSD e estudo do
+  login Google. CI verde.
+- **Branch `rod-prazos`** (a partir de `upstream/main`): documento de retomada e prazos do ROD (reposição, frequência).
 - **Peça confirmação antes de cada push** (commits novos num branch com PR aberto entram no PR).
 
 **Pronto (Fases 1 e 2 do FSD + extras):**
@@ -66,7 +67,6 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
 
 ## 3. Pendências que dependem do usuário
 
-- [ ] **Acompanhar a revisão do PR #3** e o CI do segundo commit.
 - [ ] **Decisões abertas:**
   - **G20–G22:** login Google institucional (`docs/estudos/SSO_GOOGLE.md`): adiado pelo usuário.
   - **Reposição de aulas, diário aberto e prazo da avaliação final** (oportunidades do ROD, na seção 4).
@@ -87,17 +87,18 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
 
 ### P1 — próximos passos (em ordem)
 
-1. **PR #3:** acompanhar CI e revisão; corrigir em commits novos (push com confirmação).
+1. **Branch `rod-prazos`:** abrir o PR #4 quando o usuário autorizar (perguntar antes).
 2. **Implantação em produção** (depende da TI e do endereço): seguir `docs/IMPLANTACAO.md`.
    - Fazer o **primeiro uso acompanhado** de `./scripts/atualizar.sh` e `./scripts/ensaiar-migracao.sh`, que nunca
      rodaram com Docker.
    - Fazer o **teste de restauração** do backup e agendar o cron com 3 backups por dia.
-3. **Oportunidades do ROD** (sugestões, sem decisão pendente além do "sim"):
-   - prazo de reposição de aulas, 15 dias letivos ou o fim da etapa (Art. 37, § 2º): mostrar nas ausências com turma
-     dispensada e avisar na tela inicial;
-   - diário aberto por 7 dias letivos após a aula (Art. 43): lembrete ao docente antes de o registro fechar;
-   - avaliação final no mínimo 3 dias letivos após o registro da média parcial (Art. 105, § 1º): conferência ao
-     cadastrar o período de avaliações finais.
+3. **Oportunidades do ROD:**
+   - ~~prazo de reposição de aulas (Art. 37, § 2º)~~ — **feito**: prazo no detalhe da ausência e aviso na tela inicial;
+   - ~~lembrete da frequência em 7 dias letivos (Art. 43)~~ — **feito** na mensagem ao substituto; falta um prazo por
+     aula no diário (o diário aqui é por disciplina, não por aula);
+   - avaliação final no mínimo 3 dias letivos após o registro da média parcial (Art. 105, § 1º): **não implementada**.
+     O sistema não registra a data da média parcial, e os dias de avaliação final não são letivos (G23); fica como
+     orientação na mensagem aos docentes. Reavaliar se o registro das médias entrar no sistema.
 4. **Diários por planilha:** importar a exportação do sistema acadêmico, em vez de digitar as aulas ministradas.
    Precisa de um arquivo de exemplo, com dados fictícios ou anonimizados.
 5. **Login Google (SSO)**, quando o usuário decidir G20–G22 e a TI entregar as credenciais OAuth e o domínio: cerca de
@@ -133,7 +134,7 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
 - **"Minha grade" para a Coordenação:** mantida (coordenador também leciona).
 - **Logo oficial:** `public/marca/ifce-vertical.png` substituído pela assinatura enviada pelo usuário (PNG; trocar por
   SVG se a Comunicação do IFCE fornecer).
-- **PR #3** (`e2e-ampliado`): aberto em 25/11/2026, depois da fusão do PR #2.
+- **PR #3** (`e2e-ampliado`): aberto e **mesclado** em 25/11/2026.
 - **Infraestrutura e comunicação (pedido do usuário, 25/11/2026):**
   - Dimensionamento medido para o pico de fim de semestre: 4 vCPU, 8 GB, 80 GB SSD (`docs/IMPLANTACAO.md`, 1.1).
   - Atualização segura com `scripts/atualizar.sh` (backup, ensaio das migrações numa cópia, volta automática) e

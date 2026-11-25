@@ -328,6 +328,7 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
         `Você está escalado(a) para substituir na turma *${d.turma}* em *${cabecalhoData(d)}*:`,
         ...blocos.map((b) => `- ${b} (no lugar de ${d.disciplina})`),
         onde(x.linkMinhaGrade),
+        'Lembrete: registre a frequência dessa aula no sistema acadêmico em até 7 dias letivos (ROD, Art. 43).',
         'Obrigado(a)!',
       ], 'substituicao', { ...base, horarios: lista_(blocos.map((b) => `${b} (no lugar de ${d.disciplina})`)) }),
     );
