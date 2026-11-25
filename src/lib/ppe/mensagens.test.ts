@@ -22,9 +22,10 @@ describe('situacaoDaPpe', () => {
     expect(situacaoDaPpe({ ...base, modalidade: 'PEI', status: 'EM_ANDAMENTO' })).toBe('modalidade');
     expect(situacaoDaPpe({ ...base, modalidade: 'DEPENDENCIA', status: 'EM_ANDAMENTO' })).toBe('modalidade');
   });
-  it('PEI com encontros está pronto, inclusive prorrogado', () => {
+  it('PEI com encontros está pronto; prorrogado é um momento próprio', () => {
     expect(situacaoDaPpe({ ...base, modalidade: 'PEI', status: 'EM_ANDAMENTO', pei })).toBe('pei');
-    expect(situacaoDaPpe({ ...base, modalidade: 'PEI', status: 'PRORROGADO', pei })).toBe('pei');
+    expect(situacaoDaPpe({ ...base, modalidade: 'PEI', status: 'PRORROGADO', pei })).toBe('prorrogacao');
+    expect(PUBLICOS_PPE.prorrogacao).toEqual(['estudante', 'ctp']);
     expect(situacaoDaPpe({ ...base, modalidade: 'PEI', status: 'EM_ANDAMENTO', pei: { ...pei, encontros: [] } })).toBe('modalidade');
   });
   it('aprovado, reprovado e lançado são resultado', () => {
@@ -57,11 +58,24 @@ describe('textoPpe', () => {
   });
 
   it('PEI pronto traz carga, prorrogação e o cronograma', () => {
-    const p = { ...base, modalidade: 'PEI' as const, status: 'PRORROGADO' as const, pei: { ...pei, prorrogadoAte: '2027-02-15' } };
+    const p = { ...base, modalidade: 'PEI' as const, status: 'EM_ANDAMENTO' as const, pei: { ...pei, prorrogadoAte: '2027-02-15' } };
     const t = textoPpe(p, 'pei', 'estudante');
     expect(t).toContain('Carga horária: 12h (8h presenciais, 4h práticas).');
     expect(t).toContain('Prazo prorrogado até *15/02/2027*');
     expect(t).toContain('• 01/12/2026 — VLANs');
+  });
+
+  it('prorrogação: novo prazo ao estudante e à CTP, com o cronograma', () => {
+    const p = { ...base, modalidade: 'PEI' as const, status: 'PRORROGADO' as const, pei: { ...pei, prorrogadoAte: '2027-02-15' } };
+    expect(assuntoPpe(p, 'prorrogacao')).toContain('prazo do PEI prorrogado');
+    const est = textoPpe(p, 'prorrogacao', 'estudante');
+    expect(est).toContain('foi prorrogado até *15/02/2027* (Art. 124).');
+    expect(est).toContain('• 01/12/2026 — VLANs');
+    expect(est).not.toContain('matrícula');
+    const ctp = textoPpe(p, 'prorrogacao', 'ctp');
+    expect(ctp).toContain('Estudante Fictício (matrícula 20260000)');
+    expect(ctp).toContain('prazo prorrogado até *15/02/2027*');
+    expect(textoPpe({ ...p, pei: { ...pei, prorrogadoAte: null } }, 'prorrogacao', 'estudante')).toContain('foi prorrogado (Art. 124).');
   });
 
   it('resultado com nota em vírgula e sem presumir aprovação depois do lançamento', () => {

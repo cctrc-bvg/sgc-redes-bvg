@@ -434,7 +434,7 @@ No sistema: `/ppe`.
 - Cronograma de encontros, com cópia de outro PEI da mesma disciplina (G09).
 - Acompanhar a situação: em andamento, prorrogado, aprovado, reprovado, lançado no acadêmico. Imprimir o PEI.
 - Visível também à CTP e ao Conselho de Classe (Art. 127).
-- Mensagens prontas de cada momento (Coordenação): pedir ao docente a definição da modalidade; avisar estudante e CTP da modalidade, do PEI pronto (com o cronograma de encontros) e do resultado.
+- Mensagens prontas de cada momento (Coordenação): pedir ao docente a definição da modalidade; avisar estudante e CTP da modalidade, do PEI pronto (com o cronograma de encontros), da prorrogação do prazo (Art. 124) e do resultado. Ao prorrogar, a Coordenação vai direto às mensagens.
 
 ### Fluxo: Ciclo da PPE
 

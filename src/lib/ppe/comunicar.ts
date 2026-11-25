@@ -42,15 +42,17 @@ export async function mensagensDaPpe(id: string) {
   const mensagens: MensagemPronta[] = [];
   const assunto = assuntoPpe(ppe, situacao);
   const variaveis = { disciplina: ppe.disciplina };
+  // Cada nova data de prorrogação pede um aviso novo (a chave do envio muda com a data).
+  const sufixo = situacao === 'prorrogacao' && ppe.pei?.prorrogadoAte ? `:${ppe.pei.prorrogadoAte}` : '';
   for (const publico of PUBLICOS_PPE[situacao]) {
     const corpo = textoPpe(ppe, situacao, publico);
     if (publico === 'estudante') {
       mensagens.push(
-        mensagemSemCadastro({ chave: 'estudante', titulo: `Estudante: ${ppe.nomeEstudante}`, destino: 'Estudante (PPE)', nome: ppe.nomeEstudante, assunto, texto: corpo, tipo: 'ppe', variaveis }),
+        mensagemSemCadastro({ chave: `estudante${sufixo}`, titulo: `Estudante: ${ppe.nomeEstudante}`, destino: 'Estudante (PPE)', nome: ppe.nomeEstudante, assunto, texto: corpo, tipo: 'ppe', variaveis }),
       );
     } else if (publico === 'ctp') {
       const m = await mensagemAvulsa('canal:CTP', assunto, corpo, ano);
-      if (m) mensagens.push({ ...m, chave: 'canal:CTP', tipo: 'ppe', variaveis: { ...m.variaveis, ...variaveis } });
+      if (m) mensagens.push({ ...m, chave: `canal:CTP${sufixo}`, tipo: 'ppe', variaveis: { ...m.variaveis, ...variaveis } });
     } else {
       for (const d of docentes) {
         const m = await mensagemAvulsa(`usuario:${d.id}`, assunto, corpo, ano);

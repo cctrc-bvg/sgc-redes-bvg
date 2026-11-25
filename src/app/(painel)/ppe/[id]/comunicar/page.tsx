@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Alerta } from '@/components/campo';
 import { CaixaMensagem } from '@/components/caixa-mensagem';
 import { FormularioRegistroEnvio } from '@/components/formulario-registro-envio';
 import { exigirPermissao } from '@/lib/auth/dal';
@@ -18,13 +19,14 @@ const DESTINATARIOS: Record<string, string> = {
   definir: 'o docente da disciplina, para definir a modalidade',
   modalidade: 'o estudante e a CTP',
   pei: 'o estudante e a CTP, com o cronograma de encontros',
+  prorrogacao: 'o estudante e a CTP, com o novo prazo (Art. 124)',
   resultado: 'o estudante e a CTP',
 };
 
 /** Mensagens prontas do momento atual da PPE: pedir a modalidade, modalidade definida, PEI pronto ou resultado. */
-export default async function PaginaComunicarPpe({ params }: { params: Promise<{ id: string }> }) {
+export default async function PaginaComunicarPpe({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ aviso?: string }> }) {
   const { usuario } = await exigirPermissao('comunicacao:enviar');
-  const { id } = await params;
+  const [{ id }, { aviso }] = await Promise.all([params, searchParams]);
   const dados = await mensagensDaPpe(id);
   if (!dados) notFound();
   const { ppe, situacao, mensagens } = dados;
@@ -57,6 +59,11 @@ export default async function PaginaComunicarPpe({ params }: { params: Promise<{
         Mensagens para {DESTINATARIOS[situacao]}. O estudante não tem cadastro no sistema: digite o e-mail dele na caixa ou escolha o
         contato no WhatsApp. Envie e registre cada envio.
       </p>
+      {aviso === 'prorrogado' && (
+        <div className="mt-4">
+          <Alerta tipo="sucesso">Prazo prorrogado. Agora avise o estudante e a CTP: as mensagens abaixo já estão prontas.</Alerta>
+        </div>
+      )}
       {mensagens.length === 0 ? (
         <p className="mt-6 text-slate-700">
           Nenhum destinatário ativo: confira o docente nas{' '}

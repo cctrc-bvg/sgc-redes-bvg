@@ -96,8 +96,10 @@ Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolviment
 4. **Prisma 7/8** (em 24/11/2026 o `latest` do npm já é o 8.0.0-rc; o 7 estável é o 7.10.1 — esperar o 8 estável, que
    exige adaptador de driver e o gerador novo): o `prisma.config.ts` já existe; falta trocar `url = env(...)` do schema pela
    configuração do datasource e testar com `./scripts/dev.sh docker`.
-5. **Mensagens prontas:** avaliar com a Coordenação os textos de PPI/PPE; o estudante não tem cadastro (e-mail digitado
-   na caixa) — se o campus quiser, guardar o e-mail do estudante na PPE/PPI.
+5. ~~**Mensagens prontas de PPI/PPE:** validar os textos~~ — **validados em 25/11/2026** pelo usuário: mantidos assinatura,
+   ficha da PPI assinada na Coordenação, motivo do indeferimento ao estudante, nome + matrícula para a CTP, pedido ao
+   docente sem o nome do estudante, artigos do ROD também para o estudante, "aprovado(a)/não aprovado(a)/concluída" e
+   e-mail do estudante **não** guardado. Acrescentado o aviso de **prazo prorrogado** (estudante e CTP).
 6. **Conferir o PEI impresso** com o modelo em papel do campus.
 
 ### P2 — depois

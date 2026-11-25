@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao, exigirUsuario } from '@/lib/auth/dal';
+import { temPermissao } from '@/lib/auth/rbac';
 import { dataParaBanco, hojeEmFortaleza } from '@/lib/ausencias/regras';
 import {
   exigeCoordenacao,
@@ -184,6 +185,7 @@ export async function mudarSituacao(_estado: EstadoPpe | undefined, formData: Fo
   await registrarAuditoria({ userId: usuario.id, acao: 'MUDOU_SITUACAO_PPE', entidade: 'RegistroPPE', entidadeId: ppe.id, detalhes: { de: ppe.status, para: destino } });
   revalidatePath(`/ppe/${ppe.id}`);
   revalidatePath('/ppe');
+  if (destino === 'PRORROGADO' && temPermissao(usuario.role, 'comunicacao:enviar')) redirect(`/ppe/${ppe.id}/comunicar?aviso=prorrogado`);
   return { sucesso: true, mensagem: 'Situação atualizada.' };
 }
 

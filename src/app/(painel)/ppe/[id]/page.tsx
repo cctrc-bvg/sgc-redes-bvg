@@ -18,6 +18,7 @@ const COMUNICAR: Record<SituacaoPpe, string> = {
   definir: 'Peça ao docente da disciplina que defina a modalidade.',
   modalidade: 'Modalidade definida: avise o estudante e a CTP.',
   pei: 'PEI pronto: envie o cronograma ao estudante e à CTP.',
+  prorrogacao: 'Prazo do PEI prorrogado: avise o estudante e a CTP.',
   resultado: 'Avise o estudante e a CTP do resultado.',
 };
 
