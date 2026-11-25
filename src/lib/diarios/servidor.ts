@@ -42,25 +42,28 @@ export async function situacoesAutomaticas(ano: number, ofertas: readonly Oferta
   for (const d of dispensas) dispensadasPor.set(d.ausencia.ofertaId, (dispensadasPor.get(d.ausencia.ofertaId) ?? 0) + 1);
 
   for (const o of ofertas) {
-    const sems = o.semestreLetivo === null ? calendario.semestres : [calendario.semestres[o.semestreLetivo - 1]];
-    const janela = sems.every(Boolean)
-      ? { inicio: sems[0]!.inicio, fim: sems[sems.length - 1]!.fim }
-      : null;
-    if (!janela) {
+    // Anual: cada semestre vale com a sua própria grade e a sua janela; semestral: só o semestre da oferta.
+    const numeros = o.semestreLetivo === null ? [1, 2] : [o.semestreLetivo];
+    const janelas = numeros.map((n) => calendario.semestres[n - 1]);
+    if (janelas.some((j) => !j)) {
       resultado.set(o.id, { presumido: null, efetivas: o.aulasMinistradas, restantes: null });
       continue;
     }
-    // Cada célula da grade do semestre vigente conta uma aula no seu dia da semana.
-    const celulasPorDia = new Map<number, number>();
-    for (const c of celulas) {
-      if (c.ofertaId !== o.id) continue;
-      if (o.semestreLetivo === null && c.semestreLetivo !== 1) continue; // anual aparece nos dois semestres: conta uma vez
-      celulasPorDia.set(c.diaSemana, (celulasPorDia.get(c.diaSemana) ?? 0) + 1);
-    }
-    const letivos = calendario.contagem.letivos.filter((d) => d >= janela.inicio && d <= janela.fim);
-    const base = { celulasPorDia, letivos, sabadosLetivos, hojeISO };
-    const presumido = aulasPresumidas({ ...base, dispensadas: dispensadasPor.get(o.id) ?? 0, previstas: o.aulasPrevistas });
-    resultado.set(o.id, { presumido, efetivas: ministradasEfetivas(o, presumido), restantes: aulasRestantesNaGrade(base) });
+    let dadas = 0;
+    let restantes = 0;
+    numeros.forEach((n, i) => {
+      const janela = janelas[i]!;
+      const celulasPorDia = new Map<number, number>();
+      for (const c of celulas) {
+        if (c.ofertaId === o.id && c.semestreLetivo === n) celulasPorDia.set(c.diaSemana, (celulasPorDia.get(c.diaSemana) ?? 0) + 1);
+      }
+      const letivos = calendario.contagem.letivos.filter((d) => d >= janela.inicio && d <= janela.fim);
+      const base = { celulasPorDia, letivos, sabadosLetivos, hojeISO };
+      dadas += aulasPresumidas(base);
+      restantes += aulasRestantesNaGrade(base);
+    });
+    const presumido = Math.min(Math.max(0, dadas - (dispensadasPor.get(o.id) ?? 0)), o.aulasPrevistas);
+    resultado.set(o.id, { presumido, efetivas: ministradasEfetivas(o, presumido), restantes });
   }
   return resultado;
 }

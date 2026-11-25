@@ -1,11 +1,12 @@
 import 'server-only';
 import { prisma } from '@/lib/db';
 import { NOME_PERFIL, type Permissao } from '@/lib/auth/rbac';
-import { dataDoBanco, formatarData, NOME_STATUS } from '@/lib/ausencias/regras';
+import { dataDoBanco, formatarData, hojeEmFortaleza, NOME_STATUS } from '@/lib/ausencias/regras';
 import { COLUNAS_GRADE, linhaDaGrade } from '@/lib/importacao/grade';
 import { COLUNAS_CALENDARIO, INSTRUCOES_CALENDARIO, linhasDoCalendario } from '@/lib/importacao/calendario';
 import { carregarAno } from '@/lib/calendario/servidor';
 import { periodoDaUrl } from '@/lib/grade/regras';
+import { situacoesAutomaticas } from '@/lib/diarios/servidor';
 import { anoLetivoAtual, lerAnoLetivo } from '@/lib/ofertas/regras';
 import { formatarWhatsapp } from '@/lib/usuarios/regras';
 import { NOME_CANAL } from '@/lib/ausencias/mensagens';
@@ -85,6 +86,8 @@ export const LISTAGENS: Record<string, Listagem> = {
         orderBy: [{ turma: { codigo: 'asc' } }, { disciplina: { nome: 'asc' } }],
         include: { turma: { select: { codigo: true } }, disciplina: { select: { nome: true, codigo: true } }, professor: { select: { nome: true, email: true } } },
       });
+      // RF08-A: exporta o valor que vale (presumido ou manual), não o campo bruto.
+      const situacoes = await situacoesAutomaticas(ano, os, hojeEmFortaleza());
       return {
         nomeArquivo: `ofertas-${ano}-exportadas`,
         colunas: [['Ano letivo', 10], ['Semestre', 10], ['Turma', 12], ['Código', 14], ['Disciplina', 40], ['Professor', 30], ['E-mail do professor', 32], ['Aulas previstas', 10], ['Aulas ministradas', 10], ['Diário em dia', 10]],
@@ -97,7 +100,7 @@ export const LISTAGENS: Record<string, Listagem> = {
           o.professor.nome,
           o.professor.email,
           String(o.aulasPrevistas),
-          String(o.aulasMinistradas),
+          String(situacoes.get(o.id)?.efetivas ?? o.aulasMinistradas),
           simNao(o.diarioEmDia),
         ]),
       };
