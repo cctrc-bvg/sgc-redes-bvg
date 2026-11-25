@@ -235,6 +235,9 @@ flowchart LR
 | Textos-padrão editáveis e variáveis | `src/lib/comunicacao/modelos.ts`, Comunicação › Textos-padrão |
 | Montagem (saudação do canal, links `mailto:` e `wa.me`) | `src/lib/comunicacao/mensagem.ts`, `src/lib/comunicacao/servidor.ts` |
 | Registro do envio | `src/app/(painel)/comunicacao/actions.ts` (`registrarEnvio`) e as ações de envio de PPE e PPI |
+| Resumo semanal dos docentes (G27) | `src/lib/comunicacao/periodicas.ts` (texto e prazos), `periodicas-servidor.ts` (dados), `/comunicacao/periodicas`; chave `resumo:<segunda>:<docente>` |
+
+O **resumo semanal** (sexta-feira) reúne, por docente, as aulas da semana seguinte, as mudanças (substituições, ausências) e os prazos do ROD (reposição Art. 37, frequência Art. 43, entrega da etapa Art. 171, XIX); a chave é semanal, então não repete.
 
 A chave de envio evita pedir de novo o que já foi enviado. Na prorrogação da PPE, a chave inclui a data, então uma nova prorrogação pede um novo envio.
 
@@ -294,24 +297,25 @@ flowchart LR
 
 ## 9. Diários
 
-> **Em evolução (requisito de 25/11/2026, RF08-A):** como o docente pode não aderir ao sistema, a progressão dos diários
-> passará a ser automática: as aulas são presumidas dadas pela grade e pelo calendário, e só as exceções (ausências,
-> trocas, dispensas) são registradas. O docente será avisado principalmente por mensagens preparadas pelo sistema. O
-> fluxo abaixo descreve o estado atual (lançamento manual); o plano está em `docs/PROXIMOS_PASSOS.md`, seção 4, item 2.
+> **Progressão automática (RF08-A, G25–G28; implementada em 25/11/2026):** como o docente pode não aderir ao sistema, as
+> aulas ministradas são presumidas dadas pela grade vigente e pelo calendário (dias letivos até ontem, menos as
+> dispensas sem reposição); só as exceções são registradas. A Coordenação confere por amostra com o acadêmico e corrige
+> (valor manual) ou volta ao automático. O docente é avisado pelo resumo semanal (`/comunicacao/periodicas`).
 
 ```mermaid
 flowchart LR
   classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27
   classDef docencia fill:#e8f0fb,stroke:#1d5fb8,color:#174a8f
   classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
-  P["1. Datas do semestre<br/>Calendário › Etapas"]:::gestao --> M["2. Aulas ministradas<br/>do acadêmico"]:::gestao --> S["3. Semáforo<br/>esperado até hoje"]:::sistema --> L["4. Lembrete<br/>mensagem ao docente"]:::gestao --> D["5. Docente atualiza<br/>no acadêmico"]:::docencia
+  P["1. Datas do semestre<br/>Calendário › Etapas"]:::gestao --> M["2. Aulas presumidas<br/>grade × dias letivos"]:::sistema --> C["2a. Conferência<br/>por amostra"]:::gestao --> S["3. Semáforo<br/>esperado e grade curta"]:::sistema --> L["4. Lembrete<br/>mensagem ao docente"]:::gestao --> D["5. Docente atualiza<br/>no acadêmico"]:::docencia
 ```
 
 | # | Etapa | Responsável | Parte do sistema |
 | :-- | :-- | :-- | :-- |
 | 1 | Datas do semestre | Coordenação | `calendario/actions.ts` (etapas e semestres); aviso `semestreSemDatas` na tela inicial |
-| 2 | Aulas ministradas | Coordenação | `src/app/(painel)/diarios/actions.ts` (`atualizarDiario`) |
-| 3 | Semáforo | Sistema | `src/lib/diarios/regras.ts` (`aulasEsperadas`, `semaforo`) |
+| 2 | Aulas presumidas | Sistema | `src/lib/diarios/automatico.ts`, `servidor.ts` (`situacoesAutomaticas`); coluna `ministradasManual` |
+| 2a | Conferência e correção | Coordenação | `diarios/actions.ts` (`conferirDiario`, `atualizarDiario`, `voltarAoAutomatico`); `/diarios/conferencia` |
+| 3 | Semáforo | Sistema | `src/lib/diarios/regras.ts` (`aulasEsperadas`, `semaforo` com déficit projetado) |
 | 4 | Lembrete | Coordenação | `registrarLembrete`, `lembreteDoDiario` |
 | 5 | Meus diários | Docente | `/diarios?escopo=meus` |
 

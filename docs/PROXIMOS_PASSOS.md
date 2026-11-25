@@ -93,18 +93,16 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
 1. **PR #4 (`rod-prazos`):** aberto em 25/11/2026 (https://github.com/cctrc-bvg/sgc-redes-bvg/pull/4) com os prazos do ROD
    e a progressão automática dos diários (commits enviados em 25/11/2026). Acompanhe o CI e a revisão; corrija em commits novos. Antes de dizer que um push entra no PR, confira
    com `gh pr view 4 --json state` (o PR #3 estava mesclado quando isso falhou).
-2. **Mensagens periódicas (RF08-A, G27 aceita; falta implementar):** a progressão automática dos diários já está pronta
-   (`src/lib/diarios/automatico.ts` e `servidor.ts`, coluna `ministradasManual`, etiqueta "automático", "voltar ao
-   automático", aviso "carga projetada abaixo da prevista" e `/diarios/conferencia`). Falta:
-   1. Tipo novo `resumo_semanal` em `src/lib/comunicacao/modelos.ts` e página `/comunicacao/periodicas`, com uma mensagem
-      por docente na sexta-feira (aulas da semana, mudanças, prazos calculados pelo calendário: reposição Art. 37,
-      frequência Art. 43, entrega da etapa em 5 dias letivos Art. 171, XIX). A Coordenação revisa e envia pela caixa de
-      mensagem existente; a chave de envio é semanal (não repete).
-   2. Avisos de fim de etapa (prazo de 5 dias letivos) e de fechamento do período.
-   3. *Fechamento:* testes unitários e E2E (inclusive da conferência e da progressão, ainda sem E2E), Ajuda, `FLUXOS.md`,
-      manual e capturas. Rodar a suíte completa uma vez. Testar `situacoesAutomaticas` com banco.
-   Limites conhecidos: a aula de hoje não conta como dada; dispensas com reposição agendada não saem da conta; a
-   conferência é manual, por amostra.
+2. **Mensagens periódicas (RF08-A, G27):** a progressão automática dos diários (`src/lib/diarios/automatico.ts`,
+   `servidor.ts`, `ministradasManual`, `/diarios/conferencia`) e o **resumo semanal dos docentes**
+   (`/comunicacao/periodicas`, `src/lib/comunicacao/periodicas*.ts`) estão prontos, com testes unitários, Ajuda e
+   `FLUXOS.md`. Falta:
+   - avisos próprios de **fim de etapa** e de **fechamento do período** (hoje o prazo da etapa entra no resumo semanal);
+   - **rodar o E2E** (escrito em `e2e/diarios.spec.ts`, `e2e/periodicas.spec.ts` e nas listas de páginas e
+     acessibilidade, mas ainda não executado) e testar `situacoesAutomaticas` com banco;
+   - **manual e capturas** (`npm run manual` já regenerado; faltam as capturas das telas novas), incluindo as telas novas.
+   Limites conhecidos: a aula de hoje não conta como dada; a reposição pendente do resumo lista toda dispensa recente
+   com prazo em aberto (não sabe se já foi reposta); o aviso de etapa vai a todos os docentes com oferta.
 2. **Implantação em produção** (depende da TI e do endereço): seguir `docs/IMPLANTACAO.md`.
    - Fazer o **primeiro uso acompanhado** de `./scripts/atualizar.sh` e `./scripts/ensaiar-migracao.sh`, que nunca
      rodaram com Docker.

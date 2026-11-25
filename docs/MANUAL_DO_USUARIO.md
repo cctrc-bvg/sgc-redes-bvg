@@ -436,6 +436,7 @@ No sistema: `/comunicacao`.
 - Textos-padrão por tipo de interação, com campos de substituição como {{data}} e {{codigo da turma}} — criar, editar e remover.
 - Cadastro do e-mail e da saudação de cada grupo ou setor (CAE, CTP, Gestão, nutricionista, professores, líderes).
 - Histórico dos envios registrados, exportável em planilha.
+- Resumo semanal dos docentes (Mensagens periódicas): aulas da semana seguinte, mudanças e prazos do ROD, uma mensagem por docente e por semana.
 
 ### Fluxo: Envio semiautomático
 
@@ -458,6 +459,12 @@ flowchart LR
 *Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
+
+**Enviar o resumo semanal aos docentes** (Coordenação)
+
+1. Na sexta-feira, em Comunicação, abra "Mensagens periódicas".
+2. Confira o texto de cada docente (aulas, mudanças e prazos), copie ou abra no e-mail/WhatsApp e envie.
+3. Clique em "Já enviei: registrar": o docente sai da fila da semana.
 
 **Enviar uma mensagem avulsa** (Coordenação)
 
@@ -644,14 +651,17 @@ flowchart LR
 
 ## 9. Diários
 
-Semáforo de carga horária e preenchimento dos diários, com lembrete ao docente.
+Aulas dadas presumidas pela grade e pelo calendário, correção das exceções, conferência por amostra e lembrete ao docente.
 
 No sistema: `/diarios`.
 
 ### O que você pode fazer
 
 - Ver, por oferta (turma × disciplina × professor), as aulas previstas e ministradas e a situação do diário.
-- Ordenar do que precisa de atenção ao que está em dia (semáforo).
+- As aulas ministradas são presumidas pela grade nos dias letivos já decorridos (etiqueta "automático"): o docente não precisa lançar nada, e só as exceções são corrigidas.
+- Corrigir o valor (ele passa a "manual") e voltar ao automático quando a exceção acabar.
+- Conferir por amostra com o diário do sistema acadêmico, em "Conferir com o sistema acadêmico".
+- Ordenar do que precisa de atenção ao que está em dia (semáforo); amarelo também quando a grade não comporta as aulas previstas até o fim do período.
 - Registrar a situação do diário e enviar lembrete ao docente por e-mail ou WhatsApp (Coordenação).
 - O professor vê os próprios diários.
 
@@ -665,19 +675,27 @@ flowchart LR
   classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
   classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
   E0["<b>1. Datas do semestre</b><br/><i>Coordenação</i><br/>base para as aulas esperadas (a tela inicial avisa se faltar)<br/>Onde: Calendário › Etapas"]:::gestao
-  E1["<b>2. Aulas ministradas</b><br/><i>Coordenação</i><br/>conforme o diário no sistema acadêmico<br/>Onde: Diários"]:::gestao
+  E1["<b>2. Aulas presumidas</b><br/><i>Sistema</i><br/>grade × dias letivos até ontem, menos as dispensas sem reposição<br/>Onde: Diários"]:::sistema
   E0 --> E1
-  E2["<b>3. Semáforo</b><br/><i>Sistema</i><br/>em dia, atenção ou atrasado pelo esperado até hoje<br/>Onde: Diários"]:::sistema
+  E2["<b>3. Conferência</b><br/><i>Coordenação</i><br/>por amostra, com o acadêmico; diferença vira valor manual<br/>Onde: Diários › Conferência"]:::gestao
   E1 --> E2
-  E3["<b>4. Lembrete</b><br/><i>Coordenação</i><br/>mensagem pronta ao docente, registrada<br/>Onde: Diários › disciplina"]:::gestao
+  E3["<b>4. Semáforo</b><br/><i>Sistema</i><br/>em dia, atenção (grade curta) ou atrasado (marcado pela Coordenação)<br/>Onde: Diários"]:::sistema
   E2 --> E3
-  E4["<b>5. Lançamento</b><br/><i>Professor</i><br/>atualiza o diário no acadêmico; vê os seus em Meus diários<br/>Onde: Meus diários"]:::docencia
+  E4["<b>5. Lembrete</b><br/><i>Coordenação</i><br/>mensagem pronta ao docente, registrada<br/>Onde: Diários › disciplina"]:::gestao
   E3 --> E4
+  E5["<b>6. Lançamento</b><br/><i>Professor</i><br/>atualiza o diário no acadêmico; vê os seus em Meus diários<br/>Onde: Meus diários"]:::docencia
+  E4 --> E5
 ```
 
 *Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
 
 ### Passo a passo
+
+**Conferir os diários por amostra** (Coordenação)
+
+1. Em Diários, abra "Conferir com o sistema acadêmico".
+2. Compare o presumido com o número do diário no acadêmico e digite o valor de cada disciplina da amostra.
+3. Clique em "Conferir": valor igual mantém o automático; diferente vira manual. Marque "em dia" conforme o acadêmico.
 
 **Cobrar um diário atrasado** (Coordenação)
 
@@ -694,6 +712,7 @@ flowchart LR
 ### Dúvidas frequentes
 
 - **De onde vêm as aulas previstas?** Da grade e das datas dos semestres cadastradas no calendário.
+- **O docente precisa lançar as aulas?** Não. As aulas são presumidas dadas pela grade; só as exceções (ausências, dispensas sem reposição) mudam o valor. A aula de hoje só conta a partir de amanhã.
 
 ## 10. Processos SEI
 

@@ -34,4 +34,31 @@ test('diário: validação, atualização e lembrete ao docente', async ({ page 
   await emDia.setChecked(estavaEmDia);
   await page.getByRole('button', { name: 'Salvar', exact: true }).click();
   await expect(page.locator('main')).toContainText(/Diário atualizado\.|Nenhuma alteração para salvar\./);
+
+  // O valor corrigido à mão virou manual; "Voltar ao automático" devolve o presumido (RF08-A).
+  const voltar = page.getByRole('button', { name: 'Voltar ao automático' });
+  if (await voltar.isVisible()) {
+    await voltar.click();
+    await expect(page.locator('main')).toContainText('Valor automático');
+  }
+});
+
+test('conferência: valor igual ao presumido mantém o automático; diferente vira manual', async ({ page }) => {
+  await entrar(page, 'coordenacao');
+  await page.goto('/diarios/conferencia');
+  await expect(page.getByRole('heading', { level: 1, name: 'Conferência dos diários' })).toBeVisible();
+  const linha = page.locator('tbody tr').first();
+  await expect(linha).toBeVisible();
+  const campo = linha.getByRole('textbox');
+  const original = await campo.inputValue();
+
+  await campo.fill(String(Number(original) + 3));
+  await linha.getByRole('button', { name: 'Conferir' }).click();
+  await page.goto('/diarios/conferencia');
+  await expect(page.locator('tbody tr').first().getByText('manual').first()).toBeVisible();
+
+  // Devolve o automático pelo detalhe do diário.
+  await page.locator('tbody tr').first().getByRole('link').click();
+  const voltar = page.getByRole('button', { name: 'Voltar ao automático' });
+  if (await voltar.isVisible()) await voltar.click();
 });

@@ -5,7 +5,7 @@ import { entrar, type Perfil } from './apoio';
 const PAGINAS: Record<Perfil, string[]> = {
   coordenacao: [
     '/painel', '/calendario', '/grade', '/grade/minha', '/grade/sabados', '/ausencias', '/alimentacao', '/comunicacao',
-    '/comunicacao/modelos', '/usuarios', '/turmas', '/disciplinas', '/ofertas', '/auditoria', '/ppe', '/ppi', '/diarios',
+    '/comunicacao/modelos', '/comunicacao/periodicas', '/usuarios', '/turmas', '/disciplinas', '/ofertas', '/auditoria', '/ppe', '/ppi', '/diarios', '/diarios/conferencia',
     '/processos', '/relatorios', '/ajuda', '/conta/contato',
   ],
   professor: ['/painel', '/grade', '/grade/minha', '/calendario', '/disciplinas', '/ppe', '/diarios', '/ajuda'],

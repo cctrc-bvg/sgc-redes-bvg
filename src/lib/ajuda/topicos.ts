@@ -488,6 +488,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Textos-padrão por tipo de interação, com campos de substituição como {{data}} e {{codigo da turma}} — criar, editar e remover.',
       'Cadastro do e-mail e da saudação de cada grupo ou setor (CAE, CTP, Gestão, nutricionista, professores, líderes).',
       'Histórico dos envios registrados, exportável em planilha.',
+      'Resumo semanal dos docentes (Mensagens periódicas): aulas da semana seguinte, mudanças e prazos do ROD, uma mensagem por docente e por semana.',
     ],
     diagrama: {
       titulo: 'Envio semiautomático',
@@ -499,6 +500,15 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       ],
     },
     fluxos: [
+      {
+        titulo: 'Enviar o resumo semanal aos docentes',
+        quem: 'Coordenação',
+        passos: [
+          'Na sexta-feira, em Comunicação, abra "Mensagens periódicas".',
+          'Confira o texto de cada docente (aulas, mudanças e prazos), copie ou abra no e-mail/WhatsApp e envie.',
+          'Clique em "Já enviei: registrar": o docente sai da fila da semana.',
+        ],
+      },
       {
         titulo: 'Enviar uma mensagem avulsa',
         quem: 'Coordenação',
@@ -690,12 +700,15 @@ export const TOPICOS: readonly TopicoAjuda[] = [
   {
     id: 'diarios',
     titulo: 'Diários',
-    resumo: 'Semáforo de carga horária e preenchimento dos diários, com lembrete ao docente.',
+    resumo: 'Aulas dadas presumidas pela grade e pelo calendário, correção das exceções, conferência por amostra e lembrete ao docente.',
     permissao: 'diarios:ver-proprios',
     rota: '/diarios',
     capacidades: [
       'Ver, por oferta (turma × disciplina × professor), as aulas previstas e ministradas e a situação do diário.',
-      'Ordenar do que precisa de atenção ao que está em dia (semáforo).',
+      'As aulas ministradas são presumidas pela grade nos dias letivos já decorridos (etiqueta "automático"): o docente não precisa lançar nada, e só as exceções são corrigidas.',
+      'Corrigir o valor (ele passa a "manual") e voltar ao automático quando a exceção acabar.',
+      'Conferir por amostra com o diário do sistema acadêmico, em "Conferir com o sistema acadêmico".',
+      'Ordenar do que precisa de atenção ao que está em dia (semáforo); amarelo também quando a grade não comporta as aulas previstas até o fim do período.',
       'Registrar a situação do diário e enviar lembrete ao docente por e-mail ou WhatsApp (Coordenação).',
       'O professor vê os próprios diários.',
     ],
@@ -703,13 +716,23 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       titulo: 'Acompanhar os diários',
       etapas: [
         { rotulo: 'Datas do semestre', ator: 'Coordenação', detalhe: 'base para as aulas esperadas (a tela inicial avisa se faltar)', onde: { tela: 'Calendário › Etapas', rota: '/calendario/etapas' } },
-        { rotulo: 'Aulas ministradas', ator: 'Coordenação', detalhe: 'conforme o diário no sistema acadêmico', onde: { tela: 'Diários', rota: '/diarios' } },
-        { rotulo: 'Semáforo', ator: 'Sistema', detalhe: 'em dia, atenção ou atrasado pelo esperado até hoje', onde: { tela: 'Diários', rota: '/diarios' } },
+        { rotulo: 'Aulas presumidas', ator: 'Sistema', detalhe: 'grade × dias letivos até ontem, menos as dispensas sem reposição', onde: { tela: 'Diários', rota: '/diarios' } },
+        { rotulo: 'Conferência', ator: 'Coordenação', detalhe: 'por amostra, com o acadêmico; diferença vira valor manual', onde: { tela: 'Diários › Conferência', rota: '/diarios/conferencia' } },
+        { rotulo: 'Semáforo', ator: 'Sistema', detalhe: 'em dia, atenção (grade curta) ou atrasado (marcado pela Coordenação)', onde: { tela: 'Diários', rota: '/diarios' } },
         { rotulo: 'Lembrete', ator: 'Coordenação', detalhe: 'mensagem pronta ao docente, registrada', onde: { tela: 'Diários › disciplina' } },
         { rotulo: 'Lançamento', ator: 'Professor', detalhe: 'atualiza o diário no acadêmico; vê os seus em Meus diários', onde: { tela: 'Meus diários', rota: '/diarios?escopo=meus' } },
       ],
     },
     fluxos: [
+      {
+        titulo: 'Conferir os diários por amostra',
+        quem: 'Coordenação',
+        passos: [
+          'Em Diários, abra "Conferir com o sistema acadêmico".',
+          'Compare o presumido com o número do diário no acadêmico e digite o valor de cada disciplina da amostra.',
+          'Clique em "Conferir": valor igual mantém o automático; diferente vira manual. Marque "em dia" conforme o acadêmico.',
+        ],
+      },
       {
         titulo: 'Cobrar um diário atrasado',
         quem: 'Coordenação',
@@ -724,7 +747,10 @@ export const TOPICOS: readonly TopicoAjuda[] = [
         captura: { rota: '/diarios', perfil: 'coordenacao' },
       },
     ],
-    duvidas: [{ pergunta: 'De onde vêm as aulas previstas?', resposta: 'Da grade e das datas dos semestres cadastradas no calendário.' }],
+    duvidas: [
+      { pergunta: 'De onde vêm as aulas previstas?', resposta: 'Da grade e das datas dos semestres cadastradas no calendário.' },
+      { pergunta: 'O docente precisa lançar as aulas?', resposta: 'Não. As aulas são presumidas dadas pela grade; só as exceções (ausências, dispensas sem reposição) mudam o valor. A aula de hoje só conta a partir de amanhã.' },
+    ],
     relacionados: ['comunicacao', 'calendario'],
   },
   {
