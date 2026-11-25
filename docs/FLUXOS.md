@@ -294,6 +294,11 @@ flowchart LR
 
 ## 9. Diários
 
+> **Em evolução (requisito de 25/11/2026, RF08-A):** como o docente pode não aderir ao sistema, a progressão dos diários
+> passará a ser automática: as aulas são presumidas dadas pela grade e pelo calendário, e só as exceções (ausências,
+> trocas, dispensas) são registradas. O docente será avisado principalmente por mensagens preparadas pelo sistema. O
+> fluxo abaixo descreve o estado atual (lançamento manual); o plano está em `docs/PROXIMOS_PASSOS.md`, seção 4, item 2.
+
 ```mermaid
 flowchart LR
   classDef gestao fill:#e8f5ea,stroke:#237a32,color:#1b5e27

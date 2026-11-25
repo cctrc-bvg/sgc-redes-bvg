@@ -1,6 +1,6 @@
 # Próximos Passos — Retomada do Desenvolvimento
 
-> Atualizado em **25/11/2026**, com os PR #1, #2 e #3 mesclados; trabalho novo no branch `rod-prazos`. Leia este arquivo inteiro antes de continuar: estado do
+> Atualizado em **25/11/2026**, com os PR #1, #2 e #3 mesclados; trabalho novo no branch `rod-prazos` (PR #4 aberto). Leia este arquivo inteiro antes de continuar: estado do
 > projeto, o que depende do usuário, o backlog, as decisões e as armadilhas já encontradas.
 
 ---
@@ -68,6 +68,8 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
 ## 3. Pendências que dependem do usuário
 
 - [ ] **Decisões abertas:**
+  - **G25–G28:** progressão automática dos diários e mensagens periódicas (FSD, com sugestões); G25 é o requisito
+    informado pelo usuário em 25/11/2026, falta confirmar G26 a G28.
   - **G20–G22:** login Google institucional (`docs/estudos/SSO_GOOGLE.md`): adiado pelo usuário.
   - **Reposição de aulas, diário aberto e prazo da avaliação final** (oportunidades do ROD, na seção 4).
 - [ ] **Com a TI (G17–G19 já aceitos: "o que for solicitado será concedido"):**
@@ -87,12 +89,36 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
 
 ### P1 — próximos passos (em ordem)
 
-1. **Branch `rod-prazos`:** abrir o PR #4 quando o usuário autorizar (perguntar antes).
+1. **PR #4 (`rod-prazos`):** aberto em 25/11/2026 (https://github.com/cctrc-bvg/sgc-redes-bvg/pull/4) com o commit
+   `52fd5a0` (prazos do ROD). O commit seguinte, com o requisito RF08-A, só entra no PR depois de um push (peça
+   confirmação). Acompanhe o CI e a revisão; corrija em commits novos. Antes de dizer que um push entra no PR, confira
+   com `gh pr view 4 --json state` (o PR #3 estava mesclado quando isso falhou).
+2. **Progressão automática dos diários e comunicação como interface (RF08-A, RNF06; requisito do usuário de 25/11/2026):**
+   o docente pode não aderir ao sistema; as aulas são presumidas dadas com o passar dos dias e só as exceções são
+   registradas. **Plano de implementação** (aditivo, sem apagar dados; decisões G25–G28 do FSD, com sugestões):
+   1. *Regra pura* `src/lib/diarios/automatico.ts`: aulas dadas por oferta = células da grade vigente nos dias letivos
+      entre o início do período e hoje (calendário: feriados, suspensões, sábados letivos e avaliações finais ficam de
+      fora; `contarDiasLetivos` e `diaDaGradeNaData`), menos aulas dispensadas sem reposição; substituição e adiantamento
+      contam como dadas. Testes unitários, inclusive sábado letivo e suspensão.
+   2. *Banco* (migração só de acréscimo, política de `docs/IMPLANTACAO.md` §8): `DisciplinaOferta.ministradasManual
+      Boolean @default(false)`. Valor efetivo = manual se marcado; senão o presumido. Decidir se as ofertas que já têm
+      `aulasMinistradas > 0` viram manuais (sugestão: sim, na própria migração).
+   3. *Tela de diários:* mostrar "presumido" com a etiqueta "automático"; a Coordenação corrige (vira manual) e pode
+      "voltar ao automático". "Em dia" presumido; "atrasado" só marcado à mão (G26). O semáforo "atenção" passa a
+      apontar problema estrutural (a grade não comporta as aulas previstas até o fim do período).
+   4. *Tela inicial:* a contagem "diários atrasados" usa só os marcados à mão; novo aviso quando a carga projetada fica
+      abaixo da prevista.
+   5. *Mensagens periódicas* (G27): tipo novo `resumo_semanal` em `src/lib/comunicacao/modelos.ts`, com a página
+      `/comunicacao/periodicas` que monta uma mensagem por docente (aulas da semana, mudanças, prazos calculados pelo
+      calendário: reposição Art. 37, frequência Art. 43, entrega da etapa em 5 dias letivos Art. 171, XIX). A
+      Coordenação revisa e envia pela caixa de mensagem existente; a chave de envio é semanal (não repete).
+   6. *Fechamento:* testes unitários e E2E, Ajuda, `FLUXOS.md`, manual e capturas. Rodar a suíte completa uma vez.
+   Pode começar pelos itens 1 a 4 (sem decisão nova além de G25); G26 a G28 têm sugestão no FSD.
 2. **Implantação em produção** (depende da TI e do endereço): seguir `docs/IMPLANTACAO.md`.
    - Fazer o **primeiro uso acompanhado** de `./scripts/atualizar.sh` e `./scripts/ensaiar-migracao.sh`, que nunca
      rodaram com Docker.
    - Fazer o **teste de restauração** do backup e agendar o cron com 3 backups por dia.
-3. **Oportunidades do ROD:**
+3. **Oportunidades do ROD** (feitas no PR #4, exceto a conferência do Art. 105):
    - ~~prazo de reposição de aulas (Art. 37, § 2º)~~ — **feito**: prazo no detalhe da ausência e aviso na tela inicial;
    - ~~lembrete da frequência em 7 dias letivos (Art. 43)~~ — **feito** na mensagem ao substituto; falta um prazo por
      aula no diário (o diário aqui é por disciplina, não por aula);
@@ -100,6 +126,7 @@ duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco n
      O sistema não registra a data da média parcial, e os dias de avaliação final não são letivos (G23); fica como
      orientação na mensagem aos docentes. Reavaliar se o registro das médias entrar no sistema.
 4. **Diários por planilha:** importar a exportação do sistema acadêmico, em vez de digitar as aulas ministradas.
+   Perde prioridade com a progressão automática (item 2): serviria só para conferir o presumido.
    Precisa de um arquivo de exemplo, com dados fictícios ou anonimizados.
 5. **Login Google (SSO)**, quando o usuário decidir G20–G22 e a TI entregar as credenciais OAuth e o domínio: cerca de
    2 dias de desenvolvimento (`docs/estudos/SSO_GOOGLE.md`).
