@@ -1,0 +1,10 @@
+# Complemento SÓ PARA TESTES locais: expõe o banco em 127.0.0.1:5433 (para carregar os dados de demonstração a
+# partir do host) e o app em todas as interfaces (para testar de outro aparelho da rede). Nunca use em produção.
+#   docker compose -f docker-compose.yml -f docker-compose.teste.yml up --build -d
+services:
+  db:
+    ports:
+      - "127.0.0.1:5433:5432"
+  app:
+    ports: !override
+      - "0.0.0.0:3000:3000"
