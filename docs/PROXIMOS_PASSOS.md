@@ -129,7 +129,7 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
    - ~~avisos próprios de fim de etapa e de fechamento do período~~: feitos em `/comunicacao/periodicas` (seção "Avisos do período": 7 dias antes do fim da etapa até a entrega; 14 dias antes do fim do semestre; um por docente, com registro de envio). O prazo da etapa continua também no resumo semanal;
    - **rodar o E2E** (escrito em `e2e/diarios.spec.ts`, `e2e/periodicas.spec.ts` e nas listas de páginas e
      acessibilidade, mas ainda não executado) e testar `situacoesAutomaticas` com banco;
-   - **manual e capturas** (`npm run manual` já regenerado; faltam as capturas das telas novas), incluindo as telas novas.
+   - **manual e capturas** (`npm run manual` já regenerado; capturas das telas novas feitas em 27/11/2026: editor do calendário, períodos especiais, reposições, mensagens periódicas e conferência dos diários).
    **Reposição confirmada (G29, 25/11/2026):** feita em `/reposicoes` (informar, anexar formulário opcional, ciência,
    registro direto, download restrito); E2E rodado em 25/11/2026 (`reposicoes.spec.ts`); falta testar o anexo (PDF, JPG, PNG) com arquivo real.
    Atenção: `bodySizeLimit` das Server Actions subiu para 7 MB e o proxy precisa de `client_max_body_size 7m`.

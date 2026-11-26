@@ -258,6 +258,18 @@ export const TOPICOS: readonly TopicoAjuda[] = [
         legenda: 'Cadastro de evento: tipo, datas, "Sem aula" e "Imprevisto".',
         captura: { rota: '/calendario/eventos/novo', perfil: 'coordenacao' },
       },
+      {
+        arquivo: 'calendario-editor.jpg',
+        alt: 'Editor do calendário com os meses do ano, os botões de categoria e os contadores de dias letivos ao lado.',
+        legenda: 'Editor visual: clique, Shift+clique e Ctrl+clique nos dias, escolha a categoria e acompanhe os contadores.',
+        captura: { rota: '/calendario/editor', perfil: 'coordenacao' },
+      },
+      {
+        arquivo: 'periodos-especiais.jpg',
+        alt: 'Lista de períodos especiais com nome, tipo e datas.',
+        legenda: 'Períodos especiais (jogos internos, encontro dos servidores): grade especial e refeições.',
+        captura: { rota: '/periodos', perfil: 'coordenacao' },
+      },
     ],
     duvidas: [
       { pergunta: 'Por que o total do ano não bate com a soma dos meses de julho?', resposta: 'Dias fora das etapas (recesso entre N2 e N3, por exemplo) não contam como letivos, mesmo sendo dias úteis.' },
@@ -442,6 +454,12 @@ export const TOPICOS: readonly TopicoAjuda[] = [
         legenda: 'Página da ausência: cobertura, convites, refeições e mensagens prontas.',
         captura: { rota: '/ausencias', perfil: 'coordenacao', clicar: 'a[href^="/ausencias/c"]', paginaInteira: true },
       },
+      {
+        arquivo: 'reposicoes-lista.jpg',
+        alt: 'Lista de reposições de aulas com prazo, situação e o formulário opcional.',
+        legenda: 'Reposições: o docente informa, a Coordenação dá ciência.',
+        captura: { rota: '/reposicoes', perfil: 'coordenacao' },
+      },
     ],
     duvidas: [
       { pergunta: 'Posso registrar uma ausência que já aconteceu?', resposta: 'Sim, até 30 dias para trás, e ausências planejadas até um ano à frente.' },
@@ -582,6 +600,12 @@ export const TOPICOS: readonly TopicoAjuda[] = [
         alt: 'Lista de textos-padrão agrupados por tipo de interação, com botões para criar e editar.',
         legenda: 'Textos-padrão editáveis, por tipo de interação.',
         captura: { rota: '/comunicacao/modelos', perfil: 'coordenacao' },
+      },
+      {
+        arquivo: 'comunicacao-periodicas.jpg',
+        alt: 'Resumo semanal dos docentes e avisos de fim de etapa e de fechamento do período.',
+        legenda: 'Mensagens periódicas: resumo semanal e avisos do período.',
+        captura: { rota: '/comunicacao/periodicas', perfil: 'coordenacao', paginaInteira: true },
       },
     ],
     duvidas: [
@@ -784,6 +808,12 @@ export const TOPICOS: readonly TopicoAjuda[] = [
         alt: 'Lista de diários com turma, disciplina, professor, aulas previstas e ministradas e a cor do semáforo.',
         legenda: 'Semáforo de diários.',
         captura: { rota: '/diarios', perfil: 'coordenacao' },
+      },
+      {
+        arquivo: 'diarios-conferencia.jpg',
+        alt: 'Conferência dos diários com aulas presumidas e ministradas por oferta.',
+        legenda: 'Conferência dos diários: o presumido pela grade e o informado pelo docente.',
+        captura: { rota: '/diarios/conferencia', perfil: 'coordenacao' },
       },
     ],
     duvidas: [
