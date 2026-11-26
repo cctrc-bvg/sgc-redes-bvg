@@ -51,27 +51,9 @@ export default async function PaginaPeriodicas({ searchParams }: { searchParams:
       </p>
 
       {avisos.length > 0 && (
-        <section aria-labelledby="avisos-periodo" className="mt-6 rounded-lg border border-if-verde-600 bg-if-verde-50 p-4">
-          <h2 id="avisos-periodo" className="text-lg font-bold text-slate-900">Avisos do período</h2>
-          <p className="mt-1 max-w-3xl text-sm text-slate-700">Fim de etapa e fechamento do semestre: um aviso por docente com disciplina no semestre, separado do resumo semanal.</p>
-          {avisos.map((g) => (
-            <details key={g.aviso.id} className="mt-3 rounded-md border border-slate-200 bg-white p-3" open={g.mensagens.some((m) => !m.enviado) && avisos.length === 1}>
-              <summary className="cursor-pointer font-semibold text-slate-900">
-                {g.titulo}: {g.mensagens.filter((m) => !m.enviado).length} de {g.mensagens.length} ainda não registrados
-              </summary>
-              <ul className="mt-3 space-y-4">
-                {g.mensagens.map((r) => (
-                  <li key={r.mensagem.chave} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="mb-2 text-sm text-slate-700">{r.enviado ? '✔ Envio registrado.' : 'Aviso ainda não registrado.'}</p>
-                    <CaixaMensagem mensagem={r.mensagem} mostrarWhatsapp={usuario.usaWhatsapp}>
-                      <FormularioResumo avisoId={g.aviso.id} docenteId={r.mensagem.chave.split(':').pop()!} mostrarWhatsapp={usuario.usaWhatsapp} enviado={r.enviado} />
-                    </CaixaMensagem>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          ))}
-        </section>
+        <p className="mt-3 text-sm font-semibold text-slate-800">
+          <a href="#avisos-periodo" className="text-if-verde-700 underline underline-offset-2">Há {avisos.length === 1 ? '1 aviso do período' : `${avisos.length} avisos do período`} para enviar (fim de etapa ou fechamento).</a>
+        </p>
       )}
 
       {resumos.length === 0 ? (
@@ -97,6 +79,30 @@ export default async function PaginaPeriodicas({ searchParams }: { searchParams:
           </ul>
         </>
       )}
+      {avisos.length > 0 && (
+        <section aria-labelledby="avisos-periodo" className="mt-10 rounded-lg border border-if-verde-600 bg-if-verde-50 p-4">
+          <h2 id="avisos-periodo" className="text-lg font-bold text-slate-900">Avisos do período</h2>
+          <p className="mt-1 max-w-3xl text-sm text-slate-700">Fim de etapa e fechamento do semestre: um aviso por docente com disciplina no semestre, separado do resumo semanal.</p>
+          {avisos.map((g) => (
+            <details key={g.aviso.id} className="mt-3 rounded-md border border-slate-200 bg-white p-3" open={g.mensagens.some((m) => !m.enviado) && avisos.length === 1}>
+              <summary className="cursor-pointer font-semibold text-slate-900">
+                {g.titulo}: {g.mensagens.filter((m) => !m.enviado).length} de {g.mensagens.length} ainda não registrados
+              </summary>
+              <ul className="mt-3 space-y-4">
+                {g.mensagens.map((r) => (
+                  <li key={r.mensagem.chave} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="mb-2 text-sm text-slate-700">{r.enviado ? '✔ Envio registrado.' : 'Aviso ainda não registrado.'}</p>
+                    <CaixaMensagem mensagem={r.mensagem} mostrarWhatsapp={usuario.usaWhatsapp}>
+                      <FormularioResumo avisoId={g.aviso.id} docenteId={r.mensagem.chave.split(':').pop()!} mostrarWhatsapp={usuario.usaWhatsapp} enviado={r.enviado} />
+                    </CaixaMensagem>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ))}
+        </section>
+      )}
+
     </>
   );
 }
