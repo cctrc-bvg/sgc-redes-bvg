@@ -17,6 +17,7 @@ enum Role {
   CTP
   DIRECAO
   ASSISTENCIA_ESTUDANTIL
+  CCA // Coordenação de Controle Acadêmico (secretaria escolar do curso)
 }
 
 model User {
@@ -159,6 +160,8 @@ model DisciplinaOferta {
   aulasMinistradas Int     @default(0)
   // RF08-A: false = vale o presumido (grade × dias letivos); true = a Coordenação lançou o valor à mão.
   ministradasManual Boolean @default(false)
+  // Data do lançamento manual: o valor vale como ponto de partida e o automático segue a partir dela. Vazio: valor fixo.
+  ministradasEm DateTime? @db.Date
   diarioEmDia     Boolean  @default(true)
   ultimaCobranca  DateTime?
   observacaoDiario String?
@@ -354,6 +357,8 @@ model CoberturaBloco {
   tipo          TipoCobertura
   substitutoId  String?
   substituto    User?           @relation(fields: [substitutoId], references: [id])
+  // Disciplina (oferta) que o substituto ministrou no horário: ele conta a aula no diário dela. Vazio: não informada.
+  ofertaSubstitutaId String?
   blocoOrigemId String?
   blocoOrigem   BlocoHorario?   @relation("BlocoOrigemAdiantamento", fields: [blocoOrigemId], references: [id])
 
@@ -432,6 +437,7 @@ enum CanalWhatsapp {
   CTP
   LIDERES_TURMA
   NUTRICIONISTA // nutricionista do campus: avisada das alterações de refeição
+  CCA // Coordenação de Controle Acadêmico: recebe o apanhado geral das PPI por turma
 }
 
 model ConfiguracaoCanal {

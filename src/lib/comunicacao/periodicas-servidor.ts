@@ -1,4 +1,5 @@
 import 'server-only';
+import { STATUS_COM_REPOSICAO } from '@/lib/reposicao/regras';
 import { prisma } from '@/lib/db';
 import { dataDoBanco, dataParaBanco, NOME_STATUS } from '@/lib/ausencias/regras';
 import { carregarAno } from '@/lib/calendario/servidor';
@@ -47,7 +48,7 @@ export async function resumosDaSemana(segunda: string, hojeISO: string): Promise
       select: { dataAula: true, status: true, professorAusenteId: true, oferta: { select: { disciplina: { select: { nome: true } }, turma: { select: { codigo: true } } } } },
     }),
     prisma.ausenciaDocente.findMany({
-      where: { status: 'TURMA_DISPENSADA', reposicaoEm: null, dataAula: { gte: dataParaBanco(somarDiasISO(hojeISO, -90)), lte: dataParaBanco(hojeISO) } },
+      where: { status: { in: [...STATUS_COM_REPOSICAO] }, reposicaoEm: null, dataAula: { gte: dataParaBanco(somarDiasISO(hojeISO, -90)), lte: dataParaBanco(hojeISO) } },
       select: { dataAula: true, professorAusenteId: true, oferta: { select: { disciplina: { select: { nome: true } }, turma: { select: { codigo: true } } } } },
     }),
     prisma.logComunicacao.findMany({ where: { chave: { startsWith: `resumo:${segunda}:` }, sucesso: true }, select: { chave: true } }),

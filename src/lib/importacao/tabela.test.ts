@@ -83,3 +83,13 @@ describe('gerarCsv', () => {
     expect(lerCsv(gerarCsv(['a', 'b', 'c'], linhas)).linhas[0].celulas).toEqual(linhas[0]);
   });
 });
+
+describe('mapearColunas: planilha exportada com nome e e-mail', () => {
+  it('o título exato "E-mail do professor" vence o apelido "Professor", venha antes ou depois', () => {
+    const colunas = [{ campo: 'professor' as const, titulo: 'E-mail do professor', apelidos: ['email', 'professor'], obrigatoria: true }];
+    for (const cab of [['Professor', 'E-mail do professor'], ['E-mail do professor', 'Professor']]) {
+      const t = { cabecalho: cab, linhas: [{ numero: 2, celulas: cab[0] === 'Professor' ? ['Ana Lima', 'ana@x.br'] : ['ana@x.br', 'Ana Lima'] }] };
+      expect(mapearColunas(t, colunas).registros[0].valores.professor).toBe('ana@x.br');
+    }
+  });
+});

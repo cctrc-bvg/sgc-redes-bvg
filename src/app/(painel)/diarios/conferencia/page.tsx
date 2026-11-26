@@ -11,12 +11,13 @@ import { conferirDiario } from '../actions';
 
 export const metadata: Metadata = { title: 'Conferência dos diários — SGC-Redes' };
 
-export default async function PaginaConferencia({ searchParams }: { searchParams: Promise<{ ano?: string; sem?: string; so?: string }> }) {
+export default async function PaginaConferencia({ searchParams }: { searchParams: Promise<{ ano?: string; sem?: string; so?: string; turma?: string }> }) {
   await exigirPermissao('diarios:ver-todos');
   const params = await searchParams;
   const { anoLetivo, semestreLetivo } = periodoDaUrl(params);
   const hoje = hojeEmFortaleza();
   const soDiferentes = params.so === 'diferentes';
+  const turmaFiltro = params.turma ?? '';
 
   const ofertas = await prisma.disciplinaOferta.findMany({
     where: { anoLetivo, OR: [{ semestreLetivo: null }, { semestreLetivo }] },
@@ -26,6 +27,7 @@ export default async function PaginaConferencia({ searchParams }: { searchParams
       aulasPrevistas: true,
       aulasMinistradas: true,
       ministradasManual: true,
+        ministradasEm: true,
       diarioEmDia: true,
       turma: { select: { codigo: true } },
       disciplina: { select: { nome: true } },
@@ -33,7 +35,9 @@ export default async function PaginaConferencia({ searchParams }: { searchParams
     },
   });
   const situacoes = await situacoesAutomaticas(anoLetivo, ofertas, hoje);
+  const turmas = [...new Set(ofertas.map((o) => o.turma.codigo))].sort((a, b) => a.localeCompare(b));
   const linhas = ofertas
+    .filter((o) => !turmaFiltro || o.turma.codigo === turmaFiltro)
     .map((o) => {
       const s = situacoes.get(o.id);
       return { ...o, presumido: s?.presumido ?? null, efetivas: s?.efetivas ?? o.aulasMinistradas };
@@ -42,7 +46,7 @@ export default async function PaginaConferencia({ searchParams }: { searchParams
     .map((o) => ({ ...o, diferenca: o.presumido === null ? 0 : o.efetivas - o.presumido }))
     .filter((o) => !soDiferentes || o.diferenca !== 0)
     .sort((a, b) => Math.abs(b.diferenca) - Math.abs(a.diferenca) || a.turma.codigo.localeCompare(b.turma.codigo) || a.disciplina.nome.localeCompare(b.disciplina.nome, 'pt-BR'));
-  const base = `/diarios/conferencia?ano=${anoLetivo}&sem=${semestreLetivo}`;
+  const base = `/diarios/conferencia?ano=${anoLetivo}&sem=${semestreLetivo}${turmaFiltro ? `&turma=${encodeURIComponent(turmaFiltro)}` : ''}`;
 
   return (
     <>
@@ -57,8 +61,21 @@ export default async function PaginaConferencia({ searchParams }: { searchParams
         automático; se for diferente, vira lançamento manual. A conferência é por amostra, no fim de cada etapa.
       </p>
       <div className="mt-4">
-        <SeletorPeriodo anoLetivo={anoLetivo} semestreLetivo={semestreLetivo} anos={anosDoSeletor(anoLetivo)} manter={soDiferentes ? { so: 'diferentes' } : {}} />
+        <SeletorPeriodo anoLetivo={anoLetivo} semestreLetivo={semestreLetivo} anos={anosDoSeletor(anoLetivo)} manter={{ ...(soDiferentes ? { so: 'diferentes' } : {}), ...(turmaFiltro ? { turma: turmaFiltro } : {}) }} />
       </div>
+      <form method="get" className="mt-3 flex flex-wrap items-end gap-2">
+        <input type="hidden" name="ano" value={anoLetivo} />
+        <input type="hidden" name="sem" value={semestreLetivo} />
+        {soDiferentes && <input type="hidden" name="so" value="diferentes" />}
+        <div>
+          <label htmlFor="filtro-turma" className="block text-sm font-semibold text-slate-800">Turma</label>
+          <select id="filtro-turma" name="turma" defaultValue={turmaFiltro} className="mt-1 rounded border border-slate-400 bg-white px-2 py-1.5 text-sm">
+            <option value="">Todas as turmas</option>
+            {turmas.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <button type="submit" className="rounded border border-if-verde-700 px-3 py-1.5 text-sm font-semibold text-if-verde-800 hover:bg-if-verde-50">Filtrar</button>
+      </form>
       <p className="mt-3 text-sm">
         {soDiferentes ? (
           <Link href={base} className="text-if-verde-700 underline underline-offset-2">Mostrar todos</Link>

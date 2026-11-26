@@ -104,7 +104,7 @@ export const MODELOS_TEXTO: readonly ModeloTexto[] = [
   m('convite_grupo', 'formal', 'Formal (e-mail)', 'Convite de substituição — {{codigo da turma}} — {{data}}', [
     'Prezados(as) professores(as),',
     '',
-    'A Coordenação do Curso Técnico em Redes de Computadores precisa de apoio para cobrir aulas da turma {{turma}} em {{data}} ({{dia}}), disciplina {{disciplina}}:',
+    'A Coordenação do Curso Técnico em Redes de Computadores precisa de apoio para ocupar horários de aula da turma {{turma}} em {{data}} ({{dia}}), disciplina {{disciplina}}:',
     '{{horarios}}',
     '',
     'Quem puder assumir um dos horários, ou adiantar uma aula própria da turma, por favor responda a esta mensagem.',
@@ -156,7 +156,7 @@ export const MODELOS_TEXTO: readonly ModeloTexto[] = [
   m('adiantamento', 'formal', 'Formal (e-mail)', 'Aula adiantada — {{codigo da turma}} — {{data}}', [
     'Prezado(a) {{nome}},',
     '',
-    'Para cobrir um horário vago da turma {{turma}} em {{data}} ({{dia}}), sua aula foi adiantada:',
+    'Para ocupar um horário vago da turma {{turma}} em {{data}} ({{dia}}), sua aula foi adiantada:',
     '{{horarios}}',
     '',
     'O horário de origem fica vago. Detalhes em Minha grade: {{link}}',
@@ -227,7 +227,7 @@ export const MODELOS_TEXTO: readonly ModeloTexto[] = [
   m('docente_ausente', 'formal', 'Formal (e-mail)', 'Cobertura das suas aulas — {{codigo da turma}} — {{data}}', [
     'Prezado(a) {{nome}},',
     '',
-    'Registramos a cobertura das suas aulas de {{disciplina}} na turma {{turma}} em {{data}} ({{dia}}):',
+    'Registramos a ocupação dos horários das suas aulas de {{disciplina}} na turma {{turma}} em {{data}} ({{dia}}):',
     '{{horarios}}',
     '',
     '{{reposicao}}',
@@ -389,7 +389,7 @@ export function valoresDosCampos(brutos: Readonly<Record<string, string>>): Reco
   return valores;
 }
 
-const CANAIS = ['GRUPO_PROFESSORES', 'GRUPO_GESTAO_DIR_COORD', 'ASSISTENCIA_ESTUDANTIL', 'CTP', 'LIDERES_TURMA', 'NUTRICIONISTA'] as const;
+const CANAIS = ['GRUPO_PROFESSORES', 'GRUPO_GESTAO_DIR_COORD', 'ASSISTENCIA_ESTUDANTIL', 'CTP', 'LIDERES_TURMA', 'NUTRICIONISTA', 'CCA'] as const;
 
 /** Formulário de texto-padrão (criar e editar). */
 export const ModeloSchema = z
@@ -406,3 +406,13 @@ export const ModeloSchema = z
       if (/\{\{|\}\}/.test(sobra)) ctx.addIssue({ code: 'custom', path: [campo], message: 'Feche cada campo com {{ e }} (ex.: {{data}}), com até 60 caracteres.' });
     }
   });
+
+/** Mensagem que convoca ou convida para algo que ainda vai acontecer (reunião, encontro, convite). */
+export const anunciaEventoFuturo = (assunto: string, texto: string) => /reuni|convoc|convite|encontro/i.test(`${assunto} ${texto}`);
+
+/** Campos de data (AAAA-MM-DD) anteriores a hoje: convite para data que já passou não faz sentido. */
+export function camposComDataPassada(campos: Readonly<Record<string, string>>, hojeISO: string): string[] {
+  return Object.entries(campos)
+    .filter(([nome, v]) => tipoDoCampo(nome) === 'data' && /^\d{4}-\d{2}-\d{2}$/.test(v.trim()) && v.trim() < hojeISO)
+    .map(([nome]) => nome);
+}

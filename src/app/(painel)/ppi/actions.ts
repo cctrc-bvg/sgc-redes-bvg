@@ -11,7 +11,7 @@ import { temPermissao } from '@/lib/auth/rbac';
 import { dataDoBanco, dataParaBanco, hojeEmFortaleza } from '@/lib/ausencias/regras';
 import { criarAtividadeSchema, distribuirHoras, META_PPI, SolicitacaoSchema } from '@/lib/ppi/regras';
 import { lerModoEnvio, NOME_MODO } from '@/lib/comunicacao/mensagem';
-import { chaveEnvioPpi, mensagensDaPpi } from '@/lib/ppi/comunicar';
+import { chaveEnvioPpi, mensagemResumoPpiCca, mensagensDaPpi } from '@/lib/ppi/comunicar';
 
 // Auditoria só com ids e horas: nome, matrícula e comprovantes são dados pessoais do estudante.
 
@@ -167,6 +167,22 @@ export async function registrarEnvioPpi(_e: EstadoEnvio | undefined, formData: F
   });
   await registrarAuditoria({ userId: usuario.id, acao: 'REGISTROU_ENVIO_MENSAGEM', entidade: 'LogComunicacao', entidadeId: log.id, detalhes: { canal: m.canal, modo, origem: 'ppi', situacao: s.status } });
   revalidatePath(`/ppi/${s.id}/comunicar`);
+  revalidatePath('/comunicacao');
+  return { sucesso: true, mensagem: `Envio por ${NOME_MODO[modo].toLowerCase()} registrado no histórico.` };
+}
+
+/** Registra no histórico o envio do apanhado geral da PPI à CCA (o texto é regenerado no servidor). */
+export async function registrarEnvioResumoCca(_e: EstadoEnvio | undefined, formData: FormData): Promise<EstadoEnvio> {
+  const { usuario } = await exigirPermissao('comunicacao:enviar');
+  const modo = lerModoEnvio(formData.get('modo'));
+  if (!modo) return { mensagem: 'Escolha por onde a mensagem foi enviada.' };
+  const { mensagem: m } = await mensagemResumoPpiCca();
+  if (!m) return { mensagem: 'O contato da CCA não está ativo em Comunicação.' };
+  const log = await prisma.logComunicacao.create({
+    data: { canal: m.canal, destino: m.destino, chave: `ppi-resumo:cca:${hojeEmFortaleza()}`, assunto: m.assunto, mensagem: m.texto, modoEnvio: modo, sucesso: true, userId: usuario.id },
+  });
+  await registrarAuditoria({ userId: usuario.id, acao: 'REGISTROU_ENVIO_MENSAGEM', entidade: 'LogComunicacao', entidadeId: log.id, detalhes: { canal: m.canal, modo, origem: 'ppi_resumo' } });
+  revalidatePath('/ppi/resumo-cca');
   revalidatePath('/comunicacao');
   return { sucesso: true, mensagem: `Envio por ${NOME_MODO[modo].toLowerCase()} registrado no histórico.` };
 }

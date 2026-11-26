@@ -11,6 +11,8 @@ import { lerQuantidade } from '@/lib/alimentacao/previsao';
 import { ALUNOS_MAXIMO } from '@/lib/turmas/regras';
 import { hojeEmFortaleza } from '@/lib/ausencias/regras';
 import { temPermissao } from '@/lib/auth/rbac';
+import { NOME_REFEICAO_HORARIO } from '@/lib/ausencias/mensagens';
+import { refeicoesPrevistasDaTurma } from '@/lib/alimentacao/servidor';
 
 /** Quem pode comunicar vai direto para as mensagens prontas do dia (CAE, nutricionista, Gestão, turmas). */
 const paginaComunicar = (dataRefeicao: Date, motivo: 'acrescimo' | 'ajuste' | 'ciencia') =>
@@ -81,6 +83,14 @@ export async function criarAcrescimo(_estado: EstadoAcrescimo | undefined, formD
   if (!turma) return { erros: { turmaId: ['Escolha uma turma ativa.'] }, valores };
   const { itens, passadas } = planejarAcrescimo(d, new Date());
   if (passadas.length > 0) return { erros: { refeicoes: ['Uma das refeições marcadas já passou. Desmarque-a ou escolha outra data.'] }, valores };
+
+  // Acréscimo é para refeição fora da previsão: se a grade já prevê a refeição, a turma já vai comer no campus.
+  const previstas = await refeicoesPrevistasDaTurma(turma.id, d.data);
+  const jaPrevistas = d.refeicoes.filter((r) => previstas.has(r));
+  if (jaPrevistas.length > 0) {
+    const nomes = jaPrevistas.map((r) => NOME_REFEICAO_HORARIO[r].replace(/\s*\(.*\)/, '').toLowerCase()).join(' e ');
+    return { erros: { refeicoes: [`A turma já tem ${nomes} previsto(s) pela grade neste dia: não há o que acrescentar. Desmarque ${jaPrevistas.length > 1 ? 'essas refeições' : 'essa refeição'}.`] }, valores };
+  }
 
   const ids = await prisma.$transaction(
     itens.map((i) =>

@@ -105,3 +105,13 @@ export function lembreteDoDiario(o: {
     }),
   };
 }
+
+/** "Já correram X de Y dias (Z%)": referência rápida de quanto o diário já deveria ter avançado. */
+export function progressoDoSemestre(inicioISO: string, fimISO: string, hojeISO: string): string {
+  const dia = (iso: string) => Date.parse(`${iso}T12:00:00Z`) / 86_400_000;
+  const total = Math.round(dia(fimISO) - dia(inicioISO)) + 1;
+  if (hojeISO < inicioISO) return `O semestre ainda não começou (${total} dias no total).`;
+  if (hojeISO > fimISO) return `O semestre terminou (${total} dias).`;
+  const corridos = Math.round(dia(hojeISO) - dia(inicioISO)) + 1;
+  return `Já correram ${corridos} de ${total} dias do semestre (${Math.round((corridos / total) * 100)}%).`;
+}

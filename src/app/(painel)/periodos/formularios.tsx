@@ -49,7 +49,8 @@ export function FormularioGradeEspecial(props: {
 }) {
   const [estado, acao, enviando] = useActionState<EstadoGrade | undefined, FormData>(salvarGradeEspecial, undefined);
   return (
-    <form action={acao} className="space-y-3">
+    // key: ao copiar a grade normal (ou voltar a ela), os campos recomeçam com o que está gravado; sem isso mantinham o valor antigo.
+    <form key={JSON.stringify(props.valores)} action={acao} className="space-y-3">
       {estado?.mensagem && <Alerta tipo={estado.sucesso ? 'sucesso' : 'erro'}>{estado.mensagem}</Alerta>}
       <input type="hidden" name="periodoId" value={props.periodoId} />
       <input type="hidden" name="turmaId" value={props.turmaId} />
@@ -97,7 +98,7 @@ export function FormularioGradeEspecial(props: {
 export function FormularioPresencas(props: { periodoId: string; turmas: { id: string; codigo: string; ativos: number }[]; dias: string[]; valores: Record<string, number> }) {
   const [estado, acao, enviando] = useActionState<EstadoGrade | undefined, FormData>(salvarPresencas, undefined);
   return (
-    <form action={acao} className="space-y-3">
+    <form key={JSON.stringify(props.valores)} action={acao} className="space-y-3">
       {estado?.mensagem && <Alerta tipo={estado.sucesso ? 'sucesso' : 'erro'}>{estado.mensagem}</Alerta>}
       <input type="hidden" name="periodoId" value={props.periodoId} />
       <div className="overflow-x-auto">

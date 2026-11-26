@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { STATUS_COM_REPOSICAO } from '@/lib/reposicao/regras';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Alerta } from '@/components/campo';
@@ -34,7 +35,7 @@ import { FormularioCancelamento, FormularioConvite, FormularioDecisao, type Hora
 export const metadata: Metadata = { title: 'Ausência — SGC-Redes' };
 
 const SITUACAO_HORARIO = {
-  pendente: '⚠ Sem cobertura definida',
+  pendente: '⚠ Sem ocupação definida',
   substituicao: '✔ Substituição',
   adiantamento: '✔ Aula adiantada',
   dispensa: '⏹ Turma dispensada',
@@ -49,7 +50,7 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
   if (!dados) notFound();
   const { registro, dia, ausencia, alertas, horarios, mensagens, dataISO } = dados;
   // Reposição das aulas dispensadas: 15 dias letivos ou o fim da etapa, o que vier primeiro (ROD, Art. 37, § 2º).
-  const precisaRepor = registro.status === 'TURMA_DISPENSADA' || registro.status === 'REPOSICAO_AGENDADA';
+  const precisaRepor = (STATUS_COM_REPOSICAO as readonly string[]).includes(registro.status);
   const anoCal = precisaRepor ? await carregarAno(Number(dataISO.slice(0, 4))) : null;
   const prazoRepor = anoCal ? prazoDeReposicao(dataISO, anoCal.contagem.letivos, anoCal.etapas) : null;
   // Envio automático só com a API configurada e destino válido no canal (G07).
@@ -79,6 +80,12 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
   const docente = new Map(dia.docentes.map((d) => [d.id, d.nome]));
   const disciplina = new Map(dia.aulasDoDia.map((a) => [`${a.turmaId}|${a.blocoId}`, a.disciplina]));
   const minhas = new Map(dia.coberturas.filter((c) => c.ausenciaId === id).map((c) => [c.blocoId, c]));
+  // Disciplinas que cada candidato a substituto ministra nesta turma: ele conta a aula na disciplina que der no horário.
+  const ofertasDaTurma = await prisma.disciplinaOferta.findMany({
+    where: { anoLetivo: Number(dataISO.slice(0, 4)), turmaId: registro.turmaId },
+    select: { id: true, professorId: true, disciplina: { select: { nome: true } } },
+  });
+  const disciplinasDele = (professorId: string) => ofertasDaTurma.filter((o) => o.professorId === professorId);
   const horariosDecisao: HorarioDecisao[] = ausencia.blocoIds.map((b) => {
     const subs = sugerirSubstitutos(ctx, registro.turmaId, b);
     const adis = sugerirAdiantamentos(ctx, registro.turmaId, b);
@@ -92,11 +99,16 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
         : atual.tipo === 'DISPENSA'
           ? OPCAO_DISPENSA
           : atual.tipo === 'SUBSTITUICAO'
-            ? opcaoSubstituto(atual.substitutoId ?? '')
+            ? opcaoSubstituto(atual.substitutoId ?? '', atual.ofertaSubstitutaId ?? (disciplinasDele(atual.substitutoId ?? '').length === 1 ? disciplinasDele(atual.substitutoId ?? '')[0]!.id : null))
             : opcaoAdiantamento(atual.blocoOrigemId ?? ''),
       opcoes: [
-        { valor: OPCAO_PENDENTE, rotulo: 'Decidir depois (sem cobertura)' },
-        ...subs.map((s) => ({ valor: opcaoSubstituto(s.id), rotulo: `Substituição: ${s.nome}${s.daTurma ? ' (leciona na turma)' : ''}` })),
+        { valor: OPCAO_PENDENTE, rotulo: 'Decidir depois (sem ocupação)' },
+        ...subs.flatMap((s) => {
+          const dele = disciplinasDele(s.id);
+          return dele.length === 0
+            ? [{ valor: opcaoSubstituto(s.id), rotulo: `Substituição: ${s.nome}` }]
+            : dele.map((o) => ({ valor: opcaoSubstituto(s.id, o.id), rotulo: `Substituição: ${s.nome}, na disciplina ${o.disciplina.nome} (conta no diário dela)` }));
+        }),
         ...adis.map((a) => ({
           valor: opcaoAdiantamento(a.blocoOrigemId),
           rotulo: `Adiantar ${disciplina.get(`${registro.turmaId}|${a.blocoOrigemId}`)} — ${docente.get(a.professorId) ?? ''} (de ${descreverBloco(bloco.get(a.blocoOrigemId)!)})`,
@@ -146,13 +158,20 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
       </p>
       {prazoRepor && (
         <div className="mt-3">
-          <Alerta tipo={registro.status === 'TURMA_DISPENSADA' && prazoRepor.prazo < hojeEmFortaleza() ? 'erro' : 'info'}>
-            Reposição das aulas dispensadas: {textoPrazoReposicao(prazoRepor)} (ROD, Art. 37, § 2º).
-            {registro.status === 'TURMA_DISPENSADA'
-              ? prazoRepor.prazo < hojeEmFortaleza()
-                ? ' O prazo já passou e a reposição ainda não foi agendada.'
-                : ' Combine a data com a turma (pelo menos 75% de acordo, com registro assinado) e marque "reposição agendada" na decisão.'
-              : ' Reposição já agendada.'}
+          <Alerta tipo={registro.status !== 'REPOSICAO_AGENDADA' && !registro.reposicaoEm && prazoRepor.prazo < hojeEmFortaleza() ? 'erro' : 'info'}>
+            {registro.status === 'COBERTA_POR_SUBSTITUICAO'
+              ? 'Horário ocupado por outro docente: a aula não foi dada na disciplina de quem faltou, que ainda deve repô-la para completar a carga horária (o docente que ocupou o horário pode contá-lo na disciplina dele). Prazo: '
+              : 'Reposição das aulas dispensadas: '}
+            {textoPrazoReposicao(prazoRepor)} (ROD, Art. 37, § 2º).
+            {registro.reposicaoEm
+              ? ''
+              : registro.status === 'REPOSICAO_AGENDADA'
+                ? ' Reposição já agendada.'
+                : prazoRepor.prazo < hojeEmFortaleza()
+                  ? ' O prazo já passou e a reposição ainda não foi informada.'
+                  : registro.status === 'TURMA_DISPENSADA'
+                    ? ' Combine a data com a turma (pelo menos 75% de acordo, com registro assinado) e marque "reposição agendada" na decisão.'
+                    : ' O docente informa a data da reposição em Reposições.'}
             {registro.reposicaoEm && ` Aula reposta em ${formatarData(dataDoBanco(registro.reposicaoEm))}.`}{' '}
             <Link href="/reposicoes" className="font-semibold underline underline-offset-2">Registrar ou conferir a reposição</Link>.
           </Alerta>
@@ -162,14 +181,14 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
         <div className="mt-3">
           <Alerta tipo="info">
             O próprio docente informou esta ausência. Envie a ele a &quot;Ciência da sua ausência&quot; (em Comunicar, abaixo), que já traz a orientação
-            da Gestão de Pessoas, e decida a cobertura de cada horário.
+            da Gestão de Pessoas, e decida quem ocupa cada horário.
           </Alerta>
         </div>
       )}
 
       {aviso === 'registrada' && (
         <div className="mt-4">
-          <Alerta tipo="sucesso">Ausência registrada. Decida a cobertura de cada horário abaixo.</Alerta>
+          <Alerta tipo="sucesso">Ausência registrada. Decida quem ocupa cada horário abaixo.</Alerta>
         </div>
       )}
 
@@ -186,7 +205,7 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
       </section>
 
       <section aria-labelledby="decisao" className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 id="decisao" className="text-lg font-semibold text-slate-900">Decidir a cobertura</h2>
+        <h2 id="decisao" className="text-lg font-semibold text-slate-900">Decidir a ocupação dos horários</h2>
         <p className="mb-4 mt-1 text-sm text-slate-700">
           Sugestões pela grade do dia: primeiro quem leciona na turma (G03), depois os demais docentes livres; adiantamentos trazem uma
           aula posterior da turma para o horário vago. Dispensar é o último recurso.
@@ -268,7 +287,7 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
             Modo semiautomático (G07): o sistema gera os textos e você encaminha pelo e-mail institucional
             {mostrarWhatsapp ? ' ou pelo WhatsApp' : ''}, depois registra o envio. Trechos entre {'{{ }}'} são destinatários sem cadastro:
             preencha antes de enviar. E-mail e saudação dos grupos e setores ficam em Comunicação. A Gestão só é avisada de dispensa, impacto
-            na alimentação ou aula sem cobertura (G08).
+            na alimentação ou aula sem professor definido (G08).
           </p>
           {mensagens.length === 0 ? (
             <p className="text-slate-700">Nenhuma mensagem necessária no momento.</p>

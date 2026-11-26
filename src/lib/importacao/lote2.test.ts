@@ -69,6 +69,14 @@ describe('importação de ofertas', () => {
     expect(troca.linhas[0].detalhe).toMatch(/antes: Ana/);
   });
 
+  it('aceita o nome completo do docente (planilha exportada) e recusa homônimos', () => {
+    const p = planejarImportacaoOfertas({ contexto, registros: [linha(2, 'REDES-1', 'BIO.1', 'ana')] });
+    expect(p.linhas[0].situacao).toBe('igual');
+    const homonimos = { ...contexto, docentes: [...contexto.docentes, { id: 'p3', email: 'ana2@ifce.edu.br', nome: 'Ana' }] };
+    const r = planejarImportacaoOfertas({ contexto: homonimos, registros: [linha(2, 'REDES-1', 'BIO.1', 'Ana')] });
+    expect(r.linhas[0].detalhe).toMatch(/mais de um docente/);
+  });
+
   it('ignora linha sem professor (modelo com a matriz inteira)', () => {
     const p = planejarImportacaoOfertas({ registros: [linha(2, 'REDES-1', 'qualquer', '  ')], contexto });
     expect(p.temErros).toBe(false);

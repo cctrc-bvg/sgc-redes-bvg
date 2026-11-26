@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { Alerta, BotaoPrimario, Campo, Selecao } from '@/components/campo';
 import { cadastrarSabado, type EstadoSabado } from '../actions';
 
@@ -16,11 +16,22 @@ const OPCOES_DIA = [
 export function FormularioSabado() {
   const [estado, acao, enviando] = useActionState<EstadoSabado | undefined, FormData>(cadastrarSabado, undefined);
   const v = estado?.sucesso ? undefined : estado?.valores;
+  const [escolhida, setEscolhida] = useState(v?.data ?? '');
+  // Aviso na hora: só sábado vale (o servidor confere de novo).
+  const naoESabado = /^\d{4}-\d{2}-\d{2}$/.test(escolhida) && new Date(`${escolhida}T12:00:00Z`).getUTCDay() !== 6;
   return (
     <form action={acao} className="space-y-5" noValidate>
       {estado?.mensagem && <Alerta tipo={estado.sucesso ? 'sucesso' : 'erro'}>{estado.mensagem}</Alerta>}
       <div className="grid gap-5 sm:grid-cols-2">
-        <Campo id="data" rotulo="Data do sábado" type="date" required defaultValue={v?.data ?? ''} erros={estado?.erros?.data} />
+        <Campo
+          id="data"
+          rotulo="Data do sábado"
+          type="date"
+          required
+          defaultValue={v?.data ?? ''}
+          onChange={(e) => setEscolhida(e.target.value)}
+          erros={naoESabado ? ['Essa data não cai num sábado: escolha um sábado.'] : estado?.erros?.data}
+        />
         <Selecao
           id="diaSemanaReferente"
           rotulo="Segue a grade de"
@@ -38,7 +49,7 @@ export function FormularioSabado() {
         dica="Ex.: reposição do feriado de 20/11, conforme calendário acadêmico."
       />
       <div className="sm:max-w-xs">
-        <BotaoPrimario carregando={enviando}>{enviando ? 'Salvando…' : 'Cadastrar sábado letivo'}</BotaoPrimario>
+        <BotaoPrimario carregando={enviando || naoESabado}>{enviando ? 'Salvando…' : 'Cadastrar sábado letivo'}</BotaoPrimario>
       </div>
     </form>
   );

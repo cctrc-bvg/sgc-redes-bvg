@@ -84,6 +84,7 @@ function Editor(
   const [texto, setTexto] = useState(inicial.texto);
   const [campos, setCampos] = useState<Record<string, string>>(inicial.campos);
 
+  const hojeISO = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Fortaleza' }).format(new Date());
   const pendentes = camposPendentes(assunto, texto).filter((c) => !(CAMPOS_AUTOMATICOS as readonly string[]).includes(c));
   const pessoasMarcadas = props.usuarios.filter((u) => destinos.has(u.valor)).length;
 
@@ -204,6 +205,7 @@ function Editor(
               <option key={h} value={h} />
             ))}
           </datalist>
+          {estado?.erros?.campos && <p role="alert" className="text-sm font-semibold text-if-vermelho-700">{estado.erros.campos}</p>}
           <div className="grid gap-3 sm:grid-cols-2">
             {pendentes.map((nome, i) => {
               const tipo = tipoDoCampo(nome);
@@ -224,7 +226,7 @@ function Editor(
                     </span>
                   </label>
                   {tipo === 'data' ? (
-                    <input type="date" {...comum} />
+                    <input type="date" min={hojeISO} {...comum} />
                   ) : tipo === 'hora' ? (
                     <input type="time" {...comum} />
                   ) : tipo === 'horarios' ? (

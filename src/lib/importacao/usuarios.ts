@@ -30,6 +30,7 @@ export function lerPerfil(valor: string): Role | null {
   if (v.startsWith('professor') || v === 'docente') return 'PROFESSOR';
   if (v.startsWith('coordena')) return 'COORDENADOR';
   if (v.startsWith('assistencia')) return 'ASSISTENCIA_ESTUDANTIL';
+  if (v === 'controle_academico' || v.startsWith('cca')) return 'CCA';
   return null;
 }
 

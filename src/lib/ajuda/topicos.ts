@@ -50,7 +50,8 @@ export interface TopicoAjuda {
   titulo: string;
   resumo: string;
   /** Permissão que dá acesso ao tópico; null = todos os usuários. */
-  permissao: Permissao | null;
+  /** Quem vê o tópico: quem tem esta permissão (ou qualquer uma da lista); null = todos. */
+  permissao: Permissao | readonly Permissao[] | null;
   /** Endereço da funcionalidade no sistema. */
   rota?: string;
   capacidades: string[];
@@ -322,7 +323,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
           'Em Minha grade, clique em "Informar ausência" (ou use o menu).',
           'Escolha a data; para vários dias, preencha também "Até" (até 15 dias). Aparecem as suas aulas pela grade.',
           'Marque as aulas e escolha um motivo operacional da lista. Nunca escreva o motivo pessoal ou médico.',
-          'Envie: a Coordenação recebe o aviso na tela inicial, dá ciência e organiza a cobertura. Se a ausência for hoje, ligue também para a Coordenação.',
+          'Envie: a Coordenação recebe o aviso na tela inicial, dá ciência e organiza a ocupação dos horários. Se a ausência for hoje, ligue também para a Coordenação.',
           'Acompanhe em "Minhas ausências"; enquanto a Coordenação não decidir, você pode cancelar.',
           'O motivo e o comprovante (ex.: atestado médico) vão direto à Coordenadoria de Gestão de Pessoas (CGP), pelo e-mail cgp.boaviagem@ifce.edu.br, fora do sistema.',
         ],
@@ -364,10 +365,11 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Registrar a ausência de um docente numa data: o sistema mostra as aulas dele pela grade vigente.',
       'Licença de vários dias: informe também "Até" (até 15 dias) e registre todas as aulas do período de uma vez; feriados e sábados letivos já entram na conta.',
       'Acompanhar o prazo de reposição das aulas dispensadas (15 dias letivos ou o fim da etapa, o que vier primeiro, ROD Art. 37): aparece na ausência e, quando está vencido ou perto de vencer sem data agendada, na tela inicial.',
+      'Quando outro docente ocupa o horário (substituição), quem faltou ainda precisa repor a aula para completar a carga horária da disciplina; o docente que ocupou o horário conta a aula na disciplina que ministrou (a Coordenação a escolhe ao decidir a substituição). Por isso a ausência coberta por substituição também entra em Reposição de aulas. Adiantamento não: a aula foi dada em outro horário.',
       'Reposição de aulas (menu da tela inicial ou "Reposição de aulas"): o docente informa a data em que repôs, com o formulário em anexo se quiser (PDF, JPG ou PNG, até 5 MB), e a Coordenação dá ciência; a Coordenação também pode registrar direto. O formulário pode ir só pelo e-mail institucional: o anexo no sistema é opcional.',
       'Receber as ausências que os próprios docentes informam (selo "Informada pelo docente" e contagem na tela inicial) e dar ciência a eles.',
       'Para cada horário perdido: substituição por outro docente, adiantamento de uma aula posterior da turma, dispensa da turma ou decidir depois.',
-      'Sugestões de cobertura priorizando professores da mesma turma e livres no horário.',
+      'Sugestões de ocupação do horário priorizando professores da mesma turma e livres no horário.',
       'Convidar docentes para substituir; eles aceitam ou recusam em Minha grade.',
       'Calcular o impacto nas refeições da turma (lanches e almoço) e avisar a Assistência Estudantil com a urgência (24h, imprevisto, emergência).',
       'Gerar as mensagens prontas para docentes, CTP, Gestão, CAE, nutricionista e líderes de turma.',
@@ -414,10 +416,10 @@ export const TOPICOS: readonly TopicoAjuda[] = [
         ],
       },
       {
-        titulo: 'Decidir a cobertura',
+        titulo: 'Decidir a ocupação dos horários',
         quem: 'Coordenação',
         passos: [
-          'Em "Decidir a cobertura", escolha para cada horário: substituto sugerido, adiantamento de aula, dispensa ou decidir depois.',
+          'Em "Decidir a ocupação dos horários", escolha para cada horário: substituto sugerido, adiantamento de aula, dispensa ou decidir depois.',
           'Opcional: em "Convites de substituição", convide um ou mais docentes; quem aceitar primeiro assume o horário.',
           'Confira "Refeições da turma neste dia": dispensas podem cancelar lanche ou almoço, com aviso à CAE.',
           'Em "Mensagens prontas", copie cada texto para o e-mail ou WhatsApp e clique em "Já enviei: registrar".',
@@ -443,7 +445,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       { pergunta: 'O docente avisou que não vai mais faltar.', resposta: 'Na página da ausência, use "Cancelar registro". Os avisos de refeição são desfeitos e a CAE vê que tudo volta ao normal.' },
       { pergunta: 'Por que não posso escrever o motivo real da falta?', resposta: 'Por privacidade (LGPD): o sistema e as mensagens trazem só um motivo operacional. Atestados e motivos pessoais ficam nos sistemas oficiais.' },
       { pergunta: 'E o atestado ou o motivo da ausência do docente?', resposta: 'O docente trata direto com a Coordenadoria de Gestão de Pessoas (CGP, cgp.boaviagem@ifce.edu.br): informa o motivo e entrega o comprovante (por exemplo, atestado médico). Isso não passa pelo SGC-Redes nem pela Coordenação do curso; a mensagem de ciência da ausência traz essa orientação.' },
-      { pergunta: 'O que é o selo "Informada pelo docente"?', resposta: 'O próprio docente informou a ausência em Minha grade. Dê ciência a ele pela mensagem pronta e decida a cobertura, como num registro feito pela Coordenação.' },
+      { pergunta: 'O que é o selo "Informada pelo docente"?', resposta: 'O próprio docente informou a ausência em Minha grade. Dê ciência a ele pela mensagem pronta e decida a ocupação dos horários, como num registro feito pela Coordenação.' },
     ],
     relacionados: ['grade', 'alimentacao', 'comunicacao'],
   },
@@ -685,6 +687,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Mostrar o progresso até as 40 horas e marcar a solicitação como em análise, deferida ou indeferida.',
       'Gerar a ficha "Solicitação de Prática Profissional Integrada" para assinatura.',
       'Ao deferir ou indeferir, abrir as mensagens prontas para o estudante e a CTP (e-mail ou WhatsApp), com as horas e o motivo.',
+      'Enviar à CCA (secretaria escolar) o apanhado geral por turma, só com os totais, em "Resumo para a CCA": nomes e matrículas não vão para a CCA.',
     ],
     diagrama: {
       titulo: 'Auditoria de PPI',
@@ -732,7 +735,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
     id: 'diarios',
     titulo: 'Diários',
     resumo: 'Aulas dadas presumidas pela grade e pelo calendário, correção das exceções, conferência por amostra e lembrete ao docente.',
-    permissao: 'diarios:ver-proprios',
+    permissao: ['diarios:ver-proprios', 'diarios:acompanhar'],
     rota: '/diarios',
     capacidades: [
       'Ver, por oferta (turma × disciplina × professor), as aulas previstas e ministradas e a situação do diário.',
@@ -741,7 +744,9 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Conferir por amostra com o diário do sistema acadêmico, em "Conferir com o sistema acadêmico".',
       'Ordenar do que precisa de atenção ao que está em dia (semáforo); amarelo também quando a grade não comporta as aulas previstas até o fim do período.',
       'Registrar a situação do diário e enviar lembrete ao docente por e-mail ou WhatsApp (Coordenação).',
-      'O professor vê os próprios diários.',
+      'O professor vê os próprios diários. A CCA (secretaria escolar do curso) acompanha todos os diários, só para consulta.',
+      'Mostra quantos dias do semestre já correram, para ter uma ideia de quanto os diários já deveriam ter avançado.',
+      'O valor lançado à mão vale como ponto de partida (com a data): dali em diante as aulas seguem a grade. "Voltar ao automático" descarta esse ponto de partida.',
     ],
     diagrama: {
       titulo: 'Acompanhar os diários',

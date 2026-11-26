@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
+import { hojeEmFortaleza } from '@/lib/ausencias/regras';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { dataParaBanco } from '@/lib/ausencias/regras';
@@ -172,6 +173,10 @@ export async function registrarEnvioEvento(_e: EstadoEnvioEvento | undefined, fo
   const id = String(formData.get('eventoId') ?? '');
   const dados = await mensagensDoEvento(id);
   if (!dados) return { mensagem: 'Evento não encontrado.' };
+  // Convocação de reunião que já passou não se envia nem se registra.
+  if (dados.evento.tipo === 'REUNIAO' && (dados.evento.fim ?? dados.evento.inicio) < hojeEmFortaleza()) {
+    return { mensagem: 'Esta reunião já aconteceu: não é possível registrar o envio do convite. Se a data mudou, edite o evento.' };
+  }
   const m = dados.mensagens.find((x) => x.chave === String(formData.get('chave') ?? ''));
   if (!m) return { mensagem: 'Esta mensagem não se aplica mais. Recarregue a página.' };
   const log = await prisma.logComunicacao.create({

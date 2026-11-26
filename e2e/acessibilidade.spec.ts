@@ -16,6 +16,7 @@ const PAGINAS: [Perfil, string[]][] = [
   ],
   ['professor', ['/painel', '/grade/minha', '/ausencias/informar']],
   ['cae', ['/painel', '/alimentacao']],
+  ['cca', ['/painel', '/diarios']],
 ];
 
 async function violacoes(page: Page) {

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { exigirPermissao } from '@/lib/auth/dal';
-import { formatarData, hojeEmFortaleza } from '@/lib/ausencias/regras';
+import { dataDoBanco, formatarData, hojeEmFortaleza } from '@/lib/ausencias/regras';
 import { lembreteDoDiario } from '@/lib/diarios/regras';
 import { situacoesAutomaticas } from '@/lib/diarios/servidor';
 import { voltarAoAutomatico } from '../actions';
@@ -47,7 +47,7 @@ export default async function PaginaDiario({ params }: { params: Promise<{ id: s
         <p className="mb-4 text-sm text-slate-700">
           {o.ministradasManual ? (
             <>
-              Valor <strong>lançado pela Coordenação</strong>.{' '}
+              Valor <strong>lançado pela Coordenação</strong>{o.ministradasEm ? <> em {formatarData(dataDoBanco(o.ministradasEm))}: vale como ponto de partida e, desde então, as aulas seguem a grade</> : <> (valor fixo)</>}.{' '}
               {auto?.presumido != null && <>Pela grade e pelo calendário, o presumido seria {auto.presumido}. </>}
             </>
           ) : auto?.presumido != null ? (

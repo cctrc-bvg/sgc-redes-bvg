@@ -34,7 +34,7 @@ export function FormularioRegistro(props: {
 
       <fieldset aria-describedby={erroAulas ? 'aulas-erro' : undefined}>
         <legend className="font-semibold text-slate-900">Aulas afetadas</legend>
-        <p className="text-sm text-slate-600">Cada turma e disciplina vira um registro, com a decisão de cobertura por horário.</p>
+        <p className="text-sm text-slate-600">Cada turma e disciplina vira um registro, com a decisão de quem ocupa cada horário.</p>
         {props.dias.map((dia) => (
           <div key={dia.dataISO} className={dia.titulo ? 'mt-4' : ''}>
             {dia.titulo && <p className="font-semibold text-slate-800">{dia.titulo}</p>}

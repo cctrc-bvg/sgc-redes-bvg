@@ -9,11 +9,12 @@ describe('reposição de aulas (ROD, Art. 37)', () => {
     expect(situacaoReposicao({ status: 'TURMA_DISPENSADA', reposicaoEm: '2026-03-20', reposicaoCienteEm: new Date() })).toBe('reposta');
   });
 
-  it('em aberto: só dispensa ou reposição agendada sem reposição informada', () => {
+  it('em aberto: dispensa, reposição agendada ou horário ocupado por outro docente, sem reposição informada', () => {
     expect(reposicaoEmAberto({ status: 'TURMA_DISPENSADA', reposicaoEm: null })).toBe(true);
     expect(reposicaoEmAberto({ status: 'REPOSICAO_AGENDADA', reposicaoEm: null })).toBe(true);
     expect(reposicaoEmAberto({ status: 'TURMA_DISPENSADA', reposicaoEm: new Date() })).toBe(false);
-    expect(reposicaoEmAberto({ status: 'COBERTA_POR_SUBSTITUICAO', reposicaoEm: null })).toBe(false);
+    expect(reposicaoEmAberto({ status: 'COBERTA_POR_SUBSTITUICAO', reposicaoEm: null })).toBe(true);
+    expect(reposicaoEmAberto({ status: 'AULA_ADIANTADA', reposicaoEm: null })).toBe(false);
   });
 
   it('data da reposição: nem antes da aula, nem no futuro', () => {

@@ -11,10 +11,11 @@ import { REFEICOES } from '@/lib/alimentacao/previsao';
 import { totaisDoDia, type TotaisDoDia } from '@/lib/alimentacao/servidor';
 import { carregarAno } from '@/lib/calendario/servidor';
 import { FUNCOES_DA_CONTA, funcoesPorGrupo, type NomeIcone } from '@/lib/navegacao';
-import { separarAcoes, type AcaoPrioritaria, type NivelAcao } from '@/lib/painel/acoes';
-import { periodoCurto, proximosEventos, tituloDoEvento, type DiaDaAgenda, type EventoAgenda } from '@/lib/painel/agenda';
+import { minuscularInicial, separarAcoes, type AcaoPrioritaria, type NivelAcao } from '@/lib/painel/acoes';
+import { periodoCurto, proximosEventos, tituloDoEvento, type EventoAgenda } from '@/lib/painel/agenda';
 import { acoesDoPainel, ausenciasDoDia, semanaDoDocente } from '@/lib/painel/servidor';
 import { NOME_TIPO_EVENTO } from '@/lib/calendario/regras';
+import { SemanaDoDocente } from '@/components/semana-docente';
 import { montarDias } from '../calendario/dias';
 import { MesCompacto } from '../calendario/mes';
 
@@ -98,7 +99,7 @@ export default async function PaginaPainel({ searchParams }: { searchParams: Pro
                     <li key={a.id} className="flex flex-wrap items-center gap-x-2 text-sm text-slate-700">
                       <Icone nome={a.icone} className="size-4 text-slate-500" />
                       <span>
-                        <strong className="font-semibold text-slate-900">{a.quantidade}</strong> {a.titulo.charAt(0).toLowerCase() + a.titulo.slice(1)}
+                        <strong className="font-semibold text-slate-900">{a.quantidade}</strong> {minuscularInicial(a.titulo)}
                       </span>
                       <Link href={a.href} className="text-if-verde-700 underline underline-offset-2">
                         {a.botao}
@@ -228,72 +229,6 @@ function GrupoDeFuncoes({
           </li>
         ))}
       </ul>
-    </section>
-  );
-}
-
-function SemanaDoDocente({ dias, acumula }: { dias: DiaDaAgenda[]; acumula: boolean }) {
-  const cor = acumula ? 'text-docencia-700' : 'text-if-verde-700';
-  return (
-    <section aria-labelledby="semana" className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 id="semana" className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <Icone nome="minha-grade" className={`size-5 ${cor}`} />
-          Minha semana
-          {acumula && <SeloPapel papel="docencia" cargo="" />}
-        </h3>
-        <Link href="/grade/minha" className={`text-sm underline underline-offset-2 ${cor}`}>
-          Grade completa
-        </Link>
-      </div>
-      <ol className="space-y-2">
-        {dias.map((d) => {
-          // Dia sem aula, evento ou mudança: uma linha só, para a semana caber sem rolagem.
-          const vazio = !d.semAula && !d.gradeDe && d.eventos.length === 0 && d.aulas.length === 0 && d.mudancas.length === 0;
-          return (
-            <li
-              key={d.dataISO}
-              aria-current={d.ehHoje ? 'date' : undefined}
-              className={`rounded-lg border bg-white shadow-sm ${vazio ? 'px-3 py-2' : 'p-3'} ${d.ehHoje ? (acumula ? 'border-docencia-700 ring-1 ring-docencia-700' : 'border-if-verde-700 ring-1 ring-if-verde-700') : 'border-slate-200'}`}
-            >
-              <p className="flex items-center justify-between gap-2 font-semibold text-slate-900">
-                <span>
-                  {d.rotulo}
-                  {vazio && <span className="font-normal text-slate-600"> · sem aulas suas</span>}
-                </span>
-                {d.ehHoje && <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${acumula ? 'bg-docencia-50 text-docencia-800' : 'bg-if-verde-50 text-if-verde-800'}`}>Hoje</span>}
-              </p>
-              {d.gradeDe && <p className="text-xs text-slate-600">Sábado letivo: grade de {d.gradeDe}</p>}
-              {d.semAula && <p className="mt-1 text-sm text-slate-600">{d.semAula}</p>}
-              {d.eventos.map((e) => (
-                <p key={e} className="mt-1 text-sm text-slate-700">
-                  <Icone nome="calendario" className="mr-1 inline size-4 align-[-2px] text-slate-500" />
-                  {e}
-                </p>
-              ))}
-              {d.aulas.length > 0 && (
-                <ul className="mt-1 space-y-0.5 text-sm">
-                  {d.aulas.map((a) => (
-                    <li key={a.horario} title={a.horario} className={`flex gap-2 ${a.ausente ? 'text-slate-500 line-through' : 'text-slate-800'}`}>
-                      <span className="w-11 shrink-0 font-semibold tabular-nums">{a.inicio}</span>
-                      <span>
-                        {a.turma} · {a.disciplina}
-                      </span>
-                      {a.ausente && <span className="sr-only"> (ausência registrada)</span>}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {d.mudancas.map((m) => (
-                <p key={`${m.bloco}-${m.tipo}`} className="mt-1 rounded bg-amber-50 px-2 py-1 text-sm text-amber-900">
-                  {m.tipo === 'substituicao' ? 'Substituição' : 'Aula adiantada'}: {m.bloco} · {m.turma}
-                </p>
-              ))}
-              {!vazio && !d.semAula && d.aulas.length === 0 && d.mudancas.length === 0 && <p className="mt-1 text-sm text-slate-600">Sem aulas suas neste dia.</p>}
-            </li>
-          );
-        })}
-      </ol>
     </section>
   );
 }

@@ -8,7 +8,8 @@ import { carregarAusencia, intervaloDoDia } from '@/lib/ausencias/servidor';
 import { configuracaoEvolution, destinoValido, enviarPorEvolution } from '@/lib/comunicacao/evolution';
 import { emailsValidos, lerModoEnvio, preencherCampos, NOME_MODO, type MensagemPronta, type ModoEnvioManual } from '@/lib/comunicacao/mensagem';
 import { mensagemAvulsa } from '@/lib/comunicacao/servidor';
-import { valoresDosCampos } from '@/lib/comunicacao/modelos';
+import { anunciaEventoFuturo, camposComDataPassada, valoresDosCampos } from '@/lib/comunicacao/modelos';
+import { hojeEmFortaleza } from '@/lib/ausencias/regras';
 
 export type EstadoEnvio = { mensagem?: string; sucesso?: boolean };
 
@@ -130,7 +131,7 @@ export interface ValoresAvulsa {
 export type EstadoAvulsa = {
   mensagem?: string;
   sucesso?: boolean;
-  erros?: Partial<Record<'destino' | 'assunto' | 'texto' | 'modo', string>>;
+  erros?: Partial<Record<'destino' | 'assunto' | 'texto' | 'modo' | 'campos', string>>;
   valores?: ValoresAvulsa;
   prontas?: MensagemPronta[];
   /** Destinos sem ninguém (ex.: turma sem ofertas no ano). */
@@ -163,6 +164,10 @@ export async function prepararAvulsa(_estado: EstadoAvulsa | undefined, formData
   if (texto.length < 3 || texto.length > 4000) erros.texto = 'Use de 3 a 4.000 caracteres.';
   if (destinos.length === 0) erros.destino = 'Escolha ao menos um destinatário.';
   if (destinos.length > MAX_DESTINOS) erros.destino = `Escolha até ${MAX_DESTINOS} destinatários (use um grupo de docentes).`;
+  if (anunciaEventoFuturo(assunto, texto)) {
+    const passadas = camposComDataPassada(campos, hojeEmFortaleza());
+    if (passadas.length > 0) erros.campos = `A data já passou (${passadas.join(', ')}): informe uma data de hoje em diante.`;
+  }
   if (Object.keys(erros).length > 0) return { erros, valores };
 
   const preenchidos = valoresDosCampos(campos);

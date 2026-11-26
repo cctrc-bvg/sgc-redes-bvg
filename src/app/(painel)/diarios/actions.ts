@@ -37,15 +37,21 @@ export async function atualizarDiario(_estado: EstadoDiario | undefined, formDat
   if (alto) return { erros: { aulasMinistradas: [alto] }, valores };
 
   // RF08-A: valor igual ao presumido de uma oferta automática continua automático; qualquer outro vira manual.
-  const { presumido } = (await situacoesAutomaticas(atual.anoLetivo, [atual], hojeEmFortaleza())).get(atual.id) ?? { presumido: null };
+  const hoje = hojeEmFortaleza();
+  const sit = (await situacoesAutomaticas(atual.anoLetivo, [atual], hoje)).get(atual.id);
+  const presumido = sit?.presumido ?? null;
   const manual = atual.ministradasManual || presumido === null || validacao.data.aulasMinistradas !== presumido;
+  // Valor diferente do que vale hoje vira o novo ponto de partida (valor + data); o mesmo valor não mexe em nada.
+  const mudouValor = validacao.data.aulasMinistradas !== (sit?.efetivas ?? atual.aulasMinistradas);
+  const novoPonto = manual && (mudouValor || !atual.ministradasManual);
   const dados = {
-    aulasMinistradas: manual ? validacao.data.aulasMinistradas : atual.aulasMinistradas,
+    aulasMinistradas: novoPonto ? validacao.data.aulasMinistradas : atual.aulasMinistradas,
     ministradasManual: manual,
+    ministradasEm: novoPonto ? dataParaBanco(hoje) : atual.ministradasEm,
     diarioEmDia: validacao.data.diarioEmDia,
     observacaoDiario: validacao.data.observacaoDiario ?? null,
   };
-  const alterados = (Object.keys(dados) as (keyof typeof dados)[]).filter((k) => dados[k] !== atual[k]);
+  const alterados = (Object.keys(dados) as (keyof typeof dados)[]).filter((k) => String(dados[k]) !== String(atual[k]));
   if (alterados.length === 0) return { sucesso: true, mensagem: 'Nenhuma alteração para salvar.', valores };
   await prisma.disciplinaOferta.update({ where: { id: atual.id }, data: dados });
   await registrarAuditoria({
@@ -84,10 +90,19 @@ export async function conferirDiario(formData: FormData): Promise<void> {
   const emDia = formData.get('diarioEmDia') === 'on';
   const atual = await prisma.disciplinaOferta.findUnique({ where: { id: ofertaId } });
   if (!atual || validarMinistradas(informado, atual.aulasPrevistas)) return;
-  const { presumido } = (await situacoesAutomaticas(atual.anoLetivo, [atual], hojeEmFortaleza())).get(atual.id) ?? { presumido: null };
+  const hoje = hojeEmFortaleza();
+  const sit = (await situacoesAutomaticas(atual.anoLetivo, [atual], hoje)).get(atual.id);
+  const presumido = sit?.presumido ?? null;
   const igual = presumido !== null && informado === presumido;
   const manual = atual.ministradasManual || !igual;
-  const dados = { aulasMinistradas: manual ? informado : atual.aulasMinistradas, ministradasManual: manual, diarioEmDia: emDia };
+  // Mesmo valor que já vale: nada muda. Valor diferente: vira o novo ponto de partida, a partir de hoje.
+  const novoPonto = manual && (informado !== (sit?.efetivas ?? atual.aulasMinistradas) || !atual.ministradasManual);
+  const dados = {
+    aulasMinistradas: novoPonto ? informado : atual.aulasMinistradas,
+    ministradasManual: manual,
+    ministradasEm: novoPonto ? dataParaBanco(hoje) : atual.ministradasEm,
+    diarioEmDia: emDia,
+  };
   await prisma.disciplinaOferta.update({ where: { id: atual.id }, data: dados });
   await registrarAuditoria({
     userId: usuario.id,

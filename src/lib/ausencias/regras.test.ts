@@ -144,7 +144,7 @@ describe('planejarCoberturas', () => {
   it('aceita escolhas válidas e deixa vazio como pendente', () => {
     const { coberturas, erros } = planejarCoberturas(contexto(), 'R1', ['m1', 'm2'], { m1: 'sub:carla', m2: '' });
     expect(erros).toEqual({});
-    expect(coberturas).toEqual([{ blocoId: 'm1', tipo: 'SUBSTITUICAO', substitutoId: 'carla', blocoOrigemId: null, professorOrigemId: null }]);
+    expect(coberturas).toEqual([{ blocoId: 'm1', tipo: 'SUBSTITUICAO', substitutoId: 'carla', ofertaSubstitutaId: null, blocoOrigemId: null, professorOrigemId: null }]);
   });
 
   it('adiantamento guarda a origem e o professor da aula movida', () => {
@@ -264,5 +264,12 @@ describe('período de ausência (vários dias)', () => {
   it('lê a data da chave da aula, ou usa a data informada', () => {
     expect(lerChaveDoPeriodo('2026-11-28#of1|b2', '2026-11-27')).toEqual({ data: '2026-11-28', chave: 'of1|b2' });
     expect(lerChaveDoPeriodo('of1|b2', '2026-11-27')).toEqual({ data: '2026-11-27', chave: 'of1|b2' });
+  });
+});
+
+describe('planejarCoberturas: disciplina do substituto', () => {
+  it('lê sub:<professor>:<oferta>', () => {
+    const { coberturas } = planejarCoberturas(contexto(), 'R1', ['m1'], { m1: 'sub:carla:oferta9' });
+    expect(coberturas[0]).toMatchObject({ substitutoId: 'carla', ofertaSubstitutaId: 'oferta9' });
   });
 });

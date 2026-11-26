@@ -8,23 +8,40 @@ import { dataDoBanco, dataParaBanco, descreverBloco, formatarData, hojeEmFortale
 import { prisma } from '@/lib/db';
 import { CancelarAusenciaInformada, RespostaConvite } from './convites';
 import { Alerta } from '@/components/campo';
-import { temPermissao } from '@/lib/auth/rbac';
+import { acumulaDocencia, ehDocente, temPermissao } from '@/lib/auth/rbac';
 import { mudancasDoProfessor } from '@/lib/ausencias/servidor';
+import { inicioDaSemana } from '@/lib/painel/agenda';
+import { semanaDoDocente } from '@/lib/painel/servidor';
+import { SemanaDoDocente } from '@/components/semana-docente';
+import { validarDataISO } from '@/lib/alimentacao-engine';
 import { AvisoSabados } from '../sabados/aviso';
 
 export const metadata: Metadata = { title: 'Minha grade — SGC-Redes' };
 
-export default async function PaginaMinhaGrade({ searchParams }: { searchParams: Promise<{ ano?: string; sem?: string; aviso?: string }> }) {
+export default async function PaginaMinhaGrade({ searchParams }: { searchParams: Promise<{ ano?: string; sem?: string; aviso?: string; semana?: string }> }) {
   const { usuario } = await exigirPermissao('grade:ver');
   const params = await searchParams;
   const { anoLetivo, semestreLetivo } = periodoDaUrl(params);
   const podeInformar = temPermissao(usuario, 'ausencias:informar');
   const hoje = hojeEmFortaleza();
-  const [blocos, celulas, mudancas] = await Promise.all([
+  // Semana mostrada (segunda-feira): a da URL, se válida, ou a atual; as setas avançam e voltam de 7 em 7 dias.
+  const segundaAtual = inicioDaSemana(hoje);
+  const segundaDaUrl = (() => {
+    try {
+      validarDataISO(params.semana ?? '');
+      return inicioDaSemana(params.semana!);
+    } catch {
+      return null;
+    }
+  })();
+  const segunda = segundaDaUrl ?? segundaAtual;
+  const [blocos, celulas, mudancas, semana] = await Promise.all([
     blocosOrdenados(),
     celulasDoProfessor(usuario.id, anoLetivo, semestreLetivo),
     mudancasDoProfessor(usuario.id, hoje, somarDias(hoje, 14)),
+    ehDocente(usuario) ? semanaDoDocente(usuario.id, hoje, segunda) : Promise.resolve(null),
   ]);
+  const hrefSemana = (iso: string) => `/grade/minha?ano=${anoLetivo}&sem=${semestreLetivo}&semana=${iso}#semana`;
   const convites = await prisma.conviteSubstituicao.findMany({
     where: { professorId: usuario.id, status: 'PENDENTE', ausencia: { dataAula: { gte: dataParaBanco(hoje) } } },
     orderBy: [{ ausencia: { dataAula: 'asc' } }],
@@ -87,13 +104,13 @@ export default async function PaginaMinhaGrade({ searchParams }: { searchParams:
       {params.aviso === 'ausencia-informada' && (
         <div className="mt-4">
           <Alerta tipo="sucesso">
-            Ausência informada. A Coordenação vai dar ciência e organizar a cobertura; acompanhe a situação abaixo, em &quot;Minhas ausências&quot;.
+            Ausência informada. A Coordenação vai dar ciência e organizar a ocupação dos horários; acompanhe a situação abaixo, em &quot;Minhas ausências&quot;.
           </Alerta>
         </div>
       )}
       {params.aviso === 'ausencia-cancelada' && (
         <div className="mt-4">
-          <Alerta tipo="sucesso">Ausência cancelada. A Coordenação não precisa mais decidir a cobertura.</Alerta>
+          <Alerta tipo="sucesso">Ausência cancelada. A Coordenação não precisa mais decidir a ocupação dos horários.</Alerta>
         </div>
       )}
       {minhasAusencias.length > 0 && (
@@ -144,14 +161,32 @@ export default async function PaginaMinhaGrade({ searchParams }: { searchParams:
           <ul className="mt-2 space-y-1 text-slate-800">
             {mudancas.map((m) => (
               <li key={`${m.dataISO}-${m.bloco}-${m.tipo}`}>
-                <span className="font-semibold">
+                <Link href={hrefSemana(inicioDaSemana(m.dataISO))} className="font-semibold text-if-verde-800 underline underline-offset-2">
                   {formatarData(m.dataISO)} · {m.bloco} · {m.turma}:
-                </span>{' '}
+                </Link>{' '}
                 {m.detalhe}
               </li>
             ))}
           </ul>
         </section>
+      )}
+      {semana && (
+        <div className="mt-6 max-w-3xl">
+          <SemanaDoDocente
+            dias={semana}
+            acumula={acumulaDocencia(usuario)}
+            navegacao={{
+              anterior: hrefSemana(somarDias(segunda, -7)),
+              proxima: hrefSemana(somarDias(segunda, 7)),
+              atual: hrefSemana(segundaAtual),
+              titulo: `Semana de ${formatarData(segunda).slice(0, 5)} a ${formatarData(somarDias(segunda, 4)).slice(0, 5)}`,
+              ehSemanaAtual: segunda === segundaAtual,
+            }}
+          />
+          <p className="mt-2 text-sm text-slate-600">
+            Mostra as suas aulas de cada dia, com as substituições aceitas e as aulas adiantadas. Use as setas para ver as outras semanas.
+          </p>
+        </div>
       )}
       <div className="mt-4">
         <SeletorPeriodo anoLetivo={anoLetivo} semestreLetivo={semestreLetivo} anos={anosDoSeletor(anoLetivo)} />

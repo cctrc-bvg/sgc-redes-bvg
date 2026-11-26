@@ -70,11 +70,11 @@ function textoHorario(h: LinhaHorario, paraEstudantes: boolean): string {
     case 'dispensa':
       return 'sem aula (turma dispensada neste horário)';
     default:
-      return paraEstudantes ? 'a confirmar' : 'sem cobertura definida';
+      return paraEstudantes ? 'a confirmar' : 'sem ocupação definida';
   }
 }
 
-/** Grupo de professores: convite para cobrir os horários ainda sem decisão. */
+/** Grupo de professores: convite para ocupar os horários ainda sem decisão. */
 export function mensagemProfessores(d: DadosMensagem): string | null {
   const pendentes = d.horarios.filter((h) => h.situacao === 'pendente');
   if (pendentes.length === 0) return null;
@@ -83,7 +83,7 @@ export function mensagemProfessores(d: DadosMensagem): string | null {
     `Turma: *${d.turma}*`,
     `Data: *${cabecalhoData(d)}*`,
     `Disciplina: ${d.disciplina}`,
-    'Horários sem cobertura:',
+    'Horários sem professor definido:',
     ...pendentes.map((h) => `- ${h.bloco}`),
     'Quem puder assumir ou adiantar uma aula, por favor responda à Coordenação.',
   ].join('\n');
@@ -148,6 +148,7 @@ export const NOME_CANAL: Record<CanalWhatsapp, string> = {
   CTP: 'CTP (Coord. Técnico-Pedagógica)',
   LIDERES_TURMA: 'Turma (líderes ou grupo da turma)',
   NUTRICIONISTA: 'Nutricionista do campus',
+  CCA: 'CCA (Controle Acadêmico)',
 };
 
 /** Campo a preencher quando o canal não tem saudação cadastrada. */
@@ -158,6 +159,7 @@ export const CAMPO_SAUDACAO: Record<CanalWhatsapp, string> = {
   CTP: 'destinatário na CTP',
   LIDERES_TURMA: 'líderes da turma',
   NUTRICIONISTA: 'nome da nutricionista',
+  CCA: 'destinatário na CCA',
 };
 
 /** CTP: turma dispensada em algum horário (acompanhamento pedagógico e reposição). */
@@ -269,6 +271,7 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
       ),
     },
     CTP: { horarios: lista_(d.horarios.filter((h) => h.situacao === 'dispensa').map((h) => h.bloco)) },
+    CCA: {},
     GRUPO_GESTAO_DIR_COORD: { horarios: horariosDe(false) },
   };
   const TIPO_CANAL: Record<CanalWhatsapp, TipoInteracao> = {
@@ -276,6 +279,7 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
     ASSISTENCIA_ESTUDANTIL: 'alimentacao',
     LIDERES_TURMA: 'aviso_turma',
     NUTRICIONISTA: 'alimentacao',
+    CCA: 'comunicado',
     CTP: 'ctp',
     GRUPO_GESTAO_DIR_COORD: 'gestao',
   };
@@ -365,7 +369,7 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
           ? `A Coordenação recebeu a ausência que você informou nas aulas de *${d.disciplina}* na turma *${d.turma}* em *${cabecalhoData(d)}*:`
           : `A Coordenação registrou a sua ausência nas aulas de *${d.disciplina}* na turma *${d.turma}* em *${cabecalhoData(d)}*:`,
         ...d.horarios.map((h) => `- ${h.bloco}`),
-        'Vamos organizar a cobertura e avisar você quando estiver decidida.',
+        'Vamos organizar a ocupação dos horários e avisar você quando estiver decidida.',
         '',
         ORIENTACAO_GESTAO_PESSOAS,
       ], 'docente_ausente', { ...base, horarios: lista_(d.horarios.map((h) => h.bloco)) }),
@@ -374,7 +378,7 @@ export function mensagensDaAusencia(d: DadosMensagem, x: ExtrasMensagem): Mensag
   if (ausente && decididos.length > 0) {
     lista.push(
       individual(ausente, `ausente:${ausente.id}`, 'Docente ausente', `${ASSUNTO} Cobertura das suas aulas — ${quando}`, [
-        `A Coordenação registrou a cobertura das suas aulas de *${d.disciplina}* na turma *${d.turma}* em *${cabecalhoData(d)}*:`,
+        `A Coordenação registrou a ocupação dos horários das suas aulas de *${d.disciplina}* na turma *${d.turma}* em *${cabecalhoData(d)}*:`,
         ...d.horarios.map((h) => `- ${h.bloco}: ${textoHorario(h, false)}`),
         d.horarios.some((h) => h.situacao === 'dispensa')
           ? d.status === 'REPOSICAO_AGENDADA'

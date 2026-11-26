@@ -63,6 +63,8 @@ export interface DiaDaAgenda {
 
 export interface EntradaSemana {
   hojeISO: string;
+  /** Segunda-feira da semana a mostrar; sem isso, a semana de `hojeISO`. */
+  inicio?: string;
   sabados: ReadonlyMap<string, number>;
   eventos: readonly EventoAgenda[];
   /** Células do docente por período "ano.semestre" (a semana pode cruzar o fim de semestre). */
@@ -76,7 +78,7 @@ export const chavePeriodo = (iso: string) => `${iso.slice(0, 4)}.${Number(iso.sl
 
 /** Monta a semana do docente: segunda a sexta, mais o sábado quando é letivo ou tem mudança. */
 export function montarSemana(e: EntradaSemana): DiaDaAgenda[] {
-  const inicio = inicioDaSemana(e.hojeISO);
+  const inicio = e.inicio ?? inicioDaSemana(e.hojeISO);
   const datas = [0, 1, 2, 3, 4, 5].map((n) => somarDias(inicio, n));
   const dias: DiaDaAgenda[] = [];
   for (const dataISO of datas) {
