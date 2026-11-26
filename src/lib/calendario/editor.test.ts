@@ -11,6 +11,9 @@ import {
   estadoDoInstantaneo,
   feriadosNacionais,
   inserirFeriadosNacionais,
+  modeloDoAno,
+  impactoNosDias,
+  anoEmBranco,
   instantaneoDoEstado,
   pascoa,
   SELECAO_VAZIA,
@@ -231,5 +234,52 @@ describe('histórico: mudanças que o dia a dia não mostra', () => {
     const a: Instantaneo = { ...vazio, eventos: [f, g] };
     const b: Instantaneo = { ...vazio, eventos: [f, { ...g, descricao: 'Recesso' }] };
     expect(textoDaDiferenca(diferencaEntre(a, b))).not.toBe('Sem mudança nos dias.');
+  });
+});
+
+describe('ano novo a partir do anterior', () => {
+  const ant: Instantaneo = {
+    eventos: [
+      { tipo: 'FERIAS_DOCENTES', inicio: '2026-07-06', fim: '2026-07-17', descricao: 'Recesso', suspendeAulas: true, imprevisto: false, motivo: '' },
+      { tipo: 'FERIADO', inicio: '2026-12-25', fim: '2026-12-25', descricao: 'Natal', suspendeAulas: true, imprevisto: false, motivo: '' },
+      { tipo: 'SUSPENSAO_AULAS', inicio: '2026-03-10', fim: '2026-03-10', descricao: '', suspendeAulas: true, imprevisto: true, motivo: 'Chuvas' },
+    ],
+    extras: [{ data: '2026-03-14', diaReferente: 2, observacao: '' }],
+    etapas: [{ inicio: '2026-02-02', fim: '2026-04-17' }, null, null, null],
+    semestres: [{ inicio: '2026-02-02', fim: '2026-07-03' }, null],
+  };
+  const novo = modeloDoAno(ant, 2026, 2027);
+
+  it('desloca etapas, semestres e recessos para as mesmas semanas (mesmo dia da semana)', () => {
+    expect(novo.etapas[0]).toEqual({ inicio: '2027-02-01', fim: '2027-04-16' });
+    expect(novo.semestres[0]).toEqual({ inicio: '2027-02-01', fim: '2027-07-02' });
+    expect(novo.eventos.find((e) => e.tipo === 'FERIAS_DOCENTES')).toMatchObject({ inicio: '2027-07-05', fim: '2027-07-16' });
+  });
+
+  it('feriados vêm do ano novo; suspensões, sábados letivos e feriados antigos não são copiados', () => {
+    expect(novo.eventos.some((e) => e.tipo === 'SUSPENSAO_AULAS')).toBe(false);
+    expect(novo.extras).toEqual([]);
+    expect(novo.eventos.filter((e) => e.tipo === 'FERIADO').every((e) => e.inicio.startsWith('2027-'))).toBe(true);
+    expect(novo.eventos.some((e) => e.descricao === 'Tiradentes' && e.inicio === '2027-04-21')).toBe(true);
+    expect(anoEmBranco(novo)).toBe(false);
+  });
+
+  it('ano em branco: sem eventos, sábados e períodos', () => {
+    expect(anoEmBranco({ eventos: [], extras: [], etapas: [null], semestres: [null] })).toBe(true);
+  });
+});
+
+describe('impacto das edições nos dias letivos', () => {
+  const marca = { tipo: 'FERIADO' as const, descricao: '', suspendeAulas: true, imprevisto: false, motivo: '' };
+  it('dia de semana marcado deixa de ser letivo; sábado letivo passa a ser', () => {
+    const r = impactoNosDias(base, [
+      { data: '2026-11-03', marca, extra: null },
+      { data: '2026-11-07', marca: null, extra: { diaReferente: 1, observacao: '' } },
+    ], 2026);
+    expect(r.perdidos).toEqual(['2026-11-03']);
+    expect(r.ganhos).toEqual(['2026-11-07']);
+  });
+  it('sem mudança de fato, nada muda', () => {
+    expect(impactoNosDias(base, [{ data: '2026-11-07', marca: null, extra: null }], 2026)).toEqual({ perdidos: [], ganhos: [] });
   });
 });

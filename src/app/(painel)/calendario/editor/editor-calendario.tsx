@@ -26,7 +26,7 @@ import {
 } from '@/lib/calendario/editor';
 import { DIAS_LETIVOS_ANO, DIAS_POR_ETAPA, diaDaSemanaISO, MESES, semanasDoMes, somarDiasISO } from '@/lib/calendario/regras';
 import { NOME_DIA_EXTENSO } from '@/lib/grade/regras';
-import { salvarEdicaoDoCalendario, type ResultadoEdicao } from './actions';
+import { previaDoImpactoDoCalendario, salvarEdicaoDoCalendario, type ResultadoEdicao } from './actions';
 
 const COR: Record<SituacaoDoDia, string> = {
   LETIVO: 'bg-white border-slate-300',
@@ -149,13 +149,22 @@ export function EditorCalendario({ ano, instantaneo, baseNumero, somenteLeitura,
     setSelecao(selecionarIntervalo(inicio, fim));
   };
 
-  const salvar = () => {
+  const [impacto, setImpacto] = useState<string[] | null>(null);
+  /** Primeiro mostra o impacto fora do calendário (se houver); a gravação só ocorre ao confirmar. */
+  const pedirSalvar = () => {
     iniciar(async () => {
-      const r = await salvarEdicaoDoCalendario({ ano, baseNumero, motivo, edicoes });
-      setResultado(r);
-      // Com a revisão nova, a página volta com outra chave e a tela recomeça do que ficou salvo.
-      if (r.sucesso) router.refresh();
+      const p = await previaDoImpactoDoCalendario({ ano, edicoes });
+      if (p.mensagem) return setResultado({ mensagem: p.mensagem });
+      if (p.itens?.length) return setImpacto(p.itens);
+      await gravar();
     });
+  };
+  const gravar = async () => {
+    setImpacto(null);
+    const r = await salvarEdicaoDoCalendario({ ano, baseNumero, motivo, edicoes });
+    setResultado(r);
+    // Com a revisão nova, a página volta com outra chave e a tela recomeça do que ficou salvo.
+    if (r.sucesso) router.refresh();
   };
 
   const delta = (a: number, b: number) => (a === b ? null : <span className="ml-1 text-xs font-semibold text-if-verde-800">{a > b ? '+' : '−'}{Math.abs(a - b)}</span>);
@@ -367,13 +376,29 @@ export function EditorCalendario({ ano, instantaneo, baseNumero, somenteLeitura,
               <input value={motivo} onChange={(e) => setMotivo(e.target.value)} maxLength={200} className="min-h-11 rounded-md border border-slate-400 px-2" />
             </label>
             <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" disabled={!sujo || salvando} onClick={salvar} className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800 disabled:cursor-not-allowed disabled:opacity-60">
+              <button type="button" disabled={!sujo || salvando} onClick={pedirSalvar} className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800 disabled:cursor-not-allowed disabled:opacity-60">
                 {salvando ? 'Salvando…' : 'Salvar calendário'}
               </button>
               <button type="button" disabled={!sujo || salvando} onClick={() => { setEstado(base); setDesfazer([]); setRefazer([]); setResultado(null); }} className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-60">
                 Descartar
               </button>
             </div>
+            {impacto && (
+              <div className="mt-3 rounded-md border border-amber-400 bg-amber-50 p-3 text-sm text-slate-900" role="alert">
+                <p className="font-semibold">Antes de gravar, confira o que isto afeta:</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  {impacto.map((t) => <li key={t}>{t}</li>)}
+                </ul>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" disabled={salvando} onClick={() => iniciar(gravar)} className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800 disabled:opacity-60">
+                    Gravar mesmo assim
+                  </button>
+                  <button type="button" onClick={() => setImpacto(null)} className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
+                    Voltar e ajustar
+                  </button>
+                </div>
+              </div>
+            )}
             {resultado?.mensagem && (
               <div className="mt-3">
                 <Alerta tipo={resultado.sucesso ? 'sucesso' : 'erro'}>{resultado.mensagem}</Alerta>

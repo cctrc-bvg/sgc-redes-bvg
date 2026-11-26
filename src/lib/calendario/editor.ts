@@ -384,6 +384,43 @@ export function feriadosNacionais(ano: number): FeriadoNacional[] {
   return lista.filter((f) => ![0, 6].includes(diaDaSemanaISO(f.data))).sort((a, b) => a.data.localeCompare(b.data));
 }
 
+/** Tipos que se repetem de um ano para o outro nas mesmas semanas (feriados são recalculados). */
+const TIPOS_QUE_SE_REPETEM: readonly TipoEventoCalendario[] = ['FERIAS_DOCENTES', 'ENCONTRO_PEDAGOGICO', 'AVALIACOES_FINAIS'];
+
+const diasEntreISO = (de: string, ate: string) => Math.round((Date.parse(`${ate}T12:00:00Z`) - Date.parse(`${de}T12:00:00Z`)) / 86400000);
+
+/**
+ * Ponto de partida de um ano novo: etapas, semestres, férias/recesso, encontros pedagógicos e avaliações finais do
+ * ano anterior, deslocados para as mesmas semanas (o dia da semana se mantém), mais os feriados nacionais do ano.
+ * Sábados e domingos letivos, suspensões e pontos facultativos locais não são copiados.
+ */
+export function modeloDoAno(anterior: Instantaneo, anoAnterior: number, ano: number): Instantaneo {
+  const deslocamento = Math.round(diasEntreISO(`${anoAnterior}-01-01`, `${ano}-01-01`) / 7) * 7;
+  const mover = (iso: string) => somarDiasISO(iso, deslocamento);
+  const doAno = (i: Intervalo | null): Intervalo | null => {
+    if (!i) return null;
+    const novo = { inicio: mover(i.inicio), fim: mover(i.fim) };
+    return novo.inicio.startsWith(`${ano}-`) ? novo : null;
+  };
+  const eventos: EventoInst[] = [];
+  for (const e of anterior.eventos) {
+    if (!TIPOS_QUE_SE_REPETEM.includes(e.tipo)) continue;
+    const inicio = mover(e.inicio);
+    const fim = mover(e.fim);
+    if (fim < `${ano}-01-01` || inicio > `${ano}-12-31`) continue;
+    eventos.push({ ...e, inicio, fim, imprevisto: false, motivo: '' });
+  }
+  for (const f of feriadosNacionais(ano)) {
+    if (eventos.some((e) => e.tipo === 'FERIAS_DOCENTES' && e.inicio <= f.data && e.fim >= f.data && f.tipo === 'PONTO_FACULTATIVO')) continue;
+    eventos.push({ tipo: f.tipo, inicio: f.data, fim: f.data, descricao: f.nome, suspendeAulas: true, imprevisto: false, motivo: '' });
+  }
+  eventos.sort((a, b) => a.inicio.localeCompare(b.inicio) || a.tipo.localeCompare(b.tipo));
+  return { eventos, extras: [], etapas: anterior.etapas.map(doAno), semestres: anterior.semestres.map(doAno) };
+}
+
+/** O calendário não tem nada registrado (nem etapas): é um ano em branco. */
+export const anoEmBranco = (i: Instantaneo) => i.eventos.length === 0 && i.extras.length === 0 && i.etapas.every((e) => !e) && i.semestres.every((s) => !s);
+
 /** Insere os feriados do ano sem sobrescrever o que já foi marcado. */
 export function inserirFeriadosNacionais(e: EstadoDosDias, ano: number): { estado: EstadoDosDias; inseridos: number } {
   const marcas = new Map(e.marcas);
@@ -486,6 +523,16 @@ export function aplicarEdicoesAosEventos(i: Instantaneo, edicoes: readonly Edica
     else extras.delete(x.data);
   }
   return { eventos, extras: [...extras].map(([data, x]) => ({ data, ...x })).sort((a, b) => a.data.localeCompare(b.data)), etapas: i.etapas, semestres: i.semestres };
+}
+
+/** Dias letivos que as edições tiram ou acrescentam (a base da prévia de impacto antes de gravar). */
+export function impactoNosDias(atual: Instantaneo, edicoes: readonly EdicaoDia[], ano: number): { perdidos: string[]; ganhos: string[] } {
+  const antes = new Set(contagemDoInstantaneo(atual, ano).letivos);
+  const depois = new Set(contagemDoInstantaneo(aplicarEdicoesAosEventos(atual, edicoes), ano).letivos);
+  return {
+    perdidos: [...antes].filter((d) => !depois.has(d)).sort(),
+    ganhos: [...depois].filter((d) => !antes.has(d)).sort(),
+  };
 }
 
 export const MAXIMO_DE_EDICOES = 800;

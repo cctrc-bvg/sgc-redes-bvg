@@ -157,7 +157,7 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
 7. **Desempenho, se o log de consultas lentas apontar:** agrupar ou guardar em cache por 1 minuto as cerca de 25
    contagens da tela inicial da Coordenação. Se o pico crescer, duas réplicas do app atrás do Caddy.
 8. **Prisma 7/8** (o `latest` do npm era o 8.0.0-rc em 24/11): esperar o 8 estável; o `prisma.config.ts` já existe.
-8A. ~~**Editor visual do calendário acadêmico, com histórico (pedido de 26/11/2026):**~~ **Feito em 26/11/2026** (`/calendario/editor`, G33). Falta: criar o ano a partir do anterior e mostrar o impacto em diários e prazos antes de gravar. Pedido original: hoje o calendário se monta por
+8A. ~~**Editor visual do calendário acadêmico, com histórico (pedido de 26/11/2026):**~~ **Feito em 26/11/2026** (`/calendario/editor`, G33). Também feito (27/11/2026): **criar o ano a partir do anterior** (`modeloDoAno`, botão num ano em branco) e **prévia de impacto** antes de gravar (ausências, períodos especiais e dias passados; só pede confirmação quando há o que conferir). Não há prévia por diário individual (o recálculo é automático). Pedido original: hoje o calendário se monta por
    formulários e importação. Objetivo: montar e ajustar o ano marcando os dias direto no calendário, e poder voltar no
    tempo. Requisitos do usuário:
    - **Seleção como em passagem aérea:** clicar no 1º dia; **Shift+clique** marca o intervalo; **Ctrl+clique** alterna
