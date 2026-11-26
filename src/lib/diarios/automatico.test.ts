@@ -50,7 +50,7 @@ describe('aulas presumidas (RF08-A)', () => {
 });
 
 describe('creditosDeSubstituicao', () => {
-  it('conta o horário ocupado na disciplina única do substituto na turma', async () => {
+  it('conta na disciplina registrada; sem registro, só se a oferta do substituto na turma é única', async () => {
     const { creditosDeSubstituicao } = await import('./automatico');
     const ofertas = [
       { id: 'o1', professorId: 'bruno', turmaId: 't1' },
@@ -59,13 +59,21 @@ describe('creditosDeSubstituicao', () => {
     ];
     const r = creditosDeSubstituicao(
       [
-        { substitutoId: 'bruno', turmaId: 't1' },
-        { substitutoId: 'bruno', turmaId: 't1' },
-        { substitutoId: 'carla', turmaId: 't1' }, // duas disciplinas na turma: sem crédito automático
-        { substitutoId: 'bruno', turmaId: 't2' }, // sem oferta nessa turma
+        { substitutoId: 'bruno', turmaId: 't1', dataISO: '2026-03-02' },
+        { substitutoId: 'carla', turmaId: 't1', ofertaId: 'o3', dataISO: '2026-03-03' },
+        { substitutoId: 'carla', turmaId: 't1', dataISO: '2026-03-04' }, // duas disciplinas e nada registrado: sem crédito
+        { substitutoId: 'bruno', turmaId: 't2', dataISO: '2026-03-05' }, // sem oferta nessa turma
       ],
       ofertas,
     );
-    expect(Object.fromEntries(r)).toEqual({ o1: 2 });
+    expect(Object.fromEntries(r)).toEqual({ o1: ['2026-03-02'], o3: ['2026-03-03'] });
+  });
+});
+
+describe('aulasPresumidas a partir de um ponto de partida', () => {
+  it('conta só os dias letivos desde a data do lançamento manual', () => {
+    const base = { celulasPorDia: new Map([[1, 2]]), letivos: ['2026-03-02', '2026-03-09', '2026-03-16'], sabadosLetivos: new Map<string, number>(), hojeISO: '2026-03-20' };
+    expect(aulasPresumidas(base)).toBe(6);
+    expect(aulasPresumidas({ ...base, desdeISO: '2026-03-09' })).toBe(4);
   });
 });

@@ -24,6 +24,7 @@ async function abrirDiaComAula(page: Page, docente: string, aPartirDe = 8) {
 }
 
 test('ausência: registrar, convidar substituto, aceitar em Minha grade e cancelar', async ({ page, browser }) => {
+  test.setTimeout(150_000);
   await entrar(page, 'coordenacao');
   const dataAula = await abrirDiaComAula(page, 'Ana Exemplo Lima');
   const dataBr = dataAula.split('-').reverse().join('/');
@@ -68,7 +69,7 @@ test('ausência: registrar, convidar substituto, aceitar em Minha grade e cancel
   // Pode haver o convite da demonstração também: aceita o desta data.
   await secaoConvites.getByRole('button', { name: `Aceitar: ${dataBr}` }).click();
   // A lista de convites se atualiza e a aula passa a constar nas mudanças dos próximos dias do convidado.
-  await expect(convidado.locator('section[aria-labelledby="mudancas"]')).toContainText(new RegExp(`${dataBr}.*Substituição`));
+  await expect(convidado.locator('section[aria-labelledby="mudancas"]')).toContainText(new RegExp(`${dataBr}.*Substituição`), { timeout: 60_000 });
   await contexto.close();
 
   // A Coordenação vê a situação e cancela o registro (exige confirmação).

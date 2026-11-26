@@ -182,6 +182,18 @@ export async function decidirAusencia(_estado: EstadoDecisao | undefined, formDa
   if (Object.keys(erros).length > 0) return { erros, valores, mensagem: 'Revise os horários indicados.' };
   if (justificativa.length > 300) return { erros: { justificativa: 'Use no máximo 300 caracteres.' }, valores };
 
+  // Disciplina que o substituto ministra no horário: a escolhida (conferida) ou, se ele só tem uma na turma, essa.
+  const doSubstituto = await prisma.disciplinaOferta.findMany({
+    where: { anoLetivo: Number(dataISO.slice(0, 4)), turmaId: registro.turmaId, professorId: { in: coberturas.map((c) => c.substitutoId).filter((x): x is string => !!x) } },
+    select: { id: true, professorId: true },
+  });
+  for (const c of coberturas) {
+    if (c.tipo !== 'SUBSTITUICAO' || !c.substitutoId) continue;
+    const dele = doSubstituto.filter((o) => o.professorId === c.substitutoId);
+    if (c.ofertaSubstitutaId && !dele.some((o) => o.id === c.ofertaSubstitutaId)) return { erros: { [c.blocoId]: 'A disciplina escolhida não é deste professor nesta turma.' }, valores, mensagem: 'Revise os horários indicados.' };
+    if (!c.ofertaSubstitutaId && dele.length === 1) c.ofertaSubstitutaId = dele[0]!.id;
+  }
+
   // RF04: aviso de emergência (< 4h) exige justificativa registrada.
   const agora = new Date();
   const outrasDaTurma = dia.coberturas.filter((c) => c.turmaId === registro.turmaId && c.ausenciaId !== ausenciaId);
@@ -198,7 +210,7 @@ export async function decidirAusencia(_estado: EstadoDecisao | undefined, formDa
   const resultado = await prisma.$transaction(async (tx) => {
     await tx.coberturaBloco.deleteMany({ where: { ausenciaId } });
     await tx.coberturaBloco.createMany({
-      data: coberturas.map((c) => ({ ausenciaId, blocoId: c.blocoId, tipo: c.tipo, substitutoId: c.substitutoId, blocoOrigemId: c.blocoOrigemId })),
+      data: coberturas.map((c) => ({ ausenciaId, blocoId: c.blocoId, tipo: c.tipo, substitutoId: c.substitutoId, ofertaSubstitutaId: c.ofertaSubstitutaId ?? null, blocoOrigemId: c.blocoOrigemId })),
     });
     await tx.ausenciaDocente.update({
       where: { id: ausenciaId },
@@ -328,8 +340,11 @@ export async function responderConvite(_estado: EstadoConvite | undefined, formD
   }
   const minhas = dia.coberturas.filter((c) => c.ausenciaId === ausencia.id);
   const status = statusDaAusencia(ausencia.blocoIds.length, [...minhas, { tipo: 'SUBSTITUICAO' as const }], convite.ausencia.status === 'REPOSICAO_AGENDADA');
+  const dele = await prisma.disciplinaOferta.findMany({ where: { anoLetivo: Number(dataISO.slice(0, 4)), turmaId: ausencia.turmaId, professorId: usuario.id }, select: { id: true } });
   await prisma.$transaction(async (tx) => {
-    await tx.coberturaBloco.create({ data: { ausenciaId: ausencia.id, blocoId: convite.blocoId, tipo: 'SUBSTITUICAO', substitutoId: usuario.id } });
+    await tx.coberturaBloco.create({
+      data: { ausenciaId: ausencia.id, blocoId: convite.blocoId, tipo: 'SUBSTITUICAO', substitutoId: usuario.id, ofertaSubstitutaId: dele.length === 1 ? dele[0]!.id : null },
+    });
     await tx.conviteSubstituicao.update({ where: { id: convite.id }, data: { status: 'ACEITO', respondidoEm: agora } });
     await tx.conviteSubstituicao.updateMany({
       where: { ausenciaId: ausencia.id, blocoId: convite.blocoId, status: 'PENDENTE', NOT: { id: convite.id } },

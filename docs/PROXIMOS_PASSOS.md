@@ -76,7 +76,7 @@ Tratado em 26/11/2026 (branch `ajustes-teste-25-11`):
 | "pPE" com p minúsculo na tela inicial | Siglas mantêm a caixa; o título do card ficou "Diários com carga projetada abaixo da prevista" |
 | Diários: dias já corridos no semestre | A seção do calendário mostra "Já correram X de Y dias (Z%)" |
 | Etiqueta "automático" pequena | Selo verde com ícone, mais visível |
-| Valor manual "excluído" ao voltar ao automático | O formulário não mantém mais o valor antigo na tela; o último valor lançado à mão fica guardado e pode ser **reaplicado** (na conferência aparece "último manual"). *Interpretação a confirmar:* se a ideia era outra (por exemplo, o manual valer como ponto de partida e o automático continuar dali), é uma mudança maior |
+| Valor manual "excluído" ao voltar ao automático | O lançamento manual agora é **ponto de partida**: guarda valor e data, e o automático segue a partir dela (G26/G28). "Voltar ao automático" descarta o ponto de partida |
 | Conferência: filtro por turma | Filtro "Turma" na conferência |
 | Comunicações: "cobrir" → "ocupar" | Mensagens, convites e telas de ausência falam em "ocupar o horário" / "ocupação dos horários" (o relatório mantém "taxa de cobertura") |
 | Mensagem gerada continua na tela / segunda não é gerada | A caixa de mensagem recomeça quando o texto vindo do servidor muda (todas as telas de comunicação) |
@@ -87,7 +87,7 @@ Tratado em 26/11/2026 (branch `ajustes-teste-25-11`):
 | Acréscimo de refeição que a turma já tem | Recusado quando a grade já prevê a refeição naquele dia |
 | Importar distribuição com a planilha exportada | O título "E-mail do professor" vence o apelido "Professor"; o nome completo também é aceito (sem homônimos); colunas só de consulta não geram aviso |
 | Minha grade: aceite de ocupar horário | "Minha semana" com setas para outras semanas, mostrando substituições e aulas adiantadas; as mudanças dos 14 dias levam à semana |
-| Falta ocupada por outro docente (G32) | A aula sai do presumido de quem faltou (que ainda repõe, em Reposição de aulas); o substituto ganha o crédito se tem uma só disciplina na turma |
+| Falta ocupada por outro docente (G32) | A aula sai do presumido de quem faltou (que ainda repõe, em Reposição de aulas); ao decidir a substituição, a Coordenação escolhe a disciplina que o substituto ministra, e a aula conta no diário dela |
 
 Pedido final do teste ("expandir a busca"): varridos os formulários que guardam valor digitado depois de uma ação do
 servidor (diário, grade especial, presentes) e as telas de mensagem; datas passadas em convites; coerência entre

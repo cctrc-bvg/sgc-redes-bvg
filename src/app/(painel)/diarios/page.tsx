@@ -43,6 +43,7 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
         aulasPrevistas: true,
         aulasMinistradas: true,
         ministradasManual: true,
+        ministradasEm: true,
         diarioEmDia: true,
         ultimaCobranca: true,
         turma: { select: { codigo: true } },

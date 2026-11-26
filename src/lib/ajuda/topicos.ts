@@ -365,7 +365,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Registrar a ausência de um docente numa data: o sistema mostra as aulas dele pela grade vigente.',
       'Licença de vários dias: informe também "Até" (até 15 dias) e registre todas as aulas do período de uma vez; feriados e sábados letivos já entram na conta.',
       'Acompanhar o prazo de reposição das aulas dispensadas (15 dias letivos ou o fim da etapa, o que vier primeiro, ROD Art. 37): aparece na ausência e, quando está vencido ou perto de vencer sem data agendada, na tela inicial.',
-      'Quando outro docente ocupa o horário (substituição), quem faltou ainda precisa repor a aula para completar a carga horária da disciplina; o docente que ocupou o horário pode contá-lo na disciplina dele. Por isso a ausência coberta por substituição também entra em Reposição de aulas. Adiantamento não: a aula foi dada em outro horário.',
+      'Quando outro docente ocupa o horário (substituição), quem faltou ainda precisa repor a aula para completar a carga horária da disciplina; o docente que ocupou o horário conta a aula na disciplina que ministrou (a Coordenação a escolhe ao decidir a substituição). Por isso a ausência coberta por substituição também entra em Reposição de aulas. Adiantamento não: a aula foi dada em outro horário.',
       'Reposição de aulas (menu da tela inicial ou "Reposição de aulas"): o docente informa a data em que repôs, com o formulário em anexo se quiser (PDF, JPG ou PNG, até 5 MB), e a Coordenação dá ciência; a Coordenação também pode registrar direto. O formulário pode ir só pelo e-mail institucional: o anexo no sistema é opcional.',
       'Receber as ausências que os próprios docentes informam (selo "Informada pelo docente" e contagem na tela inicial) e dar ciência a eles.',
       'Para cada horário perdido: substituição por outro docente, adiantamento de uma aula posterior da turma, dispensa da turma ou decidir depois.',
@@ -746,7 +746,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Registrar a situação do diário e enviar lembrete ao docente por e-mail ou WhatsApp (Coordenação).',
       'O professor vê os próprios diários. A CCA (secretaria escolar do curso) acompanha todos os diários, só para consulta.',
       'Mostra quantos dias do semestre já correram, para ter uma ideia de quanto os diários já deveriam ter avançado.',
-      'Ao voltar ao automático, o último valor lançado à mão fica guardado e pode ser reaplicado.',
+      'O valor lançado à mão vale como ponto de partida (com a data): dali em diante as aulas seguem a grade. "Voltar ao automático" descarta esse ponto de partida.',
     ],
     diagrama: {
       titulo: 'Acompanhar os diários',

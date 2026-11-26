@@ -27,6 +27,7 @@ export default async function PaginaConferencia({ searchParams }: { searchParams
       aulasPrevistas: true,
       aulasMinistradas: true,
       ministradasManual: true,
+        ministradasEm: true,
       diarioEmDia: true,
       turma: { select: { codigo: true } },
       disciplina: { select: { nome: true } },
@@ -111,7 +112,7 @@ export default async function PaginaConferencia({ searchParams }: { searchParams
                   <td className="px-4 py-3 text-right tabular-nums">{l.presumido ?? '—'}</td>
                   <td className="px-4 py-3 text-right tabular-nums">
                     {l.efetivas}
-                    <span className="block text-xs text-slate-600">{l.ministradasManual ? 'manual' : 'automático'}{!l.ministradasManual && l.aulasMinistradas > 0 && l.aulasMinistradas !== l.efetivas && ` · último manual: ${l.aulasMinistradas}`}{l.diferenca !== 0 && ` (${l.diferenca > 0 ? '+' : ''}${l.diferenca})`}</span>
+                    <span className="block text-xs text-slate-600">{l.ministradasManual ? 'manual' : 'automático'}{l.diferenca !== 0 && ` (${l.diferenca > 0 ? '+' : ''}${l.diferenca})`}</span>
                   </td>
                   <td className="px-4 py-3">
                     <form action={conferirDiario} className="flex flex-wrap items-center gap-2">

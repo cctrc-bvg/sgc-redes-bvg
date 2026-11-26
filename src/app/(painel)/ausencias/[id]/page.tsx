@@ -80,6 +80,12 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
   const docente = new Map(dia.docentes.map((d) => [d.id, d.nome]));
   const disciplina = new Map(dia.aulasDoDia.map((a) => [`${a.turmaId}|${a.blocoId}`, a.disciplina]));
   const minhas = new Map(dia.coberturas.filter((c) => c.ausenciaId === id).map((c) => [c.blocoId, c]));
+  // Disciplinas que cada candidato a substituto ministra nesta turma: ele conta a aula na disciplina que der no horário.
+  const ofertasDaTurma = await prisma.disciplinaOferta.findMany({
+    where: { anoLetivo: Number(dataISO.slice(0, 4)), turmaId: registro.turmaId },
+    select: { id: true, professorId: true, disciplina: { select: { nome: true } } },
+  });
+  const disciplinasDele = (professorId: string) => ofertasDaTurma.filter((o) => o.professorId === professorId);
   const horariosDecisao: HorarioDecisao[] = ausencia.blocoIds.map((b) => {
     const subs = sugerirSubstitutos(ctx, registro.turmaId, b);
     const adis = sugerirAdiantamentos(ctx, registro.turmaId, b);
@@ -93,11 +99,16 @@ export default async function PaginaAusencia({ params, searchParams }: { params:
         : atual.tipo === 'DISPENSA'
           ? OPCAO_DISPENSA
           : atual.tipo === 'SUBSTITUICAO'
-            ? opcaoSubstituto(atual.substitutoId ?? '')
+            ? opcaoSubstituto(atual.substitutoId ?? '', atual.ofertaSubstitutaId ?? (disciplinasDele(atual.substitutoId ?? '').length === 1 ? disciplinasDele(atual.substitutoId ?? '')[0]!.id : null))
             : opcaoAdiantamento(atual.blocoOrigemId ?? ''),
       opcoes: [
         { valor: OPCAO_PENDENTE, rotulo: 'Decidir depois (sem ocupação)' },
-        ...subs.map((s) => ({ valor: opcaoSubstituto(s.id), rotulo: `Substituição: ${s.nome}${s.daTurma ? ' (leciona na turma)' : ''}` })),
+        ...subs.flatMap((s) => {
+          const dele = disciplinasDele(s.id);
+          return dele.length === 0
+            ? [{ valor: opcaoSubstituto(s.id), rotulo: `Substituição: ${s.nome}` }]
+            : dele.map((o) => ({ valor: opcaoSubstituto(s.id, o.id), rotulo: `Substituição: ${s.nome}, na disciplina ${o.disciplina.nome} (conta no diário dela)` }));
+        }),
         ...adis.map((a) => ({
           valor: opcaoAdiantamento(a.blocoOrigemId),
           rotulo: `Adiantar ${disciplina.get(`${registro.turmaId}|${a.blocoOrigemId}`)} — ${docente.get(a.professorId) ?? ''} (de ${descreverBloco(bloco.get(a.blocoOrigemId)!)})`,

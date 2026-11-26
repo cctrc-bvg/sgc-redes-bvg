@@ -29,8 +29,8 @@ export function aulasNaGrade(e: EntradaPresumido, filtro: (dataISO: string) => b
  * Aulas presumidas dadas até hoje: só os dias anteriores a hoje (a aula de hoje ainda pode não ter ocorrido),
  * menos as dispensadas sem reposição. Substituição e adiantamento contam como dadas. Nunca passa das previstas.
  */
-export function aulasPresumidas(e: EntradaPresumido & { hojeISO: string; dispensadas?: number; previstas?: number }): number {
-  const dadas = aulasNaGrade(e, (d) => d < e.hojeISO) - (e.dispensadas ?? 0);
+export function aulasPresumidas(e: EntradaPresumido & { hojeISO: string; desdeISO?: string; dispensadas?: number; previstas?: number }): number {
+  const dadas = aulasNaGrade(e, (d) => d < e.hojeISO && (!e.desdeISO || d >= e.desdeISO)) - (e.dispensadas ?? 0);
   const liquido = Math.max(0, dadas);
   return e.previstas === undefined ? liquido : Math.min(liquido, e.previstas);
 }
@@ -53,19 +53,20 @@ export const ministradasEfetivas = (o: { ministradasManual: boolean; aulasMinist
   o.ministradasManual ? o.aulasMinistradas : presumido;
 
 /**
- * Aulas que o substituto pode contar na própria disciplina: uma por horário ocupado, desde que ele tenha uma única
- * oferta na turma (com duas ou mais, não dá para saber qual disciplina ele deu: a Coordenação ajusta à mão).
+ * Datas das aulas que o substituto conta na própria disciplina, por oferta. Vale a disciplina registrada na decisão;
+ * em registros antigos (sem ela), só quando ele tem uma única oferta na turma.
  */
 export function creditosDeSubstituicao(
-  coberturas: readonly { substitutoId: string; turmaId: string }[],
+  coberturas: readonly { substitutoId: string; turmaId: string; ofertaId?: string | null; dataISO: string }[],
   ofertas: readonly { id: string; professorId: string; turmaId: string }[],
-): Map<string, number> {
+): Map<string, string[]> {
   const ofertasDoPar = new Map<string, string[]>();
   for (const o of ofertas) ofertasDoPar.set(`${o.professorId}|${o.turmaId}`, [...(ofertasDoPar.get(`${o.professorId}|${o.turmaId}`) ?? []), o.id]);
-  const creditos = new Map<string, number>();
+  const creditos = new Map<string, string[]>();
   for (const c of coberturas) {
     const doPar = ofertasDoPar.get(`${c.substitutoId}|${c.turmaId}`);
-    if (doPar?.length === 1) creditos.set(doPar[0]!, (creditos.get(doPar[0]!) ?? 0) + 1);
+    const alvo = c.ofertaId && doPar?.includes(c.ofertaId) ? c.ofertaId : doPar?.length === 1 ? doPar[0] : undefined;
+    if (alvo) creditos.set(alvo, [...(creditos.get(alvo) ?? []), c.dataISO]);
   }
   return creditos;
 }

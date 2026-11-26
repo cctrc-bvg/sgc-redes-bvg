@@ -34,6 +34,7 @@ export interface CoberturaDia {
   blocoId: string;
   tipo: TipoCobertura;
   substitutoId?: string | null;
+  ofertaSubstitutaId?: string | null;
   blocoOrigemId?: string | null;
   professorOrigemId?: string | null;
 }
@@ -267,7 +268,8 @@ export function sugerirAdiantamentos(ctx: ContextoDia, turmaId: string, blocoId:
 /** Valor de cada opção do formulário de decisão (um `<select>` por bloco perdido). */
 export const OPCAO_PENDENTE = '';
 export const OPCAO_DISPENSA = 'dispensa';
-export const opcaoSubstituto = (professorId: string) => `sub:${professorId}`;
+/** `sub:<professor>` ou, quando ele leciona na turma, `sub:<professor>:<oferta>` (a disciplina que ele ministra no horário). */
+export const opcaoSubstituto = (professorId: string, ofertaId?: string | null) => (ofertaId ? `sub:${professorId}:${ofertaId}` : `sub:${professorId}`);
 export const opcaoAdiantamento = (blocoOrigemId: string) => `adi:${blocoOrigemId}`;
 export const PREFIXO_DECISAO = 'decisao:';
 
@@ -275,6 +277,7 @@ export interface CoberturaPlanejada {
   blocoId: string;
   tipo: TipoCobertura;
   substitutoId: string | null;
+  ofertaSubstitutaId?: string | null;
   blocoOrigemId: string | null;
   professorOrigemId: string | null;
 }
@@ -298,12 +301,12 @@ export function planejarCoberturas(
     if (escolha === OPCAO_DISPENSA) {
       coberturas.push({ blocoId, tipo: 'DISPENSA', substitutoId: null, blocoOrigemId: null, professorOrigemId: null });
     } else if (escolha.startsWith('sub:')) {
-      const id = escolha.slice(4);
+      const [id, ofertaId] = escolha.slice(4).split(':');
       if (!sugerirSubstitutos(ctx, turmaId, blocoId).some((s) => s.id === id)) {
         erros[blocoId] = 'Este professor não está mais livre neste horário. Escolha outra opção.';
         continue;
       }
-      coberturas.push({ blocoId, tipo: 'SUBSTITUICAO', substitutoId: id, blocoOrigemId: null, professorOrigemId: null });
+      coberturas.push({ blocoId, tipo: 'SUBSTITUICAO', substitutoId: id, ofertaSubstitutaId: ofertaId || null, blocoOrigemId: null, professorOrigemId: null });
     } else if (escolha.startsWith('adi:')) {
       const origem = escolha.slice(4);
       const sugestao = sugerirAdiantamentos(ctx, turmaId, blocoId).find((s) => s.blocoOrigemId === origem);
