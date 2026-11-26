@@ -36,10 +36,12 @@ test('diário: validação, atualização e lembrete ao docente', async ({ page 
   await expect(page.locator('main')).toContainText(/Diário atualizado\.|Nenhuma alteração para salvar\./);
 
   // O valor corrigido à mão virou manual; "Voltar ao automático" devolve o presumido (RF08-A).
+  // Espera a página assentar (o formulário remonta depois de salvar) antes de clicar.
+  await expect(page.getByText('Salvando…')).toHaveCount(0, { timeout: 30_000 });
   const voltar = page.getByRole('button', { name: 'Voltar ao automático' });
   if (await voltar.isVisible()) {
     await voltar.click();
-    await expect(page.locator('main')).toContainText('Valor automático');
+    await expect(page.locator('main')).toContainText('Valor automático', { timeout: 30_000 });
   }
 });
 

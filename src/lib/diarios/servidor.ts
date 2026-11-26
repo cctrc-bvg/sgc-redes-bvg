@@ -31,7 +31,7 @@ export async function situacoesAutomaticas(ano: number, ofertas: readonly Oferta
   const resultado = new Map<string, SituacaoAutomatica>();
   if (ofertas.length === 0) return resultado;
   const ids = ofertas.map((o) => o.id);
-  const [calendario, celulas, dispensas, substituidas, daSubstituicao, periodosEspeciais, celulasNormaisDasTurmas] = await Promise.all([
+  const [calendario, celulas, dispensas, substituidas, daSubstituicao, periodosEspeciais] = await Promise.all([
     carregarAno(ano),
     prisma.gradeHorario.findMany({ where: { ofertaId: { in: ids }, anoLetivo: ano }, select: { ofertaId: true, diaSemana: true, semestreLetivo: true } }),
     prisma.coberturaBloco.findMany({
@@ -54,8 +54,12 @@ export async function situacoesAutomaticas(ano: number, ofertas: readonly Oferta
       orderBy: { createdAt: 'desc' },
       select: { inicio: true, fim: true, grades: { where: { ofertaId: { not: null } }, select: { ofertaId: true, turmaId: true, diaSemana: true } } },
     }),
-    prisma.gradeHorario.findMany({ where: { anoLetivo: ano, ofertaId: { not: null } }, select: { ofertaId: true, turmaId: true, diaSemana: true, semestreLetivo: true } }),
   ]);
+  // A grade normal só interessa às turmas que têm grade especial em algum período (quase sempre nenhuma).
+  const turmasEspeciais = [...new Set(periodosEspeciais.flatMap((p) => p.grades.map((g) => g.turmaId)))];
+  const celulasNormaisDasTurmas = turmasEspeciais.length
+    ? await prisma.gradeHorario.findMany({ where: { anoLetivo: ano, turmaId: { in: turmasEspeciais }, ofertaId: { not: null } }, select: { ofertaId: true, turmaId: true, diaSemana: true, semestreLetivo: true } })
+    : [];
   const ajustes = ajusteDeGradeEspecial({
     periodos: periodosEspeciais.map((p) => ({ inicio: dataDoBanco(p.inicio), fim: dataDoBanco(p.fim), celulas: p.grades.map((g) => ({ ofertaId: g.ofertaId!, turmaId: g.turmaId, diaSemana: g.diaSemana })) })),
     normais: celulasNormaisDasTurmas.map((c) => ({ ofertaId: c.ofertaId!, turmaId: c.turmaId, diaSemana: c.diaSemana, semestreLetivo: c.semestreLetivo })),
