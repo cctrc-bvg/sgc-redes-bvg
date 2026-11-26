@@ -176,6 +176,7 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Ver o ano inteiro ou um mês, imprimir/salvar em PDF e exportar/importar em planilha.',
       'Ao registrar uma alteração imprevista, abrir as mensagens prontas para avisar docentes, CAE, nutricionista, Gestão, CTP e turmas.',
       'Editor visual: clicar nos dias (Shift+clique para intervalos, Ctrl+clique para dias soltos), escolher a categoria e acompanhar os contadores; cada gravação vira uma revisão que dá para consultar e restaurar.',
+      'Ano novo: num ano em branco, o editor oferece "Criar o ano a partir do anterior" (etapas, recessos e encontros nas mesmas semanas, mais os feriados nacionais). Ao gravar mudanças que afetam ausências, períodos especiais ou dias já passados, a tela mostra o impacto e pede confirmação.',
     ],
     diagrama: {
       titulo: 'Montar o calendário do ano',

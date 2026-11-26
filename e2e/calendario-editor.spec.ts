@@ -71,4 +71,12 @@ test('editor do calendário: seleção com Shift e Ctrl, categorias, contadores,
   await expect(page.getByRole('status').filter({ hasText: /Calendário atual: revisão 3 de 3/ })).toBeVisible();
   await expect(dia(page, `${ANO}-01-11`)).toHaveAttribute('data-situacao', 'FIM_DE_SEMANA_LETIVO');
   await expect(dia(page, `${ANO}-01-14`)).toHaveAttribute('data-situacao', 'LETIVO');
+
+  // Ano novo a partir do anterior: 2032 está em branco e 2031 tem calendário.
+  await page.goto(`/calendario/editor?ano=${ANO + 1}`);
+  await page.getByRole('button', { name: `Criar ${ANO + 1} a partir de ${ANO}` }).click();
+  await expect(page.locator('main')).toContainText('Calendário criado a partir do ano anterior', { timeout: 60_000 });
+  await expect(page.getByRole('status').filter({ hasText: /Calendário atual: revisão 1 de 1/ })).toBeVisible();
+  await expect(dia(page, `${ANO + 1}-04-21`)).toHaveAttribute('data-situacao', 'FERIADO'); // Tiradentes
+  await expect(page.getByRole('button', { name: `Criar ${ANO + 1} a partir de ${ANO}` })).toHaveCount(0);
 });

@@ -3,11 +3,11 @@ import type { Prisma, TipoEventoCalendario } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { dataParaBanco } from '@/lib/ausencias/regras';
 import { carregarAno } from './servidor';
-import { assinatura, diferencaEntre, textoDaDiferenca, type EventoInst, type Instantaneo } from './editor';
+import { anoEmBranco, assinatura, diferencaEntre, textoDaDiferenca, type EventoInst, type Instantaneo } from './editor';
 
 type Db = Prisma.TransactionClient | typeof prisma;
 
-export type OrigemRevisao = 'EDITOR' | 'EVENTO' | 'ETAPAS' | 'IMPORTACAO' | 'SABADO' | 'RESTAURACAO' | 'INICIAL';
+export type OrigemRevisao = 'EDITOR' | 'EVENTO' | 'ETAPAS' | 'IMPORTACAO' | 'SABADO' | 'RESTAURACAO' | 'INICIAL' | 'MODELO';
 
 export const NOME_ORIGEM: Record<string, string> = {
   EDITOR: 'Editor do calendário',
@@ -17,6 +17,7 @@ export const NOME_ORIGEM: Record<string, string> = {
   SABADO: 'Sábado letivo',
   RESTAURACAO: 'Restauração de revisão',
   INICIAL: 'Estado inicial',
+  MODELO: 'Ano criado a partir do anterior',
 };
 
 /** O calendário vigente do ano, no formato da revisão. */
@@ -55,19 +56,17 @@ interface PedidoRevisao {
   motivo?: string | null;
 }
 
-const estaVazio = (i: Instantaneo) => i.eventos.length === 0 && i.extras.length === 0 && i.etapas.every((e) => !e) && i.semestres.every((s) => !s);
-
 /** Grava a revisão se o calendário mudou desde a última (dentro de uma transação que já segura a trava do ano). */
 async function registrarDentro(tx: Prisma.TransactionClient, p: PedidoRevisao): Promise<number | null> {
   const atual = await instantaneoAtual(p.ano, tx);
   const ultima = await ultimaRevisao(p.ano, tx);
   const anterior = ultima ? (ultima.dados as unknown as Instantaneo) : null;
   if (anterior && assinatura(anterior) === assinatura(atual)) return null;
-  if (!anterior && estaVazio(atual)) return null;
+  if (!anterior && anoEmBranco(atual)) return null;
   const numero = (ultima?.numero ?? 0) + 1;
-  const resumo = anterior ? textoDaDiferenca(diferencaEntre(anterior, atual)) : 'Primeira revisão registrada: estado do calendário nesta data.';
+  const resumo = anterior ? textoDaDiferenca(diferencaEntre(anterior, atual)) : p.origem === 'MODELO' ? 'Calendário criado a partir do ano anterior.' : 'Primeira revisão registrada: estado do calendário nesta data.';
   await tx.calendarioRevisao.create({
-    data: { anoLetivo: p.ano, numero, autorId: p.autorId, motivo: p.motivo?.trim() || null, resumo, origem: anterior ? p.origem : 'INICIAL', dados: atual as unknown as Prisma.InputJsonValue },
+    data: { anoLetivo: p.ano, numero, autorId: p.autorId, motivo: p.motivo?.trim() || null, resumo, origem: anterior || p.origem === 'MODELO' ? p.origem : 'INICIAL', dados: atual as unknown as Prisma.InputJsonValue },
   });
   return numero;
 }
@@ -86,7 +85,7 @@ export async function garantirRevisaoInicial(ano: number, tx?: Prisma.Transactio
   const db: Db = tx ?? prisma;
   if (await db.calendarioRevisao.findFirst({ where: { anoLetivo: ano }, select: { id: true } })) return;
   const atual = await instantaneoAtual(ano, db);
-  if (estaVazio(atual)) return;
+  if (anoEmBranco(atual)) return;
   await registrarRevisaoSeMudou({ ano, autorId: null, origem: 'INICIAL' }, tx);
 }
 
