@@ -97,3 +97,91 @@ export function resumoSemanal(d: DadosResumo): { assunto: string; texto: string 
   L.push('', 'Qualquer dúvida, é só responder. Obrigado!', 'Coordenação do Curso Técnico em Redes de Computadores');
   return { assunto: `[SGC-Redes] Resumo da semana — ${br(d.segunda)} a ${br(sexta)}`, texto: L.join('\n') };
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Avisos próprios do período (G27): fim de etapa e fechamento do semestre. Cada docente recebe um de cada.
+// ---------------------------------------------------------------------------------------------------------------
+
+/** O aviso de etapa começa a aparecer 7 dias antes do fim dela; o de fechamento, 14 dias antes do fim do semestre. */
+export const DIAS_ANTECEDENCIA_ETAPA = 7;
+export const DIAS_ANTECEDENCIA_FECHAMENTO = 14;
+
+export interface AvisoDoPeriodo {
+  /** "etapa:2026:2" ou "fechamento:2026:1". */
+  id: string;
+  tipo: 'ETAPA' | 'FECHAMENTO';
+  /** Etapa (1 a 4) ou semestre (1 ou 2). */
+  numero: number;
+  /** Semestre letivo a que o aviso se refere (define as ofertas que entram). */
+  semestre: number;
+  fim: string;
+  entregaAte: string | null;
+}
+
+type Intervalo = { inicio: string; fim: string } | null;
+
+/** Avisos que a Coordenação deve preparar hoje: etapas perto do fim (até a entrega) e semestre perto de fechar. */
+export function avisosDoPeriodo(ano: number, etapas: readonly Intervalo[], semestres: readonly Intervalo[], letivos: readonly string[], hojeISO: string): AvisoDoPeriodo[] {
+  const lista: AvisoDoPeriodo[] = [];
+  etapas.forEach((e, i) => {
+    if (!e) return;
+    const entregaAte = nesimoDiaLetivoDepois(e.fim, letivos, DIAS_LETIVOS_ENTREGA_ETAPA);
+    const limite = entregaAte ?? somarDiasISO(e.fim, 7);
+    if (hojeISO >= somarDiasISO(e.fim, -DIAS_ANTECEDENCIA_ETAPA) && hojeISO <= limite) {
+      lista.push({ id: `etapa:${ano}:${i + 1}`, tipo: 'ETAPA', numero: i + 1, semestre: i < 2 ? 1 : 2, fim: e.fim, entregaAte });
+    }
+  });
+  semestres.forEach((s, i) => {
+    if (!s) return;
+    if (hojeISO >= somarDiasISO(s.fim, -DIAS_ANTECEDENCIA_FECHAMENTO) && hojeISO <= s.fim) {
+      lista.push({ id: `fechamento:${ano}:${i + 1}`, tipo: 'FECHAMENTO', numero: i + 1, semestre: i + 1, fim: s.fim, entregaAte: null });
+    }
+  });
+  return lista;
+}
+
+/** Chave de envio: uma por aviso e por docente (não repete). */
+export const chaveAviso = (avisoId: string, userId: string) => `aviso:${avisoId}:${userId}`;
+
+const lista = (itens: readonly string[]) => itens.map((i) => `- ${i}`);
+
+export function avisoFimDeEtapa(d: { nome: string; etapa: number; fim: string; entregaAte: string | null; hojeISO: string; disciplinas: readonly string[] }): { assunto: string; texto: string } {
+  const encerrada = d.hojeISO > d.fim;
+  const L = [`Olá, ${d.nome}!`, ''];
+  L.push(
+    encerrada
+      ? `A N${d.etapa} terminou em ${br(d.fim)}.`
+      : d.hojeISO === d.fim
+        ? `Hoje, ${br(d.fim)}, é o último dia da N${d.etapa}.`
+        : `A N${d.etapa} termina em ${br(d.fim)}.`,
+  );
+  L.push(
+    d.entregaAte
+      ? `A entrega dos diários e das notas vai até ${br(d.entregaAte)} (5 dias letivos depois do fim da etapa, ROD, Art. 171, XIX).`
+      : 'A entrega dos diários e das notas é em até 5 dias letivos depois do fim da etapa (ROD, Art. 171, XIX).',
+  );
+  if (d.disciplinas.length > 0) L.push('', '*Suas disciplinas*', ...lista(d.disciplinas));
+  L.push('', 'No SGC-Redes (Diários), confira as aulas dadas de cada disciplina antes de entregar. Reposições de aulas dispensadas também precisam ser concluídas no prazo.');
+  L.push('', 'Qualquer dúvida, é só responder. Obrigado!', 'Coordenação do Curso Técnico em Redes de Computadores');
+  return { assunto: `[SGC-Redes] Fim da N${d.etapa}: entrega dos diários até ${d.entregaAte ? br(d.entregaAte) : 'o prazo'}`, texto: L.join('\n') };
+}
+
+export function avisoFechamento(d: {
+  nome: string;
+  semestre: number;
+  ano: number;
+  fim: string;
+  disciplinas: readonly string[];
+  reposicoes: readonly { dataAula: string; disciplina: string; turma: string }[];
+}): { assunto: string; texto: string } {
+  const L = [`Olá, ${d.nome}!`, '', `O semestre ${d.ano}.${d.semestre} termina em ${br(d.fim)}.`];
+  if (d.disciplinas.length > 0) L.push('', '*Suas disciplinas*', ...lista(d.disciplinas));
+  const pendencias = [
+    'Conferir no SGC-Redes (Diários) se as aulas dadas e o conteúdo estão completos.',
+    'Entregar o diário e as notas da última etapa no prazo (5 dias letivos depois do fim dela).',
+    ...d.reposicoes.map((r) => `Concluir a reposição de ${r.disciplina} (${r.turma}), aula de ${br(r.dataAula)}, e informá-la no sistema (Reposição de aulas).`),
+  ];
+  L.push('', '*Antes do fechamento*', ...lista(pendencias));
+  L.push('', 'Qualquer dúvida, é só responder. Obrigado!', 'Coordenação do Curso Técnico em Redes de Computadores');
+  return { assunto: `[SGC-Redes] Fechamento do semestre ${d.ano}.${d.semestre}: ${br(d.fim)}`, texto: L.join('\n') };
+}

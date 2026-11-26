@@ -3,19 +3,20 @@
 import { useActionState } from 'react';
 import { Alerta } from '@/components/campo';
 import { SeletorModo } from '@/components/seletor-modo';
-import { registrarResumoSemanal, type EstadoResumo } from './actions';
+import { registrarAvisoDoPeriodo, registrarResumoSemanal, type EstadoResumo } from './actions';
 
-export function FormularioResumo({ segunda, docenteId, mostrarWhatsapp, enviado }: { segunda: string; docenteId: string; mostrarWhatsapp: boolean; enviado: boolean }) {
-  const [estado, acao, enviando] = useActionState<EstadoResumo | undefined, FormData>(registrarResumoSemanal, undefined);
+export function FormularioResumo({ segunda, avisoId, docenteId, mostrarWhatsapp, enviado }: { segunda?: string; avisoId?: string; docenteId: string; mostrarWhatsapp: boolean; enviado: boolean }) {
+  const [estado, acao, enviando] = useActionState<EstadoResumo | undefined, FormData>(avisoId ? registrarAvisoDoPeriodo : registrarResumoSemanal, undefined);
   // Depois do registro a página volta com "enviado"; o formulário some, mas a confirmação continua visível.
   if (enviado && !estado?.mensagem) return null;
   return (
     <div className="space-y-2 border-t border-slate-200 pt-3">
       {!enviado && (
       <form action={acao} className="flex flex-wrap items-end gap-3">
-        <input type="hidden" name="segunda" value={segunda} />
+        {segunda && <input type="hidden" name="segunda" value={segunda} />}
+        {avisoId && <input type="hidden" name="avisoId" value={avisoId} />}
         <input type="hidden" name="docenteId" value={docenteId} />
-        <SeletorModo id={`modo-resumo-${docenteId}`} mostrarWhatsapp={mostrarWhatsapp} />
+        <SeletorModo id={`modo-${avisoId ?? 'resumo'}-${docenteId}`.replace(/[^a-zA-Z0-9_-]/g, '-')} mostrarWhatsapp={mostrarWhatsapp} />
         <button
           type="submit"
           disabled={enviando}

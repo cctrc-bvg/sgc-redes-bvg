@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contarDiasLetivos } from '@/lib/calendario/regras';
-import { aulasPresumidas, aulasRestantesNaGrade, deficitProjetado, ministradasEfetivas } from './automatico';
+import { ajusteDeGradeEspecial, aulasPresumidas, aulasRestantesNaGrade, deficitProjetado, ministradasEfetivas } from './automatico';
 
 // Semana de 2026-03-02 (segunda) a 2026-03-08. Oferta: 2 aulas na segunda, 1 na quarta.
 const celulasPorDia = new Map([[1, 2], [3, 1]]);
@@ -75,5 +75,32 @@ describe('aulasPresumidas a partir de um ponto de partida', () => {
     const base = { celulasPorDia: new Map([[1, 2]]), letivos: ['2026-03-02', '2026-03-09', '2026-03-16'], sabadosLetivos: new Map<string, number>(), hojeISO: '2026-03-20' };
     expect(aulasPresumidas(base)).toBe(6);
     expect(aulasPresumidas({ ...base, desdeISO: '2026-03-09' })).toBe(4);
+  });
+});
+
+describe('ajusteDeGradeEspecial', () => {
+  const letivos = ['2026-11-23', '2026-11-24', '2026-11-25', '2026-11-26'];
+  const base = {
+    letivos,
+    sabadosLetivos: new Map<string, number>(),
+    hojeISO: '2026-11-26',
+    normais: [
+      { ofertaId: 'A', turmaId: 't1', diaSemana: 1, semestreLetivo: 2 },
+      { ofertaId: 'A', turmaId: 't1', diaSemana: 3, semestreLetivo: 2 },
+      { ofertaId: 'B', turmaId: 't2', diaSemana: 1, semestreLetivo: 2 },
+    ],
+    periodos: [{ inicio: '2026-11-23', fim: '2026-11-25', celulas: [{ ofertaId: 'C', turmaId: 't1', diaSemana: 1 }, { ofertaId: 'A', turmaId: 't1', diaSemana: 2 }] }],
+  };
+
+  it('a turma com grade especial perde as aulas normais e ganha as especiais, só até ontem', () => {
+    const r = ajusteDeGradeEspecial(base);
+    expect(r.get('A')).toEqual({ saem: ['2026-11-23', '2026-11-25'], entram: ['2026-11-24'] });
+    expect(r.get('C')).toEqual({ saem: [], entram: ['2026-11-23'] });
+    expect(r.has('B')).toBe(false);
+  });
+
+  it('sem período ou fora das datas, nada muda', () => {
+    expect(ajusteDeGradeEspecial({ ...base, periodos: [] }).size).toBe(0);
+    expect(ajusteDeGradeEspecial({ ...base, hojeISO: '2026-11-23' }).size).toBe(0);
   });
 });

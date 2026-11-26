@@ -126,7 +126,7 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
    `servidor.ts`, `ministradasManual`, `/diarios/conferencia`) e o **resumo semanal dos docentes**
    (`/comunicacao/periodicas`, `src/lib/comunicacao/periodicas*.ts`) estão prontos, com testes unitários, Ajuda e
    `FLUXOS.md`. Falta:
-   - avisos próprios de **fim de etapa** e de **fechamento do período** (hoje o prazo da etapa entra no resumo semanal);
+   - ~~avisos próprios de fim de etapa e de fechamento do período~~: feitos em `/comunicacao/periodicas` (seção "Avisos do período": 7 dias antes do fim da etapa até a entrega; 14 dias antes do fim do semestre; um por docente, com registro de envio). O prazo da etapa continua também no resumo semanal;
    - **rodar o E2E** (escrito em `e2e/diarios.spec.ts`, `e2e/periodicas.spec.ts` e nas listas de páginas e
      acessibilidade, mas ainda não executado) e testar `situacoesAutomaticas` com banco;
    - **manual e capturas** (`npm run manual` já regenerado; faltam as capturas das telas novas), incluindo as telas novas.
@@ -134,9 +134,9 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
    registro direto, download restrito); E2E rodado em 25/11/2026 (`reposicoes.spec.ts`); falta testar o anexo (PDF, JPG, PNG) com arquivo real.
    Atenção: `bodySizeLimit` das Server Actions subiu para 7 MB e o proxy precisa de `client_max_body_size 7m`.
    **Períodos especiais (G30, 25/11/2026):** `/periodos` (jogos internos, encontro dos servidores, eventos externos): grade
-   especial por turma, presentes por dia, resumo de refeições. Falta: usar a grade especial em **Minha grade**, na agenda da
-   tela inicial e nas aulas presumidas dos diários. E2E de `periodos.spec.ts` passou em 25/11/2026.
-   Limites conhecidos: a aula de hoje não conta como dada; a reposição pendente do resumo lista a dispensa recente sem reposição informada (G29: o docente informa em `/reposicoes`, a Coordenação dá ciência); o aviso de etapa vai a todos os docentes com oferta.
+   especial por turma, presentes por dia, resumo de refeições. A grade especial já vale em **Minha grade**, na agenda da
+   tela inicial e nas aulas presumidas dos diários (dias passados; a projeção de aulas restantes ainda usa a grade normal). E2E de `periodos.spec.ts` passou em 25/11/2026.
+   Limites conhecidos: a aula de hoje não conta como dada; a reposição pendente do resumo lista a dispensa recente sem reposição informada (G29: o docente informa em `/reposicoes`, a Coordenação dá ciência); os avisos de etapa e de fechamento vão a todos os docentes com oferta no semestre (sem filtrar por diário já entregue).
 2. **Implantação em produção** (depende da TI e do endereço): seguir `docs/IMPLANTACAO.md`.
    - Fazer o **primeiro uso acompanhado** de `./scripts/atualizar.sh` e `./scripts/ensaiar-migracao.sh`, que nunca
      rodaram com Docker.
@@ -162,7 +162,7 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
 
 ### P2 — depois
 
-- Integração com o SUAP (decidido: depois).
+- Integração com o SUAP (decidido: depois). Estudo de viabilidade, segurança e fluxo sem retrabalho: `docs/estudos/INTEGRACAO_SUAP_QACADEMICO.md` (26/11/2026; aguarda decisões da seção 10).
 - Envio automático pela Evolution API: o código existe, desligado (decidido: semiautomático). O convite individual
   seria o primeiro candidato.
 - **Fase 3 (FSD) — congelada (decisão de 25/11/2026):** laboratórios, estoque/DAP, atas e eventos ficam para

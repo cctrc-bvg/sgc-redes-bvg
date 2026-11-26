@@ -29,6 +29,18 @@ describe('montarSemana', () => {
     mudancas: [],
   };
 
+  it('período especial: a turma com grade especial troca a grade normal pela especial', () => {
+    const especiais = new Map([
+      ['2026-11-25', { periodo: 'Jogos Internos', turmas: new Set(['Redes 1']), celulas: [{ diaSemana: 3, bloco: M1, turma: 'Redes 1', disciplina: 'Redes de Computadores' }] }],
+    ]);
+    const s = montarSemana({ ...base, especiais });
+    const quarta = s[2];
+    expect(quarta.periodoEspecial).toBe('Jogos Internos');
+    expect(quarta.aulas.map((a) => `${a.turma}|${a.disciplina}`)).toEqual(['Redes 1|Redes de Computadores', 'Redes 2|Filosofia II']);
+    expect(s[1].periodoEspecial).toBeNull();
+    expect(s[1].aulas.map((a) => a.turma)).toEqual(['Redes 3']);
+  });
+
   it('segunda a sexta, aulas em ordem do dia e hoje marcado', () => {
     const s = montarSemana(base);
     expect(s.map((d) => d.dataISO)).toEqual(['2026-11-23', '2026-11-24', '2026-11-25', '2026-11-26', '2026-11-27']);

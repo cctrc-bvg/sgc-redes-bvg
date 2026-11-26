@@ -4,6 +4,8 @@ import { prisma } from '@/lib/db';
 import { dataDoBanco, dataParaBanco, periodoDaData } from '@/lib/ausencias/regras';
 import { carregarAno } from '@/lib/calendario/servidor';
 import { diaDaSemanaISO } from '@/lib/calendario/regras';
+import type { BlocoDia } from '@/lib/ausencias/regras';
+import type { CelulaAgenda, EspecialDoDia } from '@/lib/painel/agenda';
 import { diasDoPeriodo, planoAlimentar, type TurmaDoPlano } from './regras';
 
 type Db = Prisma.TransactionClient | typeof prisma;
@@ -84,4 +86,46 @@ export async function carregarPeriodo(id: string) {
     presencas: pres.map((x) => ({ turmaId: x.turmaId, data: dataDoBanco(x.data), qtdAlunos: x.qtdAlunos })),
     plano,
   };
+}
+
+/**
+ * Grade especial da semana do docente: por data, as turmas que seguem grade especial e as células dele nelas.
+ * Mesma regra de `aplicarGradeEspecial` (vale o período mais recente que cobre a data).
+ */
+export async function gradeEspecialDoDocente(
+  professorId: string,
+  datas: { dataISO: string; diaSemana: number }[],
+  blocoPorId: ReadonlyMap<string, BlocoDia>,
+  db: Db = prisma,
+): Promise<Map<string, EspecialDoDia>> {
+  const resultado = new Map<string, EspecialDoDia>();
+  if (datas.length === 0) return resultado;
+  const periodos = await db.periodoEspecial.findMany({
+    where: { inicio: { lte: dataParaBanco(datas[datas.length - 1]!.dataISO) }, fim: { gte: dataParaBanco(datas[0]!.dataISO) } },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, nome: true, inicio: true, fim: true },
+  });
+  if (periodos.length === 0) return resultado;
+  const celulas = await db.gradeEspecial.findMany({
+    where: { periodoId: { in: periodos.map((p) => p.id) } },
+    select: { periodoId: true, turmaId: true, diaSemana: true, blocoId: true, turma: { select: { nome: true } }, oferta: { select: { professorId: true, disciplina: { select: { nome: true } } } } },
+  });
+  for (const { dataISO, diaSemana } of datas) {
+    const d = dataParaBanco(dataISO).getTime();
+    const periodo = periodos.find((p) => p.inicio.getTime() <= d && p.fim.getTime() >= d);
+    if (!periodo) continue;
+    const doPeriodo = celulas.filter((c) => c.periodoId === periodo.id);
+    if (doPeriodo.length === 0) continue;
+    resultado.set(dataISO, {
+      periodo: periodo.nome,
+      turmas: new Set(doPeriodo.map((c) => c.turma.nome)),
+      celulas: doPeriodo.flatMap((c) => {
+        const bloco = blocoPorId.get(c.blocoId);
+        return c.diaSemana === diaSemana && c.oferta?.professorId === professorId && bloco
+          ? [{ diaSemana, bloco, turma: c.turma.nome, disciplina: c.oferta.disciplina.nome }]
+          : [];
+      }),
+    });
+  }
+  return resultado;
 }

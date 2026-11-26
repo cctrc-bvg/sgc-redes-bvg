@@ -70,3 +70,42 @@ export function creditosDeSubstituicao(
   }
   return creditos;
 }
+
+export interface CelulaDeGrade {
+  ofertaId: string;
+  turmaId: string;
+  diaSemana: number;
+}
+
+/**
+ * Períodos especiais (G14): nos dias do período, a turma com grade especial deixa a grade normal. Para cada oferta,
+ * as datas (uma por aula) que saem da conta pela grade normal e as que entram pela grade especial. Só dias anteriores
+ * a hoje e letivos. `periodos` vem da prioridade maior para a menor (vale o primeiro que cobre a data).
+ */
+export function ajusteDeGradeEspecial(e: {
+  periodos: readonly { inicio: string; fim: string; celulas: readonly CelulaDeGrade[] }[];
+  /** Células da grade normal, por semestre (1 ou 2). */
+  normais: readonly (CelulaDeGrade & { semestreLetivo: number })[];
+  letivos: readonly string[];
+  sabadosLetivos: ReadonlyMap<string, number>;
+  hojeISO: string;
+}): Map<string, { saem: string[]; entram: string[] }> {
+  const resultado = new Map<string, { saem: string[]; entram: string[] }>();
+  const de = (id: string) => {
+    const r = resultado.get(id) ?? { saem: [], entram: [] };
+    resultado.set(id, r);
+    return r;
+  };
+  for (const d of e.letivos) {
+    if (d >= e.hojeISO) continue;
+    const periodo = e.periodos.find((p) => p.inicio <= d && p.fim >= d && p.celulas.length > 0);
+    if (!periodo) continue;
+    const dia = diaDaGradeNaData(d, e.sabadosLetivos);
+    if (dia === null) continue;
+    const turmas = new Set(periodo.celulas.map((c) => c.turmaId));
+    const semestre = Number(d.slice(5, 7)) <= 6 ? 1 : 2;
+    for (const c of e.normais) if (c.semestreLetivo === semestre && c.diaSemana === dia && turmas.has(c.turmaId)) de(c.ofertaId).saem.push(d);
+    for (const c of periodo.celulas) if (c.diaSemana === dia) de(c.ofertaId).entram.push(d);
+  }
+  return resultado;
+}

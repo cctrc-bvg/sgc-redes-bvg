@@ -2,7 +2,7 @@ import 'server-only';
 import { prisma } from '@/lib/db';
 import { dataDoBanco, dataParaBanco } from '@/lib/ausencias/regras';
 import { carregarAno } from '@/lib/calendario/servidor';
-import { aulasPresumidas, creditosDeSubstituicao, deficitProjetado, aulasRestantesNaGrade, ministradasEfetivas } from './automatico';
+import { ajusteDeGradeEspecial, aulasPresumidas, creditosDeSubstituicao, deficitProjetado, aulasRestantesNaGrade, ministradasEfetivas } from './automatico';
 
 export interface OfertaParaPresumir {
   id: string;
@@ -31,7 +31,7 @@ export async function situacoesAutomaticas(ano: number, ofertas: readonly Oferta
   const resultado = new Map<string, SituacaoAutomatica>();
   if (ofertas.length === 0) return resultado;
   const ids = ofertas.map((o) => o.id);
-  const [calendario, celulas, dispensas, substituidas, daSubstituicao] = await Promise.all([
+  const [calendario, celulas, dispensas, substituidas, daSubstituicao, periodosEspeciais] = await Promise.all([
     carregarAno(ano),
     prisma.gradeHorario.findMany({ where: { ofertaId: { in: ids }, anoLetivo: ano }, select: { ofertaId: true, diaSemana: true, semestreLetivo: true } }),
     prisma.coberturaBloco.findMany({
@@ -48,7 +48,25 @@ export async function situacoesAutomaticas(ano: number, ofertas: readonly Oferta
       where: { tipo: 'SUBSTITUICAO', substitutoId: { not: null }, ausencia: { dataAula: { lt: dataParaBanco(hojeISO) }, oferta: { anoLetivo: ano } } },
       select: { substitutoId: true, ofertaSubstitutaId: true, ausencia: { select: { turmaId: true, dataAula: true } } },
     }),
+    // Período especial: a turma com grade especial deixa a grade normal nos dias dele.
+    prisma.periodoEspecial.findMany({
+      where: { inicio: { lte: dataParaBanco(hojeISO) }, fim: { gte: dataParaBanco(`${ano}-01-01`) }, grades: { some: { ofertaId: { not: null } } } },
+      orderBy: { createdAt: 'desc' },
+      select: { inicio: true, fim: true, grades: { where: { ofertaId: { not: null } }, select: { ofertaId: true, turmaId: true, diaSemana: true } } },
+    }),
   ]);
+  // A grade normal só interessa às turmas que têm grade especial em algum período (quase sempre nenhuma).
+  const turmasEspeciais = [...new Set(periodosEspeciais.flatMap((p) => p.grades.map((g) => g.turmaId)))];
+  const celulasNormaisDasTurmas = turmasEspeciais.length
+    ? await prisma.gradeHorario.findMany({ where: { anoLetivo: ano, turmaId: { in: turmasEspeciais }, ofertaId: { not: null } }, select: { ofertaId: true, turmaId: true, diaSemana: true, semestreLetivo: true } })
+    : [];
+  const ajustes = ajusteDeGradeEspecial({
+    periodos: periodosEspeciais.map((p) => ({ inicio: dataDoBanco(p.inicio), fim: dataDoBanco(p.fim), celulas: p.grades.map((g) => ({ ofertaId: g.ofertaId!, turmaId: g.turmaId, diaSemana: g.diaSemana })) })),
+    normais: celulasNormaisDasTurmas.map((c) => ({ ofertaId: c.ofertaId!, turmaId: c.turmaId, diaSemana: c.diaSemana, semestreLetivo: c.semestreLetivo })),
+    letivos: calendario.contagem.letivos,
+    sabadosLetivos: new Map(calendario.sabados.map((s) => [s.data, s.diaSemanaReferente])),
+    hojeISO,
+  });
   const ofertasDoAno = daSubstituicao.length
     ? await prisma.disciplinaOferta.findMany({ where: { anoLetivo: ano, professorId: { in: [...new Set(daSubstituicao.map((c) => c.substitutoId!))] } }, select: { id: true, professorId: true, turmaId: true } })
     : [];
@@ -81,8 +99,8 @@ export async function situacoesAutomaticas(ano: number, ofertas: readonly Oferta
       if (desde) dadasDesde += aulasPresumidas({ ...base, desdeISO: desde });
       restantes += aulasRestantesNaGrade(base);
     });
-    const saem = dispensadasPor.get(o.id) ?? [];
-    const entram = creditos.get(o.id) ?? [];
+    const saem = [...(dispensadasPor.get(o.id) ?? []), ...(ajustes.get(o.id)?.saem ?? [])];
+    const entram = [...(creditos.get(o.id) ?? []), ...(ajustes.get(o.id)?.entram ?? [])];
     const presumido = Math.min(Math.max(0, dadas - saem.length + entram.length), o.aulasPrevistas);
     // Lançamento manual com data: vale como ponto de partida e o automático segue a partir dela.
     const efetivas = desde

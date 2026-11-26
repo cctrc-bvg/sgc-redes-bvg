@@ -7,7 +7,7 @@ import { NOME_TIPO_EVENTO, prazoDeReposicao, somarDiasISO, suspensaoNaData } fro
 import { diaDaGradeNaData } from '@/lib/grade/regras';
 import { ONDE_DOCENTES } from '@/lib/ofertas/regras';
 import { contatoDoUsuario, primeiroNome, type MensagemPronta } from './mensagem';
-import { chaveResumoSemanal, DIAS_LETIVOS_FREQUENCIA, diasDaSemana, etapasComPrazo, nesimoDiaLetivoDepois, resumoSemanal, type DadosResumo } from './periodicas';
+import { avisoFechamento, avisoFimDeEtapa, avisosDoPeriodo, chaveAviso, chaveResumoSemanal, DIAS_LETIVOS_FREQUENCIA, diasDaSemana, etapasComPrazo, nesimoDiaLetivoDepois, resumoSemanal, type AvisoDoPeriodo, type DadosResumo } from './periodicas';
 
 export interface ResumoDoDocente {
   mensagem: MensagemPronta;
@@ -103,4 +103,60 @@ export async function resumosDaSemana(segunda: string, hojeISO: string): Promise
     });
   }
   return resultado;
+}
+
+export interface AvisoComMensagens {
+  aviso: AvisoDoPeriodo;
+  titulo: string;
+  mensagens: ResumoDoDocente[];
+}
+
+/** Avisos de fim de etapa e de fechamento do semestre, com uma mensagem por docente que tem oferta no semestre. */
+export async function avisosDoPeriodoComMensagens(hojeISO: string): Promise<AvisoComMensagens[]> {
+  const ano = Number(hojeISO.slice(0, 4));
+  const cal = await carregarAno(ano);
+  const avisos = avisosDoPeriodo(ano, cal.etapas, cal.semestres, cal.contagem.letivos, hojeISO);
+  if (avisos.length === 0) return [];
+  const [docentes, ofertas, pendentes, enviados] = await Promise.all([
+    prisma.user.findMany({ where: ONDE_DOCENTES, select: { id: true, nome: true, email: true, whatsapp: true, usaWhatsapp: true }, orderBy: { nome: 'asc' } }),
+    prisma.disciplinaOferta.findMany({
+      where: { anoLetivo: ano },
+      select: { professorId: true, semestreLetivo: true, disciplina: { select: { nome: true } }, turma: { select: { codigo: true } } },
+    }),
+    prisma.ausenciaDocente.findMany({
+      where: { status: { in: [...STATUS_COM_REPOSICAO] }, reposicaoEm: null, dataAula: { gte: dataParaBanco(`${ano}-01-01`), lte: dataParaBanco(hojeISO) } },
+      select: { dataAula: true, professorAusenteId: true, oferta: { select: { semestreLetivo: true, disciplina: { select: { nome: true } }, turma: { select: { codigo: true } } } } },
+    }),
+    prisma.logComunicacao.findMany({ where: { chave: { startsWith: 'aviso:' }, sucesso: true }, select: { chave: true } }),
+  ]);
+  const jaEnviados = new Set(enviados.map((e) => e.chave));
+  return avisos.map((aviso) => {
+    const mensagens: ResumoDoDocente[] = [];
+    for (const u of docentes) {
+      const minhas = ofertas.filter((o) => o.professorId === u.id && (o.semestreLetivo === null || o.semestreLetivo === aviso.semestre));
+      if (minhas.length === 0) continue;
+      const disciplinas = minhas.map((o) => `${o.disciplina.nome} (${o.turma.codigo})`);
+      const nome = primeiroNome(u.nome);
+      const { assunto, texto } =
+        aviso.tipo === 'ETAPA'
+          ? avisoFimDeEtapa({ nome, etapa: aviso.numero, fim: aviso.fim, entregaAte: aviso.entregaAte, hojeISO, disciplinas })
+          : avisoFechamento({
+              nome,
+              ano,
+              semestre: aviso.semestre,
+              fim: aviso.fim,
+              disciplinas,
+              reposicoes: pendentes
+                .filter((a) => a.professorAusenteId === u.id && (a.oferta.semestreLetivo === null || a.oferta.semestreLetivo === aviso.semestre))
+                .map((a) => ({ dataAula: dataDoBanco(a.dataAula), disciplina: a.oferta.disciplina.nome, turma: a.oferta.turma.codigo })),
+            });
+      const chave = chaveAviso(aviso.id, u.id);
+      mensagens.push({
+        mensagem: { chave, titulo: `Docente: ${u.nome}`, canal: null, destino: aviso.tipo === 'ETAPA' ? 'Docente (fim de etapa)' : 'Docente (fechamento)', ...contatoDoUsuario(u), assunto, texto },
+        enviado: jaEnviados.has(chave),
+        temAvisos: true,
+      });
+    }
+    return { aviso, titulo: aviso.tipo === 'ETAPA' ? `Fim da N${aviso.numero} (${aviso.fim.split('-').reverse().join('/')})` : `Fechamento do semestre ${ano}.${aviso.semestre} (${aviso.fim.split('-').reverse().join('/')})`, mensagens };
+  });
 }
