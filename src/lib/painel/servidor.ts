@@ -234,7 +234,7 @@ export async function semanaDoDocente(professorId: string, hojeISO: string = hoj
     }),
   );
   const sabadosMap = new Map(sabados.map((s) => [dataDoBanco(s.data), s.diaSemanaReferente]));
-  const datasComGrade = [0, 1, 2, 3, 4, 5].flatMap((n) => {
+  const datasComGrade = [0, 1, 2, 3, 4, 5, 6].flatMap((n) => {
     const dataISO = somarDias(inicio, n);
     const diaSemana = diaDaGradeNaData(dataISO, sabadosMap);
     return diaSemana === null ? [] : [{ dataISO, diaSemana }];
