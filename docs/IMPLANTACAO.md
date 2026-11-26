@@ -175,6 +175,7 @@ Agendamento com cron (todo dia às 02:30), em `crontab -e` do usuário que roda 
 
 ```
 30 2 * * * BACKUP_DIR=/srv/backups/sgc RETENCAO_DIAS=30 /opt/sgc-redes/scripts/backup-banco.sh >> /srv/backups/sgc/backup.log 2>&1
+45 2 1 * * /opt/sgc-redes/scripts/aplicar-retencao.sh --confirmo >> /srv/backups/sgc/retencao.log 2>&1   # retenção de dados (LGPD), 1º dia do mês; teste antes sem --confirmo
 ```
 
 **Cópia fora da VM:** o backup local não protege contra a perda da VM. Copie `/srv/backups/sgc` para outro servidor ou

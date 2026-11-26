@@ -30,18 +30,22 @@ auditoria e retenção de dados. Método: leitura do código e `npm audit --omit
 5. **Limite de login em memória:** vale para uma instância (a implantação prevista). Quem digita o e-mail de outra
    pessoa 5 vezes bloqueia essa conta por 15 min (aceitável; a Coordenação redefine a senha se preciso).
 
-## Decisão pendente: retenção (LGPD, art. 6º, III e art. 15–16)
-Proposta para validar com a Direção e o encarregado de dados do campus:
+## Retenção de dados (decidida em 27/11/2026 e implementada)
+Prazos aceitos pelo usuário (validar com a Direção e o encarregado de dados antes da produção):
 
-| Dado | Proposta | Observação |
+| Dado | Regra | Como |
 |---|---|---|
-| Anexos de reposição (podem ter assinaturas de estudantes) | apagar 1 ano após o fim do semestre | maior risco: são os únicos arquivos com dado de menores |
-| `AuditLog` com IP | manter 2 anos; depois anonimizar o IP (manter a ação) | IP é dado pessoal |
-| Ausências, reposições, diários | manter durante o curso + prazo de guarda acadêmica do IFCE | seguir a tabela de temporalidade do IFCE |
-| Usuários desativados | anonimizar nome e e-mail 2 anos após a saída | manter vínculos para histórico |
-| Revisões do calendário | manter | sem dado pessoal além do autor |
+| Anexos de reposição (podem ter assinaturas de estudantes) | apagados 1 ano após o fim do semestre da aula (30/06 ou 31/12) | `scripts/retencao.sql` |
+| `AuditLog` com IP | IP anulado após 2 anos (ação, autor e data ficam) | idem |
+| Usuários desativados | nome, e-mail, SIAPE e WhatsApp anonimizados 2 anos após a desativação (`updatedAt`) | idem |
+| Ausências, reposições, diários | mantidos (seguir a tabela de temporalidade do IFCE) | sem ação |
+| Revisões do calendário | mantidas | só o autor como dado pessoal |
 
-Implementar depois da decisão: um comando agendado (`scripts/`) que aplica os prazos e registra o que apagou.
+Uso: `./scripts/aplicar-retencao.sh` simula e desfaz (mostra as quantidades); `--confirmo` aplica. Roda como um único
+comando SQL, é repetível sem efeito (idempotente) e registra `RETENCAO_APLICADA` na auditoria com as quantidades.
+Agendar uma vez por mês (`docs/IMPLANTACAO.md`). Os backups guardam os dados antigos até saírem da rotação (30 dias).
+Limite conhecido: a "desativação" usa a data da última alteração do usuário; se alguém editar um usuário já
+desativado, o prazo recomeça.
 
 ## Itens para o pedido à TI
 - Proxy: Caddy ou Nginx **sobrescrevendo** `X-Forwarded-For`, HTTPS e `client_max_body_size 7m`.
