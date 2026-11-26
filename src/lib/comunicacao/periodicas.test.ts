@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chaveResumoSemanal, diasDaSemana, etapasComPrazo, nesimoDiaLetivoDepois, proximaSegunda, resumoSemanal, type DadosResumo } from './periodicas';
+import { avisoFechamento, avisoFimDeEtapa, avisosDoPeriodo, chaveAviso, chaveResumoSemanal, diasDaSemana, etapasComPrazo, nesimoDiaLetivoDepois, proximaSegunda, resumoSemanal, type DadosResumo } from './periodicas';
 
 describe('mensagens periódicas (G27)', () => {
   it('a próxima segunda: de sexta, sábado, domingo e segunda', () => {
@@ -66,5 +66,35 @@ describe('mensagens periódicas (G27)', () => {
 
   it('chave de envio por semana e docente', () => {
     expect(chaveResumoSemanal('2026-03-09', 'u1')).toBe('resumo:2026-03-09:u1');
+  });
+});
+
+describe('avisos do período', () => {
+  const letivos = ['2026-04-13', '2026-04-14', '2026-04-15', '2026-04-16', '2026-04-17', '2026-06-29', '2026-06-30', '2026-07-01', '2026-07-02', '2026-07-03', '2026-07-06', '2026-07-07'];
+  const etapas = [{ inicio: '2026-02-01', fim: '2026-04-10' }, { inicio: '2026-04-11', fim: '2026-06-28' }, null, null];
+  const semestres = [{ inicio: '2026-02-01', fim: '2026-06-28' }, null];
+
+  it('aparecem 7 dias antes do fim da etapa (e 14 do fechamento) e saem depois da entrega', () => {
+    expect(avisosDoPeriodo(2026, etapas, semestres, letivos, '2026-06-01')).toEqual([]);
+    const perto = avisosDoPeriodo(2026, etapas, semestres, letivos, '2026-06-21');
+    expect(perto.map((a) => a.id)).toEqual(['etapa:2026:2', 'fechamento:2026:1']);
+    const depois = avisosDoPeriodo(2026, etapas, semestres, letivos, '2026-07-03');
+    expect(depois.map((a) => a.id)).toEqual(['etapa:2026:2']);
+    expect(depois[0]!.entregaAte).toBe('2026-07-03');
+    expect(avisosDoPeriodo(2026, etapas, semestres, letivos, '2026-07-06')).toEqual([]);
+  });
+
+  it('texto do fim de etapa traz o prazo e as disciplinas; o fechamento lista as reposições', () => {
+    const e = avisoFimDeEtapa({ nome: 'Ana', etapa: 2, fim: '2026-06-28', entregaAte: '2026-07-06', hojeISO: '2026-06-22', disciplinas: ['Ética (REDES-1)'] });
+    expect(e.texto).toContain('A N2 termina em 28/06/2026.');
+    expect(e.texto).toContain('até 06/07/2026');
+    expect(e.texto).toContain('- Ética (REDES-1)');
+    const f = avisoFechamento({ nome: 'Ana', ano: 2026, semestre: 1, fim: '2026-06-28', disciplinas: [], reposicoes: [{ dataAula: '2026-06-10', disciplina: 'Ética', turma: 'REDES-1' }] });
+    expect(f.assunto).toContain('2026.1');
+    expect(f.texto).toContain('reposição de Ética (REDES-1), aula de 10/06/2026');
+  });
+
+  it('chave é única por aviso e docente', () => {
+    expect(chaveAviso('etapa:2026:2', 'u1')).toBe('aviso:etapa:2026:2:u1');
   });
 });

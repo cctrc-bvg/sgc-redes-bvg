@@ -7,7 +7,7 @@ import { hojeEmFortaleza, somarDias } from '@/lib/ausencias/regras';
 import { validarDataISO } from '@/lib/alimentacao-engine';
 import { diaDaSemanaISO } from '@/lib/calendario/regras';
 import { proximaSegunda } from '@/lib/comunicacao/periodicas';
-import { resumosDaSemana } from '@/lib/comunicacao/periodicas-servidor';
+import { avisosDoPeriodoComMensagens, resumosDaSemana } from '@/lib/comunicacao/periodicas-servidor';
 import { FormularioResumo } from './formulario';
 
 export const metadata: Metadata = { title: 'Mensagens periódicas — SGC-Redes' };
@@ -29,7 +29,7 @@ export default async function PaginaPeriodicas({ searchParams }: { searchParams:
   const params = await searchParams;
   const hoje = hojeEmFortaleza();
   const segunda = segundaValida(params.segunda) ?? proximaSegunda(hoje);
-  const resumos = await resumosDaSemana(segunda, hoje);
+  const [resumos, avisos] = await Promise.all([resumosDaSemana(segunda, hoje), avisosDoPeriodoComMensagens(hoje)]);
   const pendentes = resumos.filter((r) => !r.enviado).length;
 
   return (
@@ -49,6 +49,30 @@ export default async function PaginaPeriodicas({ searchParams }: { searchParams:
         <Link href={`/comunicacao/periodicas?segunda=${somarDias(segunda, -7)}`} className="text-if-verde-700 underline underline-offset-2">Semana anterior</Link>
         <Link href={`/comunicacao/periodicas?segunda=${somarDias(segunda, 7)}`} className="text-if-verde-700 underline underline-offset-2">Semana seguinte</Link>
       </p>
+
+      {avisos.length > 0 && (
+        <section aria-labelledby="avisos-periodo" className="mt-6 rounded-lg border border-if-verde-600 bg-if-verde-50 p-4">
+          <h2 id="avisos-periodo" className="text-lg font-bold text-slate-900">Avisos do período</h2>
+          <p className="mt-1 max-w-3xl text-sm text-slate-700">Fim de etapa e fechamento do semestre: um aviso por docente com disciplina no semestre, separado do resumo semanal.</p>
+          {avisos.map((g) => (
+            <details key={g.aviso.id} className="mt-3 rounded-md border border-slate-200 bg-white p-3" open={g.mensagens.some((m) => !m.enviado) && avisos.length === 1}>
+              <summary className="cursor-pointer font-semibold text-slate-900">
+                {g.titulo}: {g.mensagens.filter((m) => !m.enviado).length} de {g.mensagens.length} ainda não registrados
+              </summary>
+              <ul className="mt-3 space-y-4">
+                {g.mensagens.map((r) => (
+                  <li key={r.mensagem.chave} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="mb-2 text-sm text-slate-700">{r.enviado ? '✔ Envio registrado.' : 'Aviso ainda não registrado.'}</p>
+                    <CaixaMensagem mensagem={r.mensagem} mostrarWhatsapp={usuario.usaWhatsapp}>
+                      <FormularioResumo avisoId={g.aviso.id} docenteId={r.mensagem.chave.split(':').pop()!} mostrarWhatsapp={usuario.usaWhatsapp} enviado={r.enviado} />
+                    </CaixaMensagem>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ))}
+        </section>
+      )}
 
       {resumos.length === 0 ? (
         <div className="mt-6">
