@@ -137,6 +137,7 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
    especial por turma, presentes por dia, resumo de refeições. A grade especial já vale em **Minha grade**, na agenda da
    tela inicial e nas aulas presumidas dos diários (dias passados; a projeção de aulas restantes ainda usa a grade normal). E2E de `periodos.spec.ts` passou em 25/11/2026.
    Limites conhecidos: a aula de hoje não conta como dada; a reposição pendente do resumo lista a dispensa recente sem reposição informada (G29: o docente informa em `/reposicoes`, a Coordenação dá ciência); os avisos de etapa e de fechamento vão a todos os docentes com oferta no semestre (sem filtrar por diário já entregue).
+1B. **Revisão de segurança e LGPD (27/11/2026):** feita em `docs/estudos/REVISAO_SEGURANCA_LGPD.md` (corrigido o IP de origem falsificável; `PROXY_SALTOS`). **Retenção (prazos aceitos em 27/11/2026) implementada:** `scripts/aplicar-retencao.sh` (simula; `--confirmo` aplica). Falta agendar no cron da VM de produção e validar os prazos com a Direção.
 2. **Implantação em produção** (depende da TI e do endereço): seguir `docs/IMPLANTACAO.md`.
    - Fazer o **primeiro uso acompanhado** de `./scripts/atualizar.sh` e `./scripts/ensaiar-migracao.sh`, que nunca
      rodaram com Docker.

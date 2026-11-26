@@ -77,6 +77,7 @@ services:
       NODE_OPTIONS: --max-old-space-size=${APP_HEAP_MB:-768}
       DATABASE_URL: postgresql://${POSTGRES_USER:-sgc_redes}:${POSTGRES_PASSWORD:-trocar_esta_senha_em_producao}@db:5432/${POSTGRES_DB:-sgc_redes_ifce}?schema=public
       APP_URL: ${APP_URL:-http://localhost:3000}
+      PROXY_SALTOS: ${PROXY_SALTOS:-1}
       # Opcional: Webhook para Evolution API / n8n (WhatsApp automático no campus)
       WHATSAPP_WEBHOOK_URL: ${WHATSAPP_WEBHOOK_URL:-}
       WHATSAPP_WEBHOOK_TOKEN: ${WHATSAPP_WEBHOOK_TOKEN:-}

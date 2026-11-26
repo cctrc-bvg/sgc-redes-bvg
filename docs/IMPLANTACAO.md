@@ -154,7 +154,7 @@ sudo systemctl reload caddy
 ```
 
 **Opção B — Nginx** com o certificado da TI (ou `certbot --nginx`): `proxy_pass http://127.0.0.1:3000;` com
-`proxy_set_header Host $host;`, `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` e
+`proxy_set_header Host $host;`, `proxy_set_header X-Forwarded-For $remote_addr;` (sobrescreve o que o cliente enviar; o app usa o último valor da lista como IP de origem, no limite de tentativas de login e na auditoria; com mais de um proxy, defina `PROXY_SALTOS` no `.env`) e
 `proxy_set_header X-Forwarded-Proto https;`, `client_max_body_size 7m;` (importação de planilhas, até 1 MB, e formulários de reposição, até 5 MB) e
 `add_header Strict-Transport-Security "max-age=31536000" always;`.
 
@@ -175,6 +175,7 @@ Agendamento com cron (todo dia às 02:30), em `crontab -e` do usuário que roda 
 
 ```
 30 2 * * * BACKUP_DIR=/srv/backups/sgc RETENCAO_DIAS=30 /opt/sgc-redes/scripts/backup-banco.sh >> /srv/backups/sgc/backup.log 2>&1
+45 2 1 * * /opt/sgc-redes/scripts/aplicar-retencao.sh --confirmo >> /srv/backups/sgc/retencao.log 2>&1   # retenção de dados (LGPD), 1º dia do mês; teste antes sem --confirmo
 ```
 
 **Cópia fora da VM:** o backup local não protege contra a perda da VM. Copie `/srv/backups/sgc` para outro servidor ou
