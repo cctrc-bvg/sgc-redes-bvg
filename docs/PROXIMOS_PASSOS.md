@@ -107,11 +107,11 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
   - destino do backup fora da VM;
   - monitoramento externo de `/api/saude`;
   - HA do Proxmox, se houver armazenamento compartilhado.
-- [ ] **Cadastrar em Comunicação** o e-mail de cada grupo/setor (CAE, nutricionista, CTP, Gestão, líderes) e a CGP
+- [ ] **Cadastrar em Comunicação** o e-mail de cada grupo/setor. **Feitos pelo seed em 27/11/2026:** CAE (`cae.boaviagem@`), CTP (`ctp.boaviagem@`), CCA (`cca.boaviagem@`) e Gestão (`de@boaviagem.ifce.edu.br`, `gabinete.boaviagem@`), com saudações. A CGP (`cgp.boaviagem@`) já está no texto das mensagens. **Faltam, e ficam fora do código por serem e-mails pessoais:** nutricionista e líderes de turma (a Coordenação cadastra em Comunicação)
       (`cgp.boaviagem@ifce.edu.br`, já no texto das mensagens).
 - [ ] **Marcar "Também leciona"** em Usuários para quem acumula cargo e docência (Direção, CTP, AE), se houver.
 - [ ] Testar as planilhas de exemplo com dados reais (`.handoff/planilhas-exemplo/`, fora do git).
-- [ ] Logo: trocar o PNG pelo SVG oficial, se a Comunicação do IFCE fornecer.
+- [x] Logo: SVG oficial recebido em 27/11/2026 e em uso (`public/marca/ifce-vertical.svg`, PEI impresso).
 
 ---
 
