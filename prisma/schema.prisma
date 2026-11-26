@@ -17,6 +17,7 @@ enum Role {
   CTP
   DIRECAO
   ASSISTENCIA_ESTUDANTIL
+  CCA // Coordenação de Controle Acadêmico (secretaria escolar do curso)
 }
 
 model User {
@@ -432,6 +433,7 @@ enum CanalWhatsapp {
   CTP
   LIDERES_TURMA
   NUTRICIONISTA // nutricionista do campus: avisada das alterações de refeição
+  CCA // Coordenação de Controle Acadêmico: recebe o apanhado geral das PPI por turma
 }
 
 model ConfiguracaoCanal {

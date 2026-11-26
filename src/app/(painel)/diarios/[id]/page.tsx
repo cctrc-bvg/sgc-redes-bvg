@@ -6,7 +6,7 @@ import { exigirPermissao } from '@/lib/auth/dal';
 import { formatarData, hojeEmFortaleza } from '@/lib/ausencias/regras';
 import { lembreteDoDiario } from '@/lib/diarios/regras';
 import { situacoesAutomaticas } from '@/lib/diarios/servidor';
-import { voltarAoAutomatico } from '../actions';
+import { voltarAoAutomatico, reaplicarManual } from '../actions';
 import { CaixaMensagem } from '@/components/caixa-mensagem';
 import { carregarModelos } from '@/lib/comunicacao/servidor';
 import { descreverPeriodoLetivo } from '@/lib/ofertas/regras';
@@ -63,6 +63,13 @@ export default async function PaginaDiario({ params }: { params: Promise<{ id: s
           <form action={voltarAoAutomatico} className="mt-3">
             <input type="hidden" name="ofertaId" value={o.id} />
             <button type="submit" className="text-sm font-semibold text-if-verde-700 underline underline-offset-2">Voltar ao automático</button>
+          </form>
+        )}
+        {!o.ministradasManual && auto?.presumido != null && o.aulasMinistradas > 0 && o.aulasMinistradas !== auto.presumido && (
+          <form action={reaplicarManual} className="mt-3 rounded border border-slate-300 bg-slate-50 p-3 text-sm text-slate-800">
+            <input type="hidden" name="ofertaId" value={o.id} />
+            O último valor lançado à mão foi <strong>{o.aulasMinistradas}</strong>; ele está guardado, mas hoje vale o automático ({auto.presumido}).{' '}
+            <button type="submit" className="font-semibold text-if-verde-700 underline underline-offset-2">Reaplicar o valor lançado à mão</button>
           </form>
         )}
       </section>

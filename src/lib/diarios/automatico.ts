@@ -51,3 +51,21 @@ export function deficitProjetado(p: { ministradas: number; restantesNaGrade: num
 /** Valor efetivo: o lançado à mão, se a Coordenação marcou; senão o presumido. */
 export const ministradasEfetivas = (o: { ministradasManual: boolean; aulasMinistradas: number }, presumido: number) =>
   o.ministradasManual ? o.aulasMinistradas : presumido;
+
+/**
+ * Aulas que o substituto pode contar na própria disciplina: uma por horário ocupado, desde que ele tenha uma única
+ * oferta na turma (com duas ou mais, não dá para saber qual disciplina ele deu: a Coordenação ajusta à mão).
+ */
+export function creditosDeSubstituicao(
+  coberturas: readonly { substitutoId: string; turmaId: string }[],
+  ofertas: readonly { id: string; professorId: string; turmaId: string }[],
+): Map<string, number> {
+  const ofertasDoPar = new Map<string, string[]>();
+  for (const o of ofertas) ofertasDoPar.set(`${o.professorId}|${o.turmaId}`, [...(ofertasDoPar.get(`${o.professorId}|${o.turmaId}`) ?? []), o.id]);
+  const creditos = new Map<string, number>();
+  for (const c of coberturas) {
+    const doPar = ofertasDoPar.get(`${c.substitutoId}|${c.turmaId}`);
+    if (doPar?.length === 1) creditos.set(doPar[0]!, (creditos.get(doPar[0]!) ?? 0) + 1);
+  }
+  return creditos;
+}

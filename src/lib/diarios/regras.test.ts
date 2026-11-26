@@ -53,3 +53,12 @@ describe('formulário e lembrete', () => {
     expect(numeroWhatsapp(null)).toBeNull();
   });
 });
+
+describe('progressoDoSemestre', () => {
+  it('conta os dias corridos do semestre', async () => {
+    const { progressoDoSemestre } = await import('./regras');
+    expect(progressoDoSemestre('2026-08-03', '2026-12-12', '2026-11-26')).toBe('Já correram 116 de 132 dias do semestre (88%).');
+    expect(progressoDoSemestre('2026-08-03', '2026-12-12', '2026-07-01')).toContain('ainda não começou');
+    expect(progressoDoSemestre('2026-08-03', '2026-12-12', '2027-01-01')).toContain('terminou');
+  });
+});

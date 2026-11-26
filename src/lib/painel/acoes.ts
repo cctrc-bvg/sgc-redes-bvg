@@ -146,7 +146,7 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     icone: 'minha-grade',
     quantidade: c.convitesPendentes,
     titulo: 'Convites de substituição para responder',
-    detalhe: 'A Coordenação aguarda sua resposta para cobrir a aula.',
+    detalhe: 'A Coordenação aguarda sua resposta para ocupar o horário da aula.',
     href: '/grade/minha',
     botao: 'Responder',
   });
@@ -157,7 +157,7 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     quantidade: c.ausenciasPendentes,
     titulo: 'Ausências aguardando decisão',
     detalhe: [
-      c.ausenciasHojeOuAmanha > 0 ? `${c.ausenciasHojeOuAmanha} para hoje ou amanhã: decida a cobertura de cada horário.` : 'Decida a cobertura de cada horário.',
+      c.ausenciasHojeOuAmanha > 0 ? `${c.ausenciasHojeOuAmanha} para hoje ou amanhã: decida quem ocupa cada horário.` : 'Decida quem ocupa cada horário.',
       c.ausenciasInformadas > 0 && `${c.ausenciasInformadas} informada(s) pelo próprio docente: dê ciência a ele.`,
     ]
       .filter(Boolean)
@@ -329,7 +329,7 @@ export function montarAcoes(c: ContagensPainel, papel: PapelNoPainel): AcaoPrior
     nivel: 'acompanhar',
     icone: 'diarios',
     quantidade: c.diariosGradeCurta,
-    titulo: 'Carga projetada abaixo da prevista',
+    titulo: 'Diários com carga projetada abaixo da prevista',
     detalhe: 'A grade não comporta todas as aulas previstas até o fim do período: ajuste a grade ou programe reposições.',
     href: '/diarios',
     botao: 'Ver diários',
@@ -404,3 +404,6 @@ export function separarAcoes(acoes: readonly AcaoPrioritaria[]) {
     acompanhar: acoes.filter((a) => a.nivel === 'acompanhar'),
   };
 }
+
+/** Minúscula só na inicial de palavra comum; siglas (PPE, PEI, AE) ficam como estão. */
+export const minuscularInicial = (t: string) => (/^[A-ZÀ-Ý]{2,}/.test(t) ? t : t.charAt(0).toLowerCase() + t.slice(1));

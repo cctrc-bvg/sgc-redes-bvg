@@ -57,6 +57,7 @@ async function main() {
     { canal: 'CTP', nomeExibicao: 'CTP - Coord. Técnico-Pedagógica', saudacao: 'prezados(as) colegas da Coordenação Técnico-Pedagógica' },
     { canal: 'LIDERES_TURMA', nomeExibicao: 'Líderes das Turmas de Redes', saudacao: 'prezados(as) líderes de turma' },
     { canal: 'NUTRICIONISTA', nomeExibicao: 'Nutricionista do campus', saudacao: 'prezado(a) nutricionista' },
+    { canal: 'CCA', nomeExibicao: 'CCA - Coord. de Controle Acadêmico', saudacao: 'prezados(as) colegas da Coordenação de Controle Acadêmico' },
   ];
   for (const c of canais) {
     await prisma.configuracaoCanal.upsert({

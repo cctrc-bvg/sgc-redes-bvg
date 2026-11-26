@@ -28,7 +28,7 @@ describe('conteúdo da Ajuda', () => {
     expect(new Set(ids).size).toBe(ids.length);
     for (const t of TOPICOS) {
       for (const r of t.relacionados) expect(ids, `${t.id} → ${r}`).toContain(r);
-      if (t.permissao) expect(PERMISSOES, t.id).toContain(t.permissao);
+      if (t.permissao) for (const p of ([] as string[]).concat(t.permissao)) expect(PERMISSOES, t.id).toContain(p);
       expect(t.capacidades.length, t.id).toBeGreaterThan(0);
       expect(t.fluxos.length, t.id).toBeGreaterThan(0);
     }
@@ -55,6 +55,10 @@ describe('conteúdo da Ajuda', () => {
         expect(existsSync(path.join(RAIZ, 'public/manual', img.arquivo)), `falta public/manual/${img.arquivo}: rode npm run capturas`).toBe(true);
       }
     }
+  });
+
+  it('a CCA vê os tópicos gerais, de calendário e de diários (só consulta)', () => {
+    expect(topicosDoPerfil('CCA').map((t) => t.id)).toEqual(['primeiros-passos', 'calendario', 'diarios', 'planilhas', 'privacidade']);
   });
 
   it('a Assistência Estudantil vê só os tópicos gerais, de calendário e de alimentação', () => {

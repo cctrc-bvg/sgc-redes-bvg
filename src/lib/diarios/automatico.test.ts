@@ -48,3 +48,24 @@ describe('aulas presumidas (RF08-A)', () => {
     expect(ministradasEfetivas({ ministradasManual: false, aulasMinistradas: 7 }, 12)).toBe(12);
   });
 });
+
+describe('creditosDeSubstituicao', () => {
+  it('conta o horário ocupado na disciplina única do substituto na turma', async () => {
+    const { creditosDeSubstituicao } = await import('./automatico');
+    const ofertas = [
+      { id: 'o1', professorId: 'bruno', turmaId: 't1' },
+      { id: 'o2', professorId: 'carla', turmaId: 't1' },
+      { id: 'o3', professorId: 'carla', turmaId: 't1' },
+    ];
+    const r = creditosDeSubstituicao(
+      [
+        { substitutoId: 'bruno', turmaId: 't1' },
+        { substitutoId: 'bruno', turmaId: 't1' },
+        { substitutoId: 'carla', turmaId: 't1' }, // duas disciplinas na turma: sem crédito automático
+        { substitutoId: 'bruno', turmaId: 't2' }, // sem oferta nessa turma
+      ],
+      ofertas,
+    );
+    expect(Object.fromEntries(r)).toEqual({ o1: 2 });
+  });
+});

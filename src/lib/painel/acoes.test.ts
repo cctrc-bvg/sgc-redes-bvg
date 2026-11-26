@@ -100,3 +100,11 @@ describe('montarAcoes', () => {
     expect(r.map((a) => a.id)).toEqual(['b', 'a', 'c']);
   });
 });
+
+describe('minuscularInicial', () => {
+  it('desce a inicial de palavra comum e preserva siglas', async () => {
+    const { minuscularInicial } = await import('./acoes');
+    expect(minuscularInicial('Diários atrasados')).toBe('diários atrasados');
+    expect(minuscularInicial('PPE aguardando você')).toBe('PPE aguardando você');
+  });
+});

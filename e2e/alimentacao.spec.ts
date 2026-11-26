@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { entrar } from './apoio';
 
-// Dia útil daqui a ~45 dias (longe dos avisos de demonstração e dentro do prazo normal da AE).
+// Sábado daqui a ~45 dias (longe dos avisos de demonstração, dentro do prazo normal da AE e sem refeição já prevista pela grade:
+// o sistema recusa acréscimo de refeição que a turma já tem).
 function dataFutura() {
   const d = new Date();
   d.setDate(d.getDate() + 45);
-  while ([0, 6].includes(d.getDay())) d.setDate(d.getDate() + 1);
+  while (d.getDay() !== 6) d.setDate(d.getDate() + 1);
   return d.toISOString().slice(0, 10);
 }
 

@@ -7,6 +7,7 @@ export const USUARIOS = {
   ctp: 'ctp@exemplo.edu.br',
   direcao: 'direcao@exemplo.edu.br',
   cae: 'cae@exemplo.edu.br',
+  cca: 'cca@exemplo.edu.br',
 } as const;
 
 export type Perfil = keyof typeof USUARIOS;

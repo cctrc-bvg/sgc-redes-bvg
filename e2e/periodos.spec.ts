@@ -37,6 +37,9 @@ test('período especial: cria, monta a grade da turma, informa presentes e vê o
   await expect(turma).toContainText('Com grade especial');
   // O bloco pode ou não continuar aberto depois da cópia.
   if ((await turma.locator('details[open]').count()) === 0) await turma.locator('summary').click();
+  // A cópia traz a grade normal para os campos (antes eles seguiam "livres").
+  const preenchidos = await turma.locator('select[name^="celula:"]').evaluateAll((els) => els.filter((e) => (e as HTMLSelectElement).value !== '').length);
+  expect(preenchidos).toBeGreaterThan(0);
   await turma.getByRole('button', { name: 'Salvar grade especial' }).click();
   await expect(turma).toContainText('Grade especial salva.');
 

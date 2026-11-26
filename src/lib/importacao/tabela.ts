@@ -96,13 +96,23 @@ export function mapearColunas<C extends string>(
   colunas: readonly { campo: C; titulo: string; apelidos: readonly string[]; obrigatoria?: boolean }[],
 ): { registros: { numero: number; valores: Record<C, string> }[]; faltando: string[]; desconhecidas: string[]; presentes: Set<C> } {
   const indice = new Map<C, number>();
+  const porApelido = new Set<C>();
   const desconhecidas: string[] = [];
   tabela.cabecalho.forEach((titulo, i) => {
     const norm = normalizarCabecalho(titulo);
     if (!norm) return;
     const coluna = colunas.find((c) => [c.campo, c.titulo, ...c.apelidos].some((a) => normalizarCabecalho(a) === norm));
-    if (coluna && !indice.has(coluna.campo)) indice.set(coluna.campo, i);
-    else if (!coluna) desconhecidas.push(titulo);
+    if (!coluna) {
+      desconhecidas.push(titulo);
+      return;
+    }
+    const exata = normalizarCabecalho(coluna.titulo) === norm;
+    // O título exato vence um apelido que veio antes (ex.: planilha exportada com "Professor" e "E-mail do professor").
+    if (!indice.has(coluna.campo) || (exata && porApelido.has(coluna.campo))) {
+      indice.set(coluna.campo, i);
+      if (exata) porApelido.delete(coluna.campo);
+      else porApelido.add(coluna.campo);
+    }
   });
   const faltando = colunas.filter((c) => c.obrigatoria && !indice.has(c.campo)).map((c) => c.titulo);
   const registros = tabela.linhas.map((l) => ({

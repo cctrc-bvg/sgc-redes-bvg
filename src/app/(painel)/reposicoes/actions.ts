@@ -7,7 +7,7 @@ import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirUsuario } from '@/lib/auth/dal';
 import { temPermissao } from '@/lib/auth/rbac';
 import { dataDoBanco, dataParaBanco, hojeEmFortaleza } from '@/lib/ausencias/regras';
-import { nomeSeguroDoAnexo, ReposicaoSchema, validarAnexo, validarDataReposicao } from '@/lib/reposicao/regras';
+import { nomeSeguroDoAnexo, ReposicaoSchema, STATUS_COM_REPOSICAO, validarAnexo, validarDataReposicao } from '@/lib/reposicao/regras';
 
 export type EstadoReposicao = {
   mensagem?: string;
@@ -54,7 +54,7 @@ export async function registrarReposicao(_estado: EstadoReposicao | undefined, f
   if ('erro' in ctx) return { mensagem: ctx.erro };
   const { usuario, coordenacao, ausencia } = ctx;
   if (ausencia.reposicaoEm) return { mensagem: 'A reposição desta aula já foi registrada.' };
-  if (ausencia.status !== 'TURMA_DISPENSADA' && ausencia.status !== 'REPOSICAO_AGENDADA') return { mensagem: 'Esta ausência não tem aula a repor.' };
+  if (!(STATUS_COM_REPOSICAO as readonly string[]).includes(ausencia.status)) return { mensagem: 'Esta ausência não tem aula a repor.' };
 
   const parsed = ReposicaoSchema.safeParse({ data: String(formData.get('data') ?? ''), observacao: String(formData.get('observacao') ?? '') });
   if (!parsed.success) return { erros: z.flattenError(parsed.error).fieldErrors };

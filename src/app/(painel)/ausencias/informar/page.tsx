@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: 'Informar ausência — SGC-Redes' };
 
 /**
  * RF02-A (decisão G15): o docente informa a própria ausência. Entra como "Aguardando decisão" para a Coordenação,
- * que dá ciência e decide a cobertura. Motivo só operacional; o pessoal e o comprovante vão à Gestão de Pessoas.
+ * que dá ciência e decide a ocupação dos horários. Motivo só operacional; o pessoal e o comprovante vão à Gestão de Pessoas.
  */
 export default async function PaginaInformarAusencia({ searchParams }: { searchParams: Promise<{ data?: string; ate?: string }> }) {
   const { usuario } = await exigirPermissao('ausencias:informar');
@@ -36,7 +36,7 @@ export default async function PaginaInformarAusencia({ searchParams }: { searchP
       </nav>
       <h1 className="mt-2 text-2xl font-bold text-slate-900">Informar minha ausência</h1>
       <p className="mt-1 text-slate-700">
-        Escolha a data (ou o período) e as aulas. A Coordenação recebe o aviso na tela inicial, dá ciência e organiza a cobertura; você acompanha em
+        Escolha a data (ou o período) e as aulas. A Coordenação recebe o aviso na tela inicial, dá ciência e organiza a ocupação dos horários; você acompanha em
         Minha grade.
       </p>
       <div className="mt-4">
@@ -66,7 +66,7 @@ export default async function PaginaInformarAusencia({ searchParams }: { searchP
           </h2>
           {pertoDemais && (
             <div className="my-3">
-              <Alerta tipo="erro">Ausência para hoje: além de informar aqui, ligue para a Coordenação, para dar tempo de organizar a cobertura e as refeições.</Alerta>
+              <Alerta tipo="erro">Ausência para hoje: além de informar aqui, ligue para a Coordenação, para dar tempo de organizar a ocupação dos horários e as refeições.</Alerta>
             </div>
           )}
           {opcoes.comAulasLivres.length === 0 ? (

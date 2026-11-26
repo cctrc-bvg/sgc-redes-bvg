@@ -119,7 +119,7 @@ export default async function PaginaPeriodo({ params }: { params: Promise<{ id: 
           <>
             <p className="mt-1 max-w-3xl text-sm text-slate-700">
               Refeições pela regra do campus (só manhã: lanche da manhã; só tarde: lanche da tarde; integral: os três) sobre a grade especial, vezes os
-              estudantes presentes. Entre parênteses, o normal das mesmas turmas.
+              estudantes presentes. Entre parênteses, o normal das mesmas turmas. Os números e o texto abaixo se atualizam ao salvar a grade especial ou os presentes.
             </p>
             <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
               <table className="w-full min-w-[36rem] text-left text-sm">

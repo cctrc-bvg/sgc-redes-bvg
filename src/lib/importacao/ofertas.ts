@@ -38,6 +38,10 @@ export function planejarImportacaoOfertas(params: { registros: { numero: number;
   const discPorCodigo = new Map(disciplinas.filter((d) => d.codigo).map((d) => [d.codigo!.toUpperCase(), d]));
   const discPorNome = new Map(disciplinas.map((d) => [d.nome.toLowerCase(), d]));
   const docentePorEmail = new Map(docentes.map((d) => [d.email.toLowerCase(), d]));
+  // Nome completo (sem acento e caixa) como alternativa ao e-mail, só quando não há homônimos.
+  const chaveNome = (n: string) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const porNome = new Map<string, (typeof docentes)[number][]>();
+  for (const d of docentes) porNome.set(chaveNome(d.nome), [...(porNome.get(chaveNome(d.nome)) ?? []), d]);
   const ofertaPorChave = new Map(ofertas.map((o) => [`${o.anoLetivo}|${o.turmaId}|${o.disciplinaId}`, o]));
   const nomeDocente = new Map(docentes.map((d) => [d.id, d.nome]));
   const vistas = new Map<string, number>();
@@ -58,8 +62,15 @@ export function planejarImportacaoOfertas(params: { registros: { numero: number;
     const chaveDisc = valores.disciplina.trim();
     const disc = discPorCodigo.get(chaveDisc.toUpperCase()) ?? discPorNome.get(chaveDisc.toLowerCase());
     if (!disc) erros.push(`Disciplina "${valores.disciplina}" não encontrada (use o código ou o nome do catálogo).`);
-    const docente = docentePorEmail.get(valores.professor.trim().toLowerCase());
-    if (!docente) erros.push(`Professor "${valores.professor}" não encontrado entre os docentes ativos (use o e-mail do cadastro).`);
+    const homonimos = porNome.get(chaveNome(valores.professor)) ?? [];
+    const docente = docentePorEmail.get(valores.professor.trim().toLowerCase()) ?? (homonimos.length === 1 ? homonimos[0] : undefined);
+    if (!docente) {
+      erros.push(
+        homonimos.length > 1
+          ? `Há mais de um docente chamado "${valores.professor}": use o e-mail do cadastro.`
+          : `Professor "${valores.professor}" não encontrado entre os docentes ativos (use o e-mail ou o nome completo do cadastro).`,
+      );
+    }
     if (erros.length || !ano || !turma || !disc || !docente) {
       plano.linhas.push({ numero, descricao, situacao: 'erro', detalhe: erros.join(' ') });
       plano.temErros = true;

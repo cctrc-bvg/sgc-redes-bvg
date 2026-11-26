@@ -1,7 +1,7 @@
 import 'server-only';
 import * as z from 'zod';
 import { lerArquivo } from './planilha';
-import { LINHAS_MAXIMAS, mapearColunas } from './tabela';
+import { LINHAS_MAXIMAS, mapearColunas, normalizarCabecalho } from './tabela';
 
 type Colunas<C extends string> = readonly { campo: C; titulo: string; apelidos: readonly string[]; obrigatoria?: boolean }[];
 
@@ -58,6 +58,10 @@ function lerDados<C extends string>(json: string, colunas: Colunas<C>): DadosPla
   }
 }
 
-export function avisoColunasDesconhecidas(desconhecidas: string[]): string[] {
+/** Colunas que as exportações trazem só para consulta: não são erro quando a planilha volta para a importação. */
+const COLUNAS_SO_DE_CONSULTA = new Set(['semestre', 'aulas_previstas', 'aulas_ministradas', 'diario_em_dia']);
+
+export function avisoColunasDesconhecidas(todas: string[]): string[] {
+  const desconhecidas = todas.filter((c) => !COLUNAS_SO_DE_CONSULTA.has(normalizarCabecalho(c)));
   return desconhecidas.length ? [`Colunas ignoradas (nomes não reconhecidos): ${desconhecidas.join(', ')}.`] : [];
 }

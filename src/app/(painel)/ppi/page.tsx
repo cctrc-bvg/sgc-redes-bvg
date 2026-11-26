@@ -24,9 +24,14 @@ export default async function PaginaPpi({ searchParams }: { searchParams: Promis
           <h1 className="text-2xl font-bold text-slate-900">PPI — Prática Profissional Integrada</h1>
           <p className="mt-1 text-slate-700">Meta de 40 horas (Manual 2022). Lançamento e auditoria só pela Coordenação (G11).</p>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <Link href="/ppi/resumo-cca" className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
+          Resumo para a CCA
+        </Link>
         <Link href="/ppi/nova" className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
           Nova solicitação
         </Link>
+        </div>
       </div>
 
       <form method="get" className="mt-6 flex flex-wrap items-end gap-3">

@@ -127,7 +127,7 @@ export async function registrarAusencia(_estado: EstadoRegistro | undefined, for
   redirect(r.criadas.length === 1 ? `/ausencias/${r.criadas[0]}?aviso=registrada` : `/ausencias?data=${r.primeiraData}&aviso=registradas`);
 }
 
-/** RF02-A: o docente informa a própria ausência; a Coordenação dá ciência e decide a cobertura. */
+/** RF02-A: o docente informa a própria ausência; a Coordenação dá ciência e decide a ocupação dos horários. */
 export async function informarAusencia(_estado: EstadoRegistro | undefined, formData: FormData): Promise<EstadoRegistro> {
   const { usuario } = await exigirPermissao('ausencias:informar');
   const r = await criarAusencias(formData, { autorId: usuario.id, professorFixo: usuario.id, informada: true });
@@ -146,7 +146,7 @@ export async function cancelarAusenciaInformada(_estado: EstadoCancelamento | un
   });
   if (!registro || registro.professorAusenteId !== usuario.id || !registro.informadaPeloDocente) return { mensagem: 'Ausência não encontrada.' };
   if (registro.status !== 'PENDENTE_DECISAO' || registro._count.coberturas > 0) {
-    return { mensagem: 'A Coordenação já decidiu a cobertura desta ausência. Para desfazer, fale com a Coordenação.' };
+    return { mensagem: 'A Coordenação já decidiu a ocupação dos horários desta ausência. Para desfazer, fale com a Coordenação.' };
   }
   // Sem cobertura decidida, não há aviso de refeição ligado a ela: basta apagar.
   await prisma.ausenciaDocente.delete({ where: { id: ausenciaId } });

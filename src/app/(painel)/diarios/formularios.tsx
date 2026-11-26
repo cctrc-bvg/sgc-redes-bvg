@@ -7,9 +7,10 @@ import { atualizarDiario, registrarLembrete, salvarPeriodo, type EstadoDiario, t
 
 export function FormularioDiario(props: { ofertaId: string; ministradas: number; emDia: boolean; observacao: string; previstas: number }) {
   const [estado, acao, enviando] = useActionState<EstadoDiario | undefined, FormData>(atualizarDiario, undefined);
-  const v = estado?.valores;
+  // Só reaproveita o digitado quando houve erro; depois de salvar (ou de voltar ao automático) vale o que está gravado.
+  const v = estado?.sucesso ? undefined : estado?.valores;
   return (
-    <form action={acao} className="space-y-5" noValidate>
+    <form key={`${props.ministradas}|${props.emDia}|${props.observacao}`} action={acao} className="space-y-5" noValidate>
       {estado?.mensagem && <Alerta tipo={estado.sucesso ? 'sucesso' : 'erro'}>{estado.mensagem}</Alerta>}
       <input type="hidden" name="ofertaId" value={props.ofertaId} />
       <Campo

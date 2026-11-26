@@ -40,7 +40,22 @@ async function copiar(texto: string): Promise<boolean> {
  * campos `{{...}}` (destinatários sem cadastro) podem ser preenchidos e substituídos de uma vez.
  * Sem JavaScript, os campos e os links continuam funcionando com o texto original.
  */
-export function CaixaMensagem({
+export function CaixaMensagem(props: PropsCaixa) {
+  // O texto vem do servidor e pode mudar com a página já aberta (outro motivo, novos avisos): sem a chave, o editor
+  // seguia com o texto antigo, pois o estado só nasce uma vez.
+  const m = props.mensagem;
+  return <CaixaMensagemInterna key={`${m.chave}|${m.assunto}|${m.texto}`} {...props} />;
+}
+
+interface PropsCaixa {
+  mensagem: MensagemPronta;
+  mostrarWhatsapp: boolean;
+  /** Textos-padrão cadastrados (Comunicação › Textos-padrão). */
+  modelos?: readonly ModeloTexto[];
+  children?: ReactNode;
+}
+
+function CaixaMensagemInterna({
   mensagem,
   mostrarWhatsapp,
   modelos = [],

@@ -202,3 +202,13 @@ describe('RBAC — docência acumulada ao cargo', () => {
     expect(temPermissaoDoCargo({ role: 'DIRECAO', leciona: true }, 'ppe:ver')).toBe(false);
   });
 });
+
+describe('perfil CCA (secretaria escolar)', () => {
+  it('acompanha os diários só em leitura e não vê PPI, PPE, processos nem ausências', async () => {
+    const { temPermissao } = await import('./rbac');
+    expect(temPermissao('CCA', 'diarios:acompanhar')).toBe(true);
+    for (const p of ['diarios:ver-todos', 'ppi:ver', 'ppe:ver', 'kanban:ver', 'ausencias:registrar', 'alimentacao:ver', 'usuarios:gerenciar'] as const) {
+      expect(temPermissao('CCA', p), p).toBe(false);
+    }
+  });
+});

@@ -12,6 +12,7 @@ import { aulasEsperadas, NOME_SEMAFORO, ORDEM_SEMAFORO, percentual, semaforo, ty
 import { deficitProjetado } from '@/lib/diarios/automatico';
 import { situacoesAutomaticas } from '@/lib/diarios/servidor';
 import { anosDoSeletor, periodoDaUrl } from '@/lib/grade/regras';
+import { progressoDoSemestre } from '@/lib/diarios/regras';
 import { FormularioPeriodo } from './formularios';
 
 export const metadata: Metadata = { title: 'Diários — SGC-Redes' };
@@ -22,7 +23,9 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
   // Quem acumula cargo e docência alterna entre todos os diários e os seus ("Meus diários").
   const alterna = acumulaDocencia(usuario) && temPermissao(usuario, 'diarios:ver-todos');
   const meus = alterna && params.escopo === 'meus';
-  const verTodos = temPermissao(usuario, 'diarios:ver-todos') && !meus;
+  // A CCA (secretaria escolar) acompanha todos os diários em leitura; só a Coordenação corrige, confere e envia lembretes.
+  const edita = temPermissao(usuario, 'diarios:ver-todos');
+  const verTodos = (edita || temPermissao(usuario, 'diarios:acompanhar')) && !meus;
   if (!verTodos && !temPermissao(usuario, 'diarios:ver-proprios')) redirect('/painel?aviso=sem-permissao');
   const { anoLetivo, semestreLetivo } = periodoDaUrl(params);
   const hoje = hojeEmFortaleza();
@@ -80,7 +83,7 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
       <p className="mt-1 text-slate-700">
         Aulas ministradas × previstas por disciplina e turma (RF08), conforme o diário no sistema acadêmico.
       </p>
-      {verTodos && (
+      {verTodos && edita && (
         <p className="mt-2 text-sm">
           <Link href={`/diarios/conferencia?ano=${anoLetivo}&sem=${semestreLetivo}`} className="font-semibold text-if-verde-700 underline underline-offset-2">
             Conferir com o sistema acadêmico
@@ -107,15 +110,17 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
           </h2>
           <p className="mb-3 mt-1 text-sm text-slate-700">
             {atual
-              ? `De ${formatarData(dataDoBanco(atual.inicio))} a ${formatarData(dataDoBanco(atual.fim))}. As aulas esperadas até hoje são proporcionais ao tempo decorrido.`
+              ? `De ${formatarData(dataDoBanco(atual.inicio))} a ${formatarData(dataDoBanco(atual.fim))}. ${progressoDoSemestre(dataDoBanco(atual.inicio), dataDoBanco(atual.fim), hoje)} As aulas esperadas até hoje são proporcionais ao tempo decorrido.`
               : 'Informe o início e o fim do semestre para o semáforo comparar com as aulas esperadas até hoje (anuais precisam dos dois semestres).'}
           </p>
-          <FormularioPeriodo
-            anoLetivo={anoLetivo}
-            semestreLetivo={semestreLetivo}
-            inicio={atual ? dataDoBanco(atual.inicio) : ''}
-            fim={atual ? dataDoBanco(atual.fim) : ''}
-          />
+          {edita && (
+            <FormularioPeriodo
+              anoLetivo={anoLetivo}
+              semestreLetivo={semestreLetivo}
+              inicio={atual ? dataDoBanco(atual.inicio) : ''}
+              fim={atual ? dataDoBanco(atual.fim) : ''}
+            />
+          )}
         </section>
       )}
 
@@ -151,7 +156,7 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
                   return (
                     <tr key={l.id}>
                       <th scope="row" className="px-4 py-3 font-normal">
-                        {verTodos ? (
+                        {edita && verTodos ? (
                           <Link href={`/diarios/${l.id}`} className="font-semibold text-if-verde-700 underline underline-offset-2 hover:text-if-verde-800">
                             {l.disciplina.nome}
                           </Link>
@@ -167,7 +172,7 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
                         <span className="tabular-nums">
                           {l.aulasMinistradas} de {l.aulasPrevistas} ({pct}%)
                         </span>
-                        {l.automatico && <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">automático</span>}
+                        {l.automatico && <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-if-verde-700 bg-if-verde-50 px-2 py-0.5 text-xs font-bold text-if-verde-800"><span aria-hidden="true">⟳</span> automático</span>}
                         <span className="mt-1 block h-2 w-32 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
                           <span className="block h-full bg-if-verde-700" style={{ width: `${pct}%` }} />
                         </span>
@@ -177,7 +182,7 @@ export default async function PaginaDiarios({ searchParams }: { searchParams: Pr
                         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.classe}`}>
                           <span aria-hidden="true">{s.icone}</span> {s.texto}
                         </span>
-                        {verTodos && l.ultimaCobranca && (
+                        {edita && verTodos && l.ultimaCobranca && (
                           <span className="block text-xs text-slate-600">Lembrete em {formatarData(hojeEmFortaleza(l.ultimaCobranca))}</span>
                         )}
                       </td>

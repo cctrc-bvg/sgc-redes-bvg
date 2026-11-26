@@ -25,8 +25,14 @@ export function situacaoReposicao(a: { status: string; reposicaoEm: string | nul
 }
 
 /** A aula ainda deve ser reposta: sem reposição informada. Reposições informadas deixam de ser pendência de prazo. */
-export const reposicaoEmAberto = (a: { status: string; reposicaoEm: unknown }) =>
-  (a.status === 'TURMA_DISPENSADA' || a.status === 'REPOSICAO_AGENDADA') && !a.reposicaoEm;
+export const reposicaoEmAberto = (a: { status: string; reposicaoEm: unknown }) => (STATUS_COM_REPOSICAO as readonly string[]).includes(a.status) && !a.reposicaoEm;
+
+/**
+ * Situações da ausência em que o docente faltante ainda deve repor a aula. Mesmo quando outro docente ocupa o horário
+ * (substituição), a aula não foi dada na disciplina do faltante: ele repõe para completar a carga horária, e o substituto
+ * pode contar o horário na disciplina dele. Adiantamento não entra: a aula foi dada, em outro horário.
+ */
+export const STATUS_COM_REPOSICAO = ['TURMA_DISPENSADA', 'REPOSICAO_AGENDADA', 'COBERTA_POR_SUBSTITUICAO'] as const;
 
 export const ReposicaoSchema = z.object({
   data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: 'Informe a data em que a aula foi reposta.' }),

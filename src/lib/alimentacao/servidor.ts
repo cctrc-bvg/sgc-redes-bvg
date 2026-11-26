@@ -1,6 +1,7 @@
 import 'server-only';
 import { prisma } from '@/lib/db';
 import { presencaPorTurno } from '@/lib/ausencias/regras';
+import { calcularRefeicoesPrevistas } from '@/lib/alimentacao-engine';
 import { carregarDia, intervaloDoDia } from '@/lib/ausencias/servidor';
 import { mediasDaTurma, preverRefeicoesDaTurma, somarQuantidades, type Quantidades } from './previsao';
 
@@ -50,4 +51,11 @@ export async function totaisDoDia(dataISO: string): Promise<TotaisDoDia> {
     total: somarQuantidades(finais),
     avisos: avisos.length,
   };
+}
+
+/** Refeições que a turma já tem previstas pela grade na data (RN01), considerando o dia letivo e a grade especial. */
+export async function refeicoesPrevistasDaTurma(turmaId: string, dataISO: string) {
+  const dia = await carregarDia(dataISO);
+  const blocos = dia.aulasDoDia.filter((a) => a.turmaId === turmaId).map((a) => a.blocoId);
+  return new Set(calcularRefeicoesPrevistas(presencaPorTurno(blocos, dia.blocos)));
 }

@@ -47,6 +47,22 @@ test.describe('Comunicação: mensagem avulsa e caixa de mensagem', () => {
     await expect(page.locator('section[aria-labelledby="historico"]')).toContainText('Assunto: Teste E2E: reunião');
   });
 
+  test('convite para reunião em data passada é recusado; em data futura, gera a mensagem', async ({ page }) => {
+    const avulsa = page.locator('section[aria-labelledby="avulsa"]');
+    await avulsa.getByRole('checkbox', { name: 'Assistência Estudantil' }).first().check();
+    await avulsa.getByLabel('Assunto').fill('Convocação: reunião de teste');
+    await avulsa.getByLabel('Texto', { exact: true }).fill('Convocamos para reunião em {{data da reunião}}.');
+    const campo = avulsa.getByLabel(/^data da reunião/);
+    await campo.fill('2020-01-15');
+    await avulsa.getByRole('button', { name: 'Gerar mensagens' }).click();
+    await expect(avulsa.getByRole('alert').filter({ hasText: 'já passou' })).toBeVisible();
+    const futura = new Date();
+    futura.setDate(futura.getDate() + 10);
+    await avulsa.getByLabel(/^data da reunião/).fill(futura.toISOString().slice(0, 10));
+    await avulsa.getByRole('button', { name: 'Gerar mensagens' }).click();
+    await expect(avulsa.getByLabel('Texto da mensagem').first()).toHaveValue(/Convocamos para reunião em \d{2}\/\d{2}\/\d{4}/);
+  });
+
   test('texto-padrão preenche assunto e texto e marca destinatários sugeridos', async ({ page }) => {
     const avulsa = page.locator('section[aria-labelledby="avulsa"]');
     const select = avulsa.getByLabel('Texto-padrão (opcional)');

@@ -34,3 +34,23 @@ describe('mensagens da PPI', () => {
     expect(ctp).toContain('Motivo: Faltam comprovantes do estágio.');
   });
 });
+
+describe('resumo da PPI para a CCA', () => {
+  it('agrupa por turma sem identificar estudantes e ignora rascunhos', async () => {
+    const { resumoPpiPorTurma, textoResumoPpi } = await import('./mensagens');
+    const r = resumoPpiPorTurma([
+      { turmaAtual: 'REDES-3', status: 'DEFERIDA' },
+      { turmaAtual: 'REDES-3', status: 'INDEFERIDA' },
+      { turmaAtual: 'REDES-3', status: 'EM_ANALISE' },
+      { turmaAtual: 'REDES-2', status: 'DEFERIDA' },
+      { turmaAtual: 'REDES-2', status: 'RASCUNHO' },
+    ]);
+    expect(r).toEqual([
+      { turma: 'REDES-2', deferidas: 1, indeferidas: 0, emAnalise: 0 },
+      { turma: 'REDES-3', deferidas: 1, indeferidas: 1, emAnalise: 1 },
+    ]);
+    const t = textoResumoPpi(r, '2026-11-26');
+    expect(t).toContain('26/11/2026');
+    expect(t).toContain('- REDES-3: 1 deferida(s), 1 indeferida(s), 1 em análise');
+  });
+});

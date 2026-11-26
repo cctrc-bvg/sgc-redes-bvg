@@ -19,7 +19,7 @@ test('reposição: arquivo que não é PDF, JPG ou PNG é recusado', async ({ pa
   test.skip((await resumo.count()) === 0, 'Sem aula dispensada nos dados de demonstração.');
   await resumo.click();
   const form = resumo.locator('xpath=..').locator('form').first();
-  await form.getByLabel('Data em que a aula foi reposta').fill(new Date().toISOString().slice(0, 10));
+  await form.getByLabel('Data em que a aula foi reposta').fill(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Fortaleza' }).format(new Date()));
   await form.getByLabel(/^Formulário de reposição/).setInputFiles({ name: 'x.pdf', mimeType: 'application/pdf', buffer: Buffer.from('<html>não é pdf</html>') });
   await form.getByRole('button', { name: 'Registrar reposição' }).click();
   await expect(page.locator('main')).toContainText('Envie um arquivo PDF, JPG ou PNG.');

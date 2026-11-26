@@ -71,6 +71,18 @@ export async function voltarAoAutomatico(formData: FormData): Promise<void> {
   revalidatePath(`/diarios/${atual.id}`);
 }
 
+/** Reaplica o último valor lançado à mão (guardado ao voltar ao automático). */
+export async function reaplicarManual(formData: FormData): Promise<void> {
+  const { usuario } = await exigirPermissao('diarios:ver-todos');
+  const ofertaId = String(formData.get('ofertaId') ?? '');
+  const atual = await prisma.disciplinaOferta.findUnique({ where: { id: ofertaId }, select: { id: true, ministradasManual: true, aulasMinistradas: true } });
+  if (!atual || atual.ministradasManual) return;
+  await prisma.disciplinaOferta.update({ where: { id: atual.id }, data: { ministradasManual: true } });
+  await registrarAuditoria({ userId: usuario.id, acao: 'ATUALIZOU_DIARIO', entidade: 'DisciplinaOferta', entidadeId: atual.id, detalhes: { reaplicouManual: atual.aulasMinistradas } });
+  revalidatePath('/diarios');
+  revalidatePath(`/diarios/${atual.id}`);
+}
+
 /**
  * Conferência por amostra (G26): a Coordenação compara com o diário do sistema acadêmico. Valor igual ao presumido
  * confirma o automático; valor diferente vira lançamento manual. Também marca se o diário está em dia.

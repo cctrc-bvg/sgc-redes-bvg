@@ -1,4 +1,5 @@
 import 'server-only';
+import { STATUS_COM_REPOSICAO } from '@/lib/reposicao/regras';
 import { prisma } from '@/lib/db';
 import { ehDocente, temPermissao, type Permissao, type Titular } from '@/lib/auth/rbac';
 import { NOME_STATUS, dataDoBanco, dataParaBanco, hojeEmFortaleza, somarDias } from '@/lib/ausencias/regras';
@@ -70,7 +71,7 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
     pode('ausencias:registrar') ? reposicoesSemData(hojeISO) : Promise.resolve({ vencidas: 0, aVencer: 0 }),
     contar(pode('ausencias:registrar'), () => prisma.ausenciaDocente.count({ where: { reposicaoEm: { not: null }, reposicaoCienteEm: null } })),
     contar(docente, () =>
-      prisma.ausenciaDocente.count({ where: { professorAusenteId: usuario.id, reposicaoEm: null, status: { in: ['TURMA_DISPENSADA', 'REPOSICAO_AGENDADA'] }, dataAula: { gte: dataParaBanco(somarDias(hojeISO, -120)), lte: dataParaBanco(hojeISO) } } }),
+      prisma.ausenciaDocente.count({ where: { professorAusenteId: usuario.id, reposicaoEm: null, status: { in: [...STATUS_COM_REPOSICAO] }, dataAula: { gte: dataParaBanco(somarDias(hojeISO, -120)), lte: dataParaBanco(hojeISO) } } }),
     ),
     contar(docente, () =>
       prisma.conviteSubstituicao.count({ where: { professorId: usuario.id, status: 'PENDENTE', ausencia: { dataAula: { gte: hoje } } } }),
@@ -162,7 +163,7 @@ export async function contagensDoPainel(usuario: { id: string } & Exclude<Titula
  */
 async function reposicoesSemData(hojeISO: string): Promise<{ vencidas: number; aVencer: number }> {
   const dispensadas = await prisma.ausenciaDocente.findMany({
-    where: { status: 'TURMA_DISPENSADA', reposicaoEm: null, dataAula: { gte: dataParaBanco(somarDias(hojeISO, -90)), lte: dataParaBanco(hojeISO) } },
+    where: { status: { in: [...STATUS_COM_REPOSICAO] }, reposicaoEm: null, dataAula: { gte: dataParaBanco(somarDias(hojeISO, -90)), lte: dataParaBanco(hojeISO) } },
     select: { dataAula: true },
   });
   if (dispensadas.length === 0) return { vencidas: 0, aVencer: 0 };
@@ -201,8 +202,8 @@ export async function acoesDoPainel(usuario: { id: string } & Exclude<Titular, s
 }
 
 /** Semana do docente para a agenda do painel (aulas, sem-aula, eventos, mudanças e ausências dele). */
-export async function semanaDoDocente(professorId: string, hojeISO: string = hojeEmFortaleza()) {
-  const inicio = inicioDaSemana(hojeISO);
+export async function semanaDoDocente(professorId: string, hojeISO: string = hojeEmFortaleza(), semanaDe?: string) {
+  const inicio = semanaDe ?? inicioDaSemana(hojeISO);
   const fim = somarDias(inicio, 5);
   const [blocos, sabados, eventos, ausencias, mudancas] = await Promise.all([
     blocosOrdenados(),
@@ -239,6 +240,7 @@ export async function semanaDoDocente(professorId: string, hojeISO: string = hoj
   }
   return montarSemana({
     hojeISO,
+    inicio,
     sabados: new Map(sabados.map((s) => [dataDoBanco(s.data), s.diaSemanaReferente])),
     eventos: eventos.map((e) => ({
       inicio: dataDoBanco(e.inicio),

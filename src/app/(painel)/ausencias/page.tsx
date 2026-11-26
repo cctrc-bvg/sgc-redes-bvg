@@ -10,7 +10,7 @@ import { SituacaoAusencia } from './situacao';
 export const metadata: Metadata = { title: 'Ausências — SGC-Redes' };
 
 const AVISOS: Record<string, string> = {
-  registradas: 'Ausências registradas, uma por turma e disciplina. Abra cada uma para decidir a cobertura.',
+  registradas: 'Ausências registradas, uma por turma e disciplina. Abra cada uma para decidir a ocupação dos horários.',
   cancelada: 'Registro de ausência cancelado. Os avisos de refeição ligados a ele foram cancelados.',
 };
 

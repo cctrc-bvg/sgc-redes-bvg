@@ -31,6 +31,7 @@ const PESSOAS: { nome: string; email: string; role: Role; whatsapp?: string }[] 
   { nome: 'CTP (demonstração)', email: `ctp@${DOMINIO}`, role: 'CTP' },
   { nome: 'Direção de Ensino (demonstração)', email: `direcao@${DOMINIO}`, role: 'DIRECAO' },
   { nome: 'Assistência Estudantil (demonstração)', email: `cae@${DOMINIO}`, role: 'ASSISTENCIA_ESTUDANTIL' },
+  { nome: 'CCA (demonstração)', email: `cca@${DOMINIO}`, role: 'CCA' },
 ];
 
 const somarDias = (iso: string, n: number) => {
@@ -86,6 +87,7 @@ async function main() {
     CTP: [`ctp@${DOMINIO}`, 'prezados(as) colegas da Coordenação Técnico-Pedagógica'],
     LIDERES_TURMA: [`lideres.redes@${DOMINIO}`, 'prezados(as) líderes de turma'],
     NUTRICIONISTA: [`nutricao@${DOMINIO}`, 'prezado(a) nutricionista'],
+    CCA: [`cca@${DOMINIO}`, 'prezados(as) colegas da Coordenação de Controle Acadêmico'],
   };
   for (const [canal, [email, saudacao]] of Object.entries(canais)) {
     await prisma.configuracaoCanal.updateMany({ where: { canal: canal as never }, data: { email, saudacao } });

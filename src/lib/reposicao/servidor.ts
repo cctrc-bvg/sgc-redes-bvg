@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { dataDoBanco, dataParaBanco } from '@/lib/ausencias/regras';
 import { carregarAno } from '@/lib/calendario/servidor';
 import { prazoDeReposicao, somarDiasISO, type PrazoReposicao } from '@/lib/calendario/regras';
-import { situacaoReposicao, type SituacaoReposicao } from './regras';
+import { situacaoReposicao, STATUS_COM_REPOSICAO, type SituacaoReposicao } from './regras';
 
 export interface LinhaReposicao {
   id: string;
@@ -33,7 +33,7 @@ export async function listarReposicoes(hojeISO: string, docenteId?: string): Pro
     where: {
       dataAula: { gte: desde },
       ...(docenteId ? { professorAusenteId: docenteId } : {}),
-      OR: [{ status: { in: ['TURMA_DISPENSADA', 'REPOSICAO_AGENDADA'] } }, { reposicaoEm: { not: null } }],
+      OR: [{ status: { in: [...STATUS_COM_REPOSICAO] } }, { reposicaoEm: { not: null } }],
     },
     select: {
       id: true,
