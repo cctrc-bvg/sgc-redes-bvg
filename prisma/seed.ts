@@ -50,21 +50,25 @@ async function main() {
   // 3. Grupos e setores para as mensagens (e-mail e saudação editáveis em Comunicação).
   // Saudação padrão: entra como "Olá, {saudação}!"; prezado(a) no singular, prezados(as) no plural.
   // Sem saudação, a mensagem traz um campo {{...}} para preencher.
-  const canais: { canal: CanalWhatsapp; nomeExibicao: string; saudacao?: string }[] = [
+  const canais: { canal: CanalWhatsapp; nomeExibicao: string; saudacao?: string; email?: string; saudacaoAntiga?: string }[] = [
     { canal: 'GRUPO_PROFESSORES', nomeExibicao: 'Grupo Professores - Redes', saudacao: 'prezados(as) professores(as)' },
-    { canal: 'GRUPO_GESTAO_DIR_COORD', nomeExibicao: 'Grupo Gestão (Coord + DE + DG)', saudacao: 'prezados(as) gestores(as)' },
-    { canal: 'ASSISTENCIA_ESTUDANTIL', nomeExibicao: 'Assistência Estudantil (Refeitório)', saudacao: 'prezados(as) colegas da Assistência Estudantil' },
-    { canal: 'CTP', nomeExibicao: 'CTP - Coord. Técnico-Pedagógica', saudacao: 'prezados(as) colegas da Coordenação Técnico-Pedagógica' },
+    { canal: 'GRUPO_GESTAO_DIR_COORD', nomeExibicao: 'Grupo Gestão (Coord + DE + DG)', saudacao: 'prezados(as) colegas da Direção de Ensino e do Gabinete da Direção Geral', saudacaoAntiga: 'prezados(as) gestores(as)', email: 'de@boaviagem.ifce.edu.br, gabinete.boaviagem@ifce.edu.br' },
+    { canal: 'ASSISTENCIA_ESTUDANTIL', nomeExibicao: 'Assistência Estudantil (Refeitório)', saudacao: 'prezados(as) colegas da Coordenadoria de Assistência Estudantil', saudacaoAntiga: 'prezados(as) colegas da Assistência Estudantil', email: 'cae.boaviagem@ifce.edu.br' },
+    { canal: 'CTP', nomeExibicao: 'CTP - Coord. Técnico-Pedagógica', saudacao: 'prezados(as) colegas da Coordenação Técnico-Pedagógica', email: 'ctp.boaviagem@ifce.edu.br' },
     { canal: 'LIDERES_TURMA', nomeExibicao: 'Líderes das Turmas de Redes', saudacao: 'prezados(as) líderes de turma' },
     { canal: 'NUTRICIONISTA', nomeExibicao: 'Nutricionista do campus', saudacao: 'prezado(a) nutricionista' },
-    { canal: 'CCA', nomeExibicao: 'CCA - Coord. de Controle Acadêmico', saudacao: 'prezados(as) colegas da Coordenação de Controle Acadêmico' },
+    { canal: 'CCA', nomeExibicao: 'CCA - Coord. de Controle Acadêmico', saudacao: 'prezados(as) colegas da Coordenação de Controle Acadêmico', email: 'cca.boaviagem@ifce.edu.br' },
   ];
-  for (const c of canais) {
+  for (const { saudacaoAntiga, ...c } of canais) {
     await prisma.configuracaoCanal.upsert({
       where: { canal: c.canal },
       update: {},
       create: c,
     });
+    // Bancos já existentes: preenche o e-mail só se estiver vazio e troca a saudação só se ainda for a antiga
+    // (o que a Coordenação editou em Comunicação nunca é sobrescrito).
+    if (c.email) await prisma.configuracaoCanal.updateMany({ where: { canal: c.canal, email: null }, data: { email: c.email } });
+    if (saudacaoAntiga && c.saudacao) await prisma.configuracaoCanal.updateMany({ where: { canal: c.canal, saudacao: saudacaoAntiga }, data: { saudacao: c.saudacao } });
   }
 
   // 4. Regras PPI (evita duplicar se rodar seed novamente)

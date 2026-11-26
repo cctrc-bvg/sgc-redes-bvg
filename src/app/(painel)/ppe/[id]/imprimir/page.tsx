@@ -61,7 +61,7 @@ export default async function PaginaImprimirPei({ params }: { params: Promise<{ 
               <div className="flex items-start justify-between">
                 {/* Arquivo extraído do modelo do campus; trocar pelo SVG oficial da Comunicação (docs/IDENTIDADE_VISUAL_UX.md). */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/marca/ifce-vertical.png" alt="Instituto Federal do Ceará" style={{ height: '1.9cm', width: 'auto' }} />
+                <img src="/marca/ifce-vertical.svg" alt="Instituto Federal do Ceará" style={{ height: '1.9cm', width: 'auto' }} />
                 <p className="mt-6 font-bold">Plano de Estudo Individual</p>
               </div>
             </td>
