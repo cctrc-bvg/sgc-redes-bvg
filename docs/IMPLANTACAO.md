@@ -154,7 +154,7 @@ sudo systemctl reload caddy
 ```
 
 **Opção B — Nginx** com o certificado da TI (ou `certbot --nginx`): `proxy_pass http://127.0.0.1:3000;` com
-`proxy_set_header Host $host;`, `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` e
+`proxy_set_header Host $host;`, `proxy_set_header X-Forwarded-For $remote_addr;` (sobrescreve o que o cliente enviar; o app usa o último valor da lista como IP de origem, no limite de tentativas de login e na auditoria; com mais de um proxy, defina `PROXY_SALTOS` no `.env`) e
 `proxy_set_header X-Forwarded-Proto https;`, `client_max_body_size 7m;` (importação de planilhas, até 1 MB, e formulários de reposição, até 5 MB) e
 `add_header Strict-Transport-Security "max-age=31536000" always;`.
 
