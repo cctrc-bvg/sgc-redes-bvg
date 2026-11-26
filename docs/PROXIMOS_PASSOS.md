@@ -162,7 +162,7 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
 
 ### P2 — depois
 
-- Integração com o SUAP (decidido: depois).
+- Integração com o SUAP (decidido: depois). Estudo de viabilidade, segurança e fluxo sem retrabalho: `docs/estudos/INTEGRACAO_SUAP_QACADEMICO.md` (26/11/2026; aguarda decisões da seção 10).
 - Envio automático pela Evolution API: o código existe, desligado (decidido: semiautomático). O convite individual
   seria o primeiro candidato.
 - **Fase 3 (FSD) — congelada (decisão de 25/11/2026):** laboratórios, estoque/DAP, atas e eventos ficam para
