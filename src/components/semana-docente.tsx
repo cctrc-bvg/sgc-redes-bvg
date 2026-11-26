@@ -62,7 +62,7 @@ export function SemanaDoDocente({
                 </span>
                 {d.ehHoje && <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${acumula ? 'bg-docencia-50 text-docencia-800' : 'bg-if-verde-50 text-if-verde-800'}`}>Hoje</span>}
               </p>
-              {d.gradeDe && <p className="text-xs text-slate-600">Sábado letivo: grade de {d.gradeDe}</p>}
+              {d.gradeDe && <p className="text-xs text-slate-600">{d.rotulo.startsWith('Domingo') ? 'Domingo' : 'Sábado'} letivo: grade de {d.gradeDe}</p>}
               {d.semAula && <p className="mt-1 text-sm text-slate-600">{d.semAula}</p>}
               {d.periodoEspecial && <p className="mt-1 text-xs text-slate-600">Período especial: {d.periodoEspecial}. Turmas com grade especial seguem a grade temporária.</p>}
               {d.eventos.map((e) => (

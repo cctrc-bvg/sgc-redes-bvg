@@ -13,12 +13,15 @@ import { temPermissao } from '@/lib/auth/rbac';
 import { pedeComunicacao } from '@/lib/calendario/mensagens';
 import { lerModoEnvio, NOME_MODO } from '@/lib/comunicacao/mensagem';
 import { mensagensDoEvento } from '@/lib/calendario/comunicar';
-import { registrarRevisaoSeMudou, type OrigemRevisao } from '@/lib/calendario/revisoes';
+import { garantirRevisoesIniciais, registrarRevisaoSeMudou, type OrigemRevisao } from '@/lib/calendario/revisoes';
 
 /** Registra a revisão do ano (e do seguinte, se o evento atravessa a virada) depois de uma alteração. */
 async function revisar(anos: readonly string[], autorId: string, origem: OrigemRevisao) {
   for (const ano of new Set(anos.map((a) => Number(a.slice(0, 4))))) await registrarRevisaoSeMudou({ ano, autorId, origem });
 }
+
+/** Antes de gravar: garante que o estado de hoje já está no histórico (senão a primeira revisão guardaria o estado já alterado). */
+const antesDeMudar = (anos: readonly string[]) => garantirRevisoesIniciais(anos.map((a) => Number(a.slice(0, 4))));
 
 type CampoEvento = 'tipo' | 'inicio' | 'fim' | 'descricao' | 'motivo';
 export type EstadoEvento = { mensagem?: string; sucesso?: boolean; erros?: Partial<Record<CampoEvento, string>>; valores?: Record<string, string> };
@@ -60,6 +63,7 @@ export async function criarEvento(_e: EstadoEvento | undefined, formData: FormDa
   const { usuario } = await exigirPermissao('calendario:gerenciar');
   const lido = lerEvento(formData);
   if ('erros' in lido) return { erros: lido.erros, valores: lido.valores };
+  await antesDeMudar([lido.dados.inicio, lido.dados.fim]);
   const criado = await prisma.eventoCalendario.create({ data: paraBanco(lido.dados) });
   await revisar([lido.dados.inicio, lido.dados.fim], usuario.id, 'EVENTO');
   await registrarAuditoria({
@@ -82,6 +86,7 @@ export async function atualizarEvento(_e: EstadoEvento | undefined, formData: Fo
   const lido = lerEvento(formData);
   if ('erros' in lido) return { erros: lido.erros, valores: lido.valores };
   const antes = await prisma.eventoCalendario.findUnique({ where: { id }, select: { inicio: true, fim: true } });
+  await antesDeMudar([lido.dados.inicio, lido.dados.fim, antes?.inicio.toISOString() ?? lido.dados.inicio, antes?.fim.toISOString() ?? lido.dados.fim]);
   await prisma.eventoCalendario.update({ where: { id }, data: paraBanco(lido.dados) });
   await revisar([lido.dados.inicio, lido.dados.fim, antes?.inicio.toISOString() ?? lido.dados.inicio, antes?.fim.toISOString() ?? lido.dados.fim], usuario.id, 'EVENTO');
   await registrarAuditoria({
@@ -104,6 +109,7 @@ export async function removerEvento(_e: EstadoSimples | undefined, formData: For
   if (formData.get('confirmo') !== 'on') return { mensagem: 'Marque a confirmação para remover.' };
   const atual = await prisma.eventoCalendario.findUnique({ where: { id } });
   if (!atual) return { mensagem: 'Evento não encontrado.' };
+  await antesDeMudar([atual.inicio.toISOString(), atual.fim.toISOString()]);
   await prisma.eventoCalendario.delete({ where: { id } });
   await revisar([atual.inicio.toISOString(), atual.fim.toISOString()], usuario.id, 'EVENTO');
   await registrarAuditoria({ userId: usuario.id, acao: 'REMOVEU_EVENTO_CALENDARIO', entidade: 'EventoCalendario', entidadeId: id, detalhes: { tipo: atual.tipo } });
@@ -147,6 +153,7 @@ export async function salvarEtapas(_e: EstadoEtapas | undefined, formData: FormD
   checar('semestre', ['1º semestre', '2º semestre'], semestres);
   if (Object.keys(erros).length > 0) return { erros, valores };
 
+  await garantirRevisoesIniciais([ano]);
   await prisma.$transaction(async (tx) => {
     for (const [i, x] of etapas.entries()) {
       const numero = i + 1;

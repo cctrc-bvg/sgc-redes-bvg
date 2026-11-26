@@ -20,8 +20,8 @@ export const NOME_ORIGEM: Record<string, string> = {
 };
 
 /** O calendário vigente do ano, no formato da revisão. */
-export async function instantaneoAtual(ano: number): Promise<Instantaneo> {
-  const cal = await carregarAno(ano);
+export async function instantaneoAtual(ano: number, db: Db = prisma): Promise<Instantaneo> {
+  const cal = await carregarAno(ano, db);
   return {
     eventos: cal.eventos.map((e) => ({ tipo: e.tipo, inicio: e.inicio, fim: e.fim, descricao: e.descricao ?? '', suspendeAulas: e.suspendeAulas, imprevisto: e.imprevisto, motivo: e.motivo ?? '' })),
     extras: cal.sabados.map((s) => ({ data: s.data, diaReferente: s.diaSemanaReferente, observacao: s.observacao ?? '' })),
@@ -35,30 +35,64 @@ export async function ultimaRevisao(ano: number, db: Db = prisma) {
 }
 
 /**
- * Registra uma revisão se o calendário do ano mudou desde a última. Chamada depois de qualquer alteração do
- * calendário (editor, evento, etapas, importação, sábado letivo). Sem revisão anterior, a primeira é o estado atual.
+ * Executa `fn` numa transação que segura a trava do ano (advisory lock): duas gravações do calendário do mesmo ano
+ * nunca andam juntas, então a checagem de conflito, a alteração e o número da revisão ficam consistentes.
  */
-export async function registrarRevisaoSeMudou(p: { ano: number; autorId: string | null; origem: OrigemRevisao; motivo?: string | null }): Promise<number | null> {
-  const atual = await instantaneoAtual(p.ano);
-  return prisma.$transaction(async (tx) => {
-    const ultima = await ultimaRevisao(p.ano, tx);
-    const anterior = ultima ? (ultima.dados as unknown as Instantaneo) : null;
-    if (anterior && assinatura(anterior) === assinatura(atual)) return null;
-    const numero = (ultima?.numero ?? 0) + 1;
-    const resumo = anterior ? textoDaDiferenca(diferencaEntre(anterior, atual)) : 'Primeira revisão registrada: estado do calendário nesta data.';
-    await tx.calendarioRevisao.create({
-      data: { anoLetivo: p.ano, numero, autorId: p.autorId, motivo: p.motivo?.trim() || null, resumo, origem: anterior ? p.origem : 'INICIAL', dados: atual as unknown as Prisma.InputJsonValue },
-    });
-    return numero;
-  });
+export function comTravaDoAno<T>(ano: number, fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT 1 AS ok FROM (SELECT pg_advisory_xact_lock(CAST(${700000 + ano} AS bigint))) t`;
+      return fn(tx);
+    },
+    { timeout: 30000, maxWait: 15000 },
+  );
 }
 
-/** Garante que existe ao menos uma revisão (para o histórico começar no estado de hoje). */
-export async function garantirRevisaoInicial(ano: number): Promise<void> {
-  if (await prisma.calendarioRevisao.findFirst({ where: { anoLetivo: ano }, select: { id: true } })) return;
-  const atual = await instantaneoAtual(ano);
-  if (atual.eventos.length === 0 && atual.extras.length === 0 && atual.etapas.every((e) => !e) && atual.semestres.every((s) => !s)) return;
-  await registrarRevisaoSeMudou({ ano, autorId: null, origem: 'INICIAL' });
+interface PedidoRevisao {
+  ano: number;
+  autorId: string | null;
+  origem: OrigemRevisao;
+  motivo?: string | null;
+}
+
+const estaVazio = (i: Instantaneo) => i.eventos.length === 0 && i.extras.length === 0 && i.etapas.every((e) => !e) && i.semestres.every((s) => !s);
+
+/** Grava a revisão se o calendário mudou desde a última (dentro de uma transação que já segura a trava do ano). */
+async function registrarDentro(tx: Prisma.TransactionClient, p: PedidoRevisao): Promise<number | null> {
+  const atual = await instantaneoAtual(p.ano, tx);
+  const ultima = await ultimaRevisao(p.ano, tx);
+  const anterior = ultima ? (ultima.dados as unknown as Instantaneo) : null;
+  if (anterior && assinatura(anterior) === assinatura(atual)) return null;
+  if (!anterior && estaVazio(atual)) return null;
+  const numero = (ultima?.numero ?? 0) + 1;
+  const resumo = anterior ? textoDaDiferenca(diferencaEntre(anterior, atual)) : 'Primeira revisão registrada: estado do calendário nesta data.';
+  await tx.calendarioRevisao.create({
+    data: { anoLetivo: p.ano, numero, autorId: p.autorId, motivo: p.motivo?.trim() || null, resumo, origem: anterior ? p.origem : 'INICIAL', dados: atual as unknown as Prisma.InputJsonValue },
+  });
+  return numero;
+}
+
+/**
+ * Registra uma revisão se o calendário do ano mudou desde a última. Chamada depois de qualquer alteração do
+ * calendário (editor, evento, etapas, importação, sábado letivo). Sem revisão anterior, a primeira é o estado atual:
+ * por isso as alterações chamam `garantirRevisaoInicial` ANTES de gravar.
+ */
+export function registrarRevisaoSeMudou(p: PedidoRevisao, tx?: Prisma.TransactionClient): Promise<number | null> {
+  return tx ? registrarDentro(tx, p) : comTravaDoAno(p.ano, (t) => registrarDentro(t, p));
+}
+
+/** Garante que existe ao menos uma revisão (para o histórico começar no estado anterior à primeira mudança). */
+export async function garantirRevisaoInicial(ano: number, tx?: Prisma.TransactionClient): Promise<void> {
+  const db: Db = tx ?? prisma;
+  if (await db.calendarioRevisao.findFirst({ where: { anoLetivo: ano }, select: { id: true } })) return;
+  const atual = await instantaneoAtual(ano, db);
+  if (estaVazio(atual)) return;
+  await registrarRevisaoSeMudou({ ano, autorId: null, origem: 'INICIAL' }, tx);
+}
+
+/** Garante a revisão inicial de vários anos (antes de uma alteração que pode tocá-los). */
+export async function garantirRevisoesIniciais(anos: Iterable<number>): Promise<void> {
+  for (const ano of new Set(anos)) await garantirRevisaoInicial(ano);
 }
 
 export function listarRevisoes(ano: number) {

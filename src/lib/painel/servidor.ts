@@ -206,7 +206,7 @@ export async function acoesDoPainel(usuario: { id: string } & Exclude<Titular, s
 /** Semana do docente para a agenda do painel (aulas, sem-aula, eventos, mudanças e ausências dele). */
 export async function semanaDoDocente(professorId: string, hojeISO: string = hojeEmFortaleza(), semanaDe?: string) {
   const inicio = semanaDe ?? inicioDaSemana(hojeISO);
-  const fim = somarDias(inicio, 5);
+  const fim = somarDias(inicio, 6);
   const [blocos, sabados, eventos, ausencias, mudancas] = await Promise.all([
     blocosOrdenados(),
     prisma.sabadoLetivo.findMany({ where: { data: { gte: dataParaBanco(inicio), lte: dataParaBanco(fim) } } }),
@@ -218,7 +218,7 @@ export async function semanaDoDocente(professorId: string, hojeISO: string = hoj
     mudancasDoProfessor(professorId, inicio, fim),
   ]);
   const bloco = new Map(blocos.map((b) => [b.id, b]));
-  const periodos = [...new Set([0, 1, 2, 3, 4, 5].map((n) => chavePeriodo(somarDias(inicio, n))))];
+  const periodos = [...new Set([0, 1, 2, 3, 4, 5, 6].map((n) => chavePeriodo(somarDias(inicio, n))))];
   const celulas = new Map<string, CelulaAgenda[]>();
   await Promise.all(
     periodos.map(async (p) => {

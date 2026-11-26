@@ -300,11 +300,11 @@ export function diferencaEntre(antes: Instantaneo, depois: Instantaneo): Diferen
   for (const d of new Set([...a.extras.keys(), ...b.extras.keys()])) {
     const x = a.extras.get(d);
     const y = b.extras.get(d);
-    if (x && y && x.diaReferente === y.diaReferente) continue;
+    if (x && y && chaveExtra(x) === chaveExtra(y)) continue;
     if (x) item(NOME_CATEGORIA.FIM_DE_SEMANA_LETIVO).removidos++;
     if (y) item(NOME_CATEGORIA.FIM_DE_SEMANA_LETIVO).adicionados++;
   }
-  const doOutros = (s: Instantaneo) => s.eventos.filter((e) => !ehTipoDoEditor(e.tipo)).map((e) => `${e.tipo}|${e.inicio}|${e.fim}|${e.descricao}`);
+  const doOutros = (s: Instantaneo) => s.eventos.filter((e) => !ehTipoDoEditor(e.tipo)).map((e) => `${e.tipo}|${e.inicio}|${e.fim}|${e.descricao}|${e.suspendeAulas ? 1 : 0}|${e.imprevisto ? 1 : 0}|${e.motivo}`);
   const oa = new Set(doOutros(antes));
   const ob = new Set(doOutros(depois));
   const novos = [...ob].filter((x) => !oa.has(x)).length;
@@ -312,6 +312,8 @@ export function diferencaEntre(antes: Instantaneo, depois: Instantaneo): Diferen
   if (novos || saiu) Object.assign(item('Outros eventos'), { adicionados: novos, removidos: saiu });
   const periodos = (s: Instantaneo) => JSON.stringify([s.etapas, s.semestres]);
   if (periodos(antes) !== periodos(depois)) item('Etapas e semestres').adicionados = 1;
+  // Mudança que o dia a dia não mostra (ex.: eventos sobrepostos): ainda assim é uma revisão e precisa de texto.
+  if (mapa.size === 0 && assinatura(antes) !== assinatura(depois)) item('Outras alterações').adicionados = 1;
   return [...mapa.values()];
 }
 
@@ -321,6 +323,7 @@ export function textoDaDiferenca(d: readonly Diferenca[]): string {
   return d
     .map((x) => {
       if (x.rotulo === 'Etapas e semestres') return 'Etapas e semestres alterados';
+      if (x.rotulo === 'Outras alterações') return 'Outras alterações nos eventos do calendário';
       if (x.rotulo === 'Outros eventos') return `Outros eventos: ${[x.adicionados ? `+${x.adicionados}` : '', x.removidos ? `−${x.removidos}` : ''].filter(Boolean).join(', ')}`;
       const partes = [x.adicionados ? `+${x.adicionados}` : '', x.removidos ? `−${x.removidos}` : ''].filter(Boolean).join(', ');
       return `${x.rotulo}: ${partes} ${x.adicionados + x.removidos === 1 ? 'dia' : 'dias'}`;
@@ -429,6 +432,60 @@ export function aplicarEdicoes(e: EstadoDosDias, edicoes: readonly EdicaoDia[]):
     else extras.delete(x.data);
   }
   return { marcas, extras, outros: e.outros };
+}
+
+/**
+ * Aplica as edições direto nos eventos do instantâneo, sem achatar o calendário em marcas por dia: eventos que a
+ * edição não toca (inclusive sobrepostos ou que atravessam a virada do ano) ficam exatamente como estão. Os dias
+ * editados saem dos eventos do editor (que são partidos se preciso) e entram as novas marcas, agrupadas em dias seguidos.
+ */
+export function aplicarEdicoesAosEventos(i: Instantaneo, edicoes: readonly EdicaoDia[]): Instantaneo {
+  const editados = new Set(edicoes.map((x) => x.data));
+  const eventos: EventoInst[] = [];
+  for (const e of i.eventos) {
+    if (!ehTipoDoEditor(e.tipo)) {
+      eventos.push(e);
+      continue;
+    }
+    const dias = [...datasEntre(e.inicio, e.fim)];
+    if (!dias.some((d) => editados.has(d))) {
+      eventos.push(e);
+      continue;
+    }
+    let trecho: { inicio: string; fim: string } | null = null;
+    const fechar = () => {
+      if (trecho) eventos.push({ ...e, ...trecho });
+      trecho = null;
+    };
+    for (const d of dias) {
+      if (editados.has(d)) fechar();
+      else if (trecho) trecho.fim = d;
+      else trecho = { inicio: d, fim: d };
+    }
+    fechar();
+  }
+  const novas = edicoes.filter((x) => x.marca).sort((a, b) => a.data.localeCompare(b.data));
+  let atual: { m: Marca; inicio: string; fim: string } | null = null;
+  const fecharNova = () => {
+    if (atual) eventos.push({ tipo: atual.m.tipo, inicio: atual.inicio, fim: atual.fim, descricao: atual.m.descricao, suspendeAulas: atual.m.suspendeAulas, imprevisto: atual.m.imprevisto, motivo: atual.m.motivo });
+    atual = null;
+  };
+  for (const x of novas) {
+    const m = x.marca!;
+    if (atual && chaveMarca(atual.m) === chaveMarca(m) && somarDiasISO(atual.fim, 1) === x.data) atual.fim = x.data;
+    else {
+      fecharNova();
+      atual = { m, inicio: x.data, fim: x.data };
+    }
+  }
+  fecharNova();
+  eventos.sort((a, b) => a.inicio.localeCompare(b.inicio) || a.tipo.localeCompare(b.tipo));
+  const extras = new Map(i.extras.map((x) => [x.data, { diaReferente: x.diaReferente, observacao: x.observacao }] as const));
+  for (const x of edicoes) {
+    if (x.extra) extras.set(x.data, x.extra);
+    else extras.delete(x.data);
+  }
+  return { eventos, extras: [...extras].map(([data, x]) => ({ data, ...x })).sort((a, b) => a.data.localeCompare(b.data)), etapas: i.etapas, semestres: i.semestres };
 }
 
 export const MAXIMO_DE_EDICOES = 800;

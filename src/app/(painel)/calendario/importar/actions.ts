@@ -3,7 +3,7 @@
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
-import { registrarRevisaoSeMudou } from '@/lib/calendario/revisoes';
+import { garantirRevisaoInicial, registrarRevisaoSeMudou } from '@/lib/calendario/revisoes';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { dataParaBanco } from '@/lib/ausencias/regras';
@@ -39,6 +39,7 @@ export async function importarCalendario(_estado: EstadoImportacao | undefined, 
 
   const intervalo = (i: { inicio: string; fim: string }) => ({ inicio: dataParaBanco(i.inicio), fim: dataParaBanco(i.fim) });
   const evento = (e: (typeof plano.eventosCriar)[number]) => ({ ...e, ...intervalo(e) });
+  await garantirRevisaoInicial(ano);
   try {
     await prisma.$transaction([
       ...plano.etapas.flatMap((e, i) =>

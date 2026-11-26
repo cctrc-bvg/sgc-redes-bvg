@@ -15,7 +15,7 @@ const SEMANA_LONGA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 /** Descrição do dia para leitores de tela e dica ao passar o mouse. */
 function descricao(d: string, info: InfoDia | undefined) {
   const partes = [`${Number(d.slice(8))} de ${MESES[Number(d.slice(5, 7)) - 1]}`];
-  if (info?.letivo) partes.push(info.sabadoRef ? `sábado letivo (grade de ${NOME_DIA_EXTENSO[info.sabadoRef]})` : 'dia letivo');
+  if (info?.letivo) partes.push(info.sabadoRef ? `${new Date(`${d}T12:00:00Z`).getUTCDay() === 0 ? 'domingo' : 'sábado'} letivo (grade de ${NOME_DIA_EXTENSO[info.sabadoRef]})` : 'dia letivo');
   else partes.push('sem aula');
   for (const e of info?.eventos ?? []) partes.push(e.titulo);
   return partes.join(' · ');
@@ -143,7 +143,7 @@ export function Legenda() {
   return (
     <ul className="flex flex-wrap gap-2 text-xs text-slate-800" aria-label="Legenda">
       <li className="rounded border border-slate-200 bg-white px-2 py-0.5">Dia letivo</li>
-      <li className="rounded border border-if-verde-700 bg-if-verde-50 px-2 py-0.5">Sábado letivo</li>
+      <li className="rounded border border-if-verde-700 bg-if-verde-50 px-2 py-0.5">Sábado/domingo letivo</li>
       <li className="rounded border border-slate-100 bg-slate-100 px-2 py-0.5">Sem aula</li>
       {(Object.keys(NOME_TIPO_EVENTO) as TipoEventoCalendario[]).map((t) => (
         <li key={t} className={`rounded border px-2 py-0.5 ${COR_TIPO_EVENTO[t]}`}>

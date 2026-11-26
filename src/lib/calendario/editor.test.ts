@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   aplicarCategoria,
   aplicarEdicoes,
+  aplicarEdicoesAosEventos,
   assinatura,
   clicarNoDia,
   contarInstantaneo,
@@ -175,5 +176,60 @@ describe('edições enviadas pela tela', () => {
     expect(validarEdicoes([], 2026, motivos)).toMatchObject({ ok: false });
     const av = validarEdicoes([{ data: '2026-12-10', marca: marca('AVALIACOES_FINAIS', { suspendeAulas: false }), extra: null }], 2026, motivos);
     expect(av.ok && av.edicoes[0]!.marca!.suspendeAulas).toBe(true);
+  });
+});
+
+describe('edição direta nos eventos (sem achatar)', () => {
+  const ev = (tipo: 'FERIADO' | 'FERIAS_DOCENTES', inicio: string, fim: string, descricao = '') => ({ tipo, inicio, fim, descricao, suspendeAulas: true, imprevisto: false, motivo: '' });
+  const marca = (tipo: 'FERIADO' | 'PONTO_FACULTATIVO') => ({ tipo, descricao: '', suspendeAulas: true, imprevisto: false, motivo: '' });
+
+  it('eventos sobrepostos e eventos que a edição não toca ficam como estão', () => {
+    const i: Instantaneo = { ...vazio, eventos: [ev('FERIAS_DOCENTES', '2026-12-21', '2027-01-08'), ev('FERIADO', '2026-12-25', '2026-12-25', 'Natal'), ev('FERIADO', '2026-11-02', '2026-11-02')] };
+    const r = aplicarEdicoesAosEventos(i, [{ data: '2026-11-02', marca: marca('PONTO_FACULTATIVO'), extra: null }]);
+    expect(r.eventos).toContainEqual(ev('FERIAS_DOCENTES', '2026-12-21', '2027-01-08'));
+    expect(r.eventos).toContainEqual(ev('FERIADO', '2026-12-25', '2026-12-25', 'Natal'));
+    expect(r.eventos.filter((e) => e.tipo === 'FERIADO' && e.inicio === '2026-11-02')).toHaveLength(0);
+    expect(r.eventos.some((e) => e.tipo === 'PONTO_FACULTATIVO' && e.inicio === '2026-11-02')).toBe(true);
+  });
+
+  it('editar um dia dentro de um evento longo o parte em dois (e vale na virada do ano)', () => {
+    const i: Instantaneo = { ...vazio, eventos: [ev('FERIAS_DOCENTES', '2026-12-28', '2027-01-04')] };
+    const r = aplicarEdicoesAosEventos(i, [{ data: '2026-12-31', marca: null, extra: null }]);
+    expect(r.eventos.map((e) => [e.inicio, e.fim])).toEqual([
+      ['2026-12-28', '2026-12-30'],
+      ['2027-01-01', '2027-01-04'],
+    ]);
+  });
+
+  it('dias editados seguidos e iguais viram um só evento; extras são aplicados', () => {
+    const r = aplicarEdicoesAosEventos(vazio, [
+      { data: '2026-11-02', marca: marca('FERIADO'), extra: null },
+      { data: '2026-11-03', marca: marca('FERIADO'), extra: null },
+      { data: '2026-11-07', marca: null, extra: { diaReferente: 2, observacao: '' } },
+    ]);
+    expect(r.eventos).toHaveLength(1);
+    expect(r.eventos[0]).toMatchObject({ inicio: '2026-11-02', fim: '2026-11-03' });
+    expect(r.extras).toEqual([{ data: '2026-11-07', diaReferente: 2, observacao: '' }]);
+  });
+});
+
+describe('histórico: mudanças que o dia a dia não mostra', () => {
+  it('só a observação de um sábado letivo muda o resumo', () => {
+    const a: Instantaneo = { ...vazio, extras: [{ data: '2026-11-07', diaReferente: 1, observacao: '' }] };
+    const b: Instantaneo = { ...vazio, extras: [{ data: '2026-11-07', diaReferente: 1, observacao: 'Reposição' }] };
+    expect(textoDaDiferenca(diferencaEntre(a, b))).not.toBe('Sem mudança nos dias.');
+  });
+
+  it('mudança só de suspensão em evento fora do editor aparece como outros eventos', () => {
+    const reuniao = (suspende: boolean): Instantaneo => ({ ...vazio, eventos: [{ tipo: 'REUNIAO', inicio: '2026-11-05', fim: '2026-11-05', descricao: '', suspendeAulas: suspende, imprevisto: false, motivo: '' }] });
+    expect(textoDaDiferenca(diferencaEntre(reuniao(false), reuniao(true)))).toContain('Outros eventos');
+  });
+
+  it('eventos sobrepostos alterados ganham texto genérico em vez de "sem mudança"', () => {
+    const f = { tipo: 'FERIADO' as const, inicio: '2026-12-25', fim: '2026-12-25', descricao: '', suspendeAulas: true, imprevisto: false, motivo: '' };
+    const g = { ...f, tipo: 'FERIAS_DOCENTES' as const, inicio: '2026-12-21', fim: '2026-12-31' };
+    const a: Instantaneo = { ...vazio, eventos: [f, g] };
+    const b: Instantaneo = { ...vazio, eventos: [f, { ...g, descricao: 'Recesso' }] };
+    expect(textoDaDiferenca(diferencaEntre(a, b))).not.toBe('Sem mudança nos dias.');
   });
 });

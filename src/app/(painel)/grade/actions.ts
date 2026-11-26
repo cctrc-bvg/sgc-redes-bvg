@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { blocosOrdenados, ofertasDoSemestre } from '@/lib/grade/consultas';
-import { registrarRevisaoSeMudou } from '@/lib/calendario/revisoes';
+import { garantirRevisaoInicial, registrarRevisaoSeMudou } from '@/lib/calendario/revisoes';
 import { DIAS_SEMANA, PREFIXO_CELULA, SabadoLetivoSchema, chaveCelula, lerSemestreLetivo, planejarGrade, type PlanoGrade } from '@/lib/grade/regras';
 import { lerAnoLetivo } from '@/lib/ofertas/regras';
 
@@ -165,22 +165,26 @@ export async function cadastrarSabado(_estado: EstadoSabado | undefined, formDat
   const valores = Object.fromEntries(['data', 'diaSemanaReferente', 'observacao'].map((c) => [c, String(formData.get(c) ?? '')]));
   const validacao = SabadoLetivoSchema.safeParse(valores);
   if (!validacao.success) return { erros: z.flattenError(validacao.error).fieldErrors, valores };
+  const ano = Number(validacao.data.data.slice(0, 4));
+  await garantirRevisaoInicial(ano);
+  let criado: { id: string };
   try {
-    const criado = await prisma.sabadoLetivo.create({
+    criado = await prisma.sabadoLetivo.create({
       data: {
         data: new Date(`${validacao.data.data}T00:00:00Z`),
         diaSemanaReferente: validacao.data.diaSemanaReferente,
         observacao: validacao.data.observacao ?? null,
       },
     });
-    await registrarRevisaoSeMudou({ ano: Number(validacao.data.data.slice(0, 4)), autorId: editor.id, origem: 'SABADO' });
-    await registrarAuditoria({ userId: editor.id, acao: 'CADASTROU_SABADO_LETIVO', entidade: 'SabadoLetivo', entidadeId: criado.id });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
       return { erros: { data: ['Este sábado já está cadastrado.'] }, valores };
     }
     throw e;
   }
+  // Fora do try acima: um conflito na revisão (índice único) não pode virar "sábado já cadastrado".
+  await registrarRevisaoSeMudou({ ano, autorId: editor.id, origem: 'SABADO' });
+  await registrarAuditoria({ userId: editor.id, acao: 'CADASTROU_SABADO_LETIVO', entidade: 'SabadoLetivo', entidadeId: criado.id });
   revalidatePath('/grade');
   return { sucesso: true, mensagem: 'Sábado letivo cadastrado.' };
 }
@@ -189,6 +193,7 @@ export async function excluirSabado(formData: FormData): Promise<void> {
   const { usuario: editor } = await exigirPermissao('grade:editar');
   const id = String(formData.get('sabadoId') ?? '');
   const antes = await prisma.sabadoLetivo.findUnique({ where: { id }, select: { data: true } });
+  if (antes) await garantirRevisaoInicial(antes.data.getUTCFullYear());
   const { count } = await prisma.sabadoLetivo.deleteMany({ where: { id } });
   if (count > 0 && antes) await registrarRevisaoSeMudou({ ano: antes.data.getUTCFullYear(), autorId: editor.id, origem: 'SABADO' });
   if (count > 0) await registrarAuditoria({ userId: editor.id, acao: 'EXCLUIU_SABADO_LETIVO', entidade: 'SabadoLetivo', entidadeId: id });
