@@ -175,10 +175,12 @@ export const TOPICOS: readonly TopicoAjuda[] = [
       'Avaliações finais nunca contam como dias letivos (ROD, Art. 32; refeições nesses dias só por acréscimo lançado na Alimentação): ficam fora da contagem e da grade, inclusive aos sábados. Acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais; o sistema avisa se o período for cadastrado antes disso e, enquanto elas não estiverem cadastradas, sugere começar no dia seguinte ao último dia letivo. Os prazos entre as avaliações são combinados com os docentes.',
       'Ver o ano inteiro ou um mês, imprimir/salvar em PDF e exportar/importar em planilha.',
       'Ao registrar uma alteração imprevista, abrir as mensagens prontas para avisar docentes, CAE, nutricionista, Gestão, CTP e turmas.',
+      'Editor visual: clicar nos dias (Shift+clique para intervalos, Ctrl+clique para dias soltos), escolher a categoria e acompanhar os contadores; cada gravação vira uma revisão que dá para consultar e restaurar.',
     ],
     diagrama: {
       titulo: 'Montar o calendário do ano',
       etapas: [
+        { rotulo: 'Editor visual', ator: 'Coordenação', detalhe: 'marcar feriados, recesso, sábados letivos e mais, direto nos dias, com contadores e histórico', onde: { tela: 'Calendário › Editor visual e histórico', rota: '/calendario/editor' } },
         { rotulo: 'Etapas e semestres', ator: 'Coordenação', detalhe: 'datas de início e fim de N1–N4 e dos dois semestres', onde: { tela: 'Calendário › Etapas', rota: '/calendario/etapas' } },
         { rotulo: 'Eventos', ator: 'Coordenação', detalhe: 'feriados, recesso, reuniões, avaliações', onde: { tela: 'Calendário › Novo evento', rota: '/calendario/eventos/novo' } },
         { rotulo: 'Sábados letivos', ator: 'Coordenação', detalhe: 'data + dia cuja grade vale', onde: { tela: 'Grade › Sábados letivos', rota: '/grade/sabados' } },

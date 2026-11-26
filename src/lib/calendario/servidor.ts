@@ -48,7 +48,7 @@ export async function carregarAno(ano: number) {
   const periodos = (etapas.some(Boolean) ? etapas : semestres).filter((x): x is Intervalo => x !== null);
   const contagem = doAno
     ? contarDiasLetivos({ ...doAno, eventos, sabadosLetivos: new Set(sabados.map((s) => s.data)), periodos })
-    : { letivos: [], perdidosImprevistos: [], sabados: [] };
+    : { letivos: [], perdidosImprevistos: [], sabados: [], domingos: [] };
   return {
     ano,
     etapas,

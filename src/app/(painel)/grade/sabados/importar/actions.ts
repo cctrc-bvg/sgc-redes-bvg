@@ -3,6 +3,7 @@
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
+import { registrarRevisaoSeMudou } from '@/lib/calendario/revisoes';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { dataDoBanco, dataParaBanco } from '@/lib/ausencias/regras';
@@ -42,6 +43,7 @@ export async function importarSabados(_estado: EstadoImportacao | undefined, for
     }
     throw e;
   }
+  for (const ano of new Set([...plano.criar.map((x) => Number(x.data.slice(0, 4))), ...existentes.filter((e) => plano.atualizar.some((a) => a.id === e.id)).map((e) => Number(e.data.slice(0, 4)))])) await registrarRevisaoSeMudou({ ano, autorId: usuario.id, origem: 'SABADO' });
   await registrarAuditoria({ userId: usuario.id, acao: 'IMPORTOU_SABADOS_LETIVOS', entidade: 'SabadoLetivo', entidadeId: 'importacao', detalhes: { criados: plano.criar.length, alterados: plano.atualizar.length } });
   revalidatePath('/grade/sabados');
   revalidatePath('/grade');

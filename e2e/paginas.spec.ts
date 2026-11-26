@@ -4,7 +4,7 @@ import { entrar, type Perfil } from './apoio';
 // Abre as páginas principais de cada perfil e confere que carregam sem erro de servidor nem de JavaScript.
 const PAGINAS: Record<Perfil, string[]> = {
   coordenacao: [
-    '/painel', '/calendario', '/grade', '/grade/minha', '/grade/sabados', '/ausencias', '/alimentacao', '/comunicacao',
+    '/painel', '/calendario', '/calendario/editor', '/grade', '/grade/minha', '/grade/sabados', '/ausencias', '/alimentacao', '/comunicacao',
     '/comunicacao/modelos', '/comunicacao/periodicas', '/usuarios', '/turmas', '/disciplinas', '/ofertas', '/auditoria', '/ppe', '/ppi', '/diarios', '/diarios/conferencia', '/reposicoes', '/periodos', '/ppi/resumo-cca',
     '/processos', '/relatorios', '/ajuda', '/conta/contato',
   ],

@@ -3,6 +3,7 @@
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
+import { registrarRevisaoSeMudou } from '@/lib/calendario/revisoes';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { dataParaBanco } from '@/lib/ausencias/regras';
@@ -82,6 +83,7 @@ export async function importarCalendario(_estado: EstadoImportacao | undefined, 
     sabadosCriados: plano.sabadosCriar.length,
     sabadosAlterados: plano.sabadosAtualizar.length,
   };
+  await registrarRevisaoSeMudou({ ano, autorId: usuario.id, origem: 'IMPORTACAO' });
   await registrarAuditoria({ userId: usuario.id, acao: 'IMPORTOU_CALENDARIO', entidade: 'EventoCalendario', entidadeId: String(ano), detalhes });
   for (const caminho of ['/calendario', '/grade', '/grade/sabados', '/diarios', '/alimentacao', '/ausencias']) revalidatePath(caminho);
   return {

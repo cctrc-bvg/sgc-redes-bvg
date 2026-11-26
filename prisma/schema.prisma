@@ -46,6 +46,7 @@ model User {
   ausenciasRegistradas   AusenciaDocente[]  @relation("ProfessorAusente")
   substituicoesFeitas    AusenciaDocente[]  @relation("ProfessorSubstituto")
   coberturasFeitas       CoberturaBloco[]
+  revisoesCalendario     CalendarioRevisao[]
   convitesSubstituicao   ConviteSubstituicao[]
   peisOrientados         PlanoEstudoIndividual[]
   ppisOrientadas         PpiAtividade[]
@@ -710,4 +711,26 @@ model PresencaEspecial {
   qtdAlunos  Int
 
   @@unique([periodoId, turmaId, data])
+}
+
+// ==========================================
+// HISTÓRICO DO CALENDÁRIO (revisões)
+// ==========================================
+
+// Foto do calendário de um ano a cada mudança (eventos, sábados/domingos letivos, etapas e semestres). Só se acrescenta:
+// restaurar uma revisão antiga cria uma revisão nova. O calendário vigente continua nas tabelas de sempre.
+model CalendarioRevisao {
+  id        String   @id @default(cuid())
+  anoLetivo Int
+  numero    Int      // 1, 2, 3… dentro do ano
+  autorId   String?
+  autor     User?    @relation(fields: [autorId], references: [id], onDelete: SetNull)
+  motivo    String?  // opcional, escrito por quem salvou
+  resumo    String   // o que mudou, em dias por categoria
+  origem    String   // EDITOR | EVENTO | ETAPAS | IMPORTACAO | SABADO | RESTAURACAO | INICIAL
+  dados     Json     // Instantaneo
+  createdAt DateTime @default(now())
+
+  @@unique([anoLetivo, numero])
+  @@index([anoLetivo, createdAt])
 }

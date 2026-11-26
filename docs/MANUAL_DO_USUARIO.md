@@ -129,6 +129,7 @@ No sistema: `/calendario`.
 - Avaliações finais nunca contam como dias letivos (ROD, Art. 32; refeições nesses dias só por acréscimo lançado na Alimentação): ficam fora da contagem e da grade, inclusive aos sábados. Acontecem só no fim do ano, depois da última semana letiva, também para as disciplinas semestrais; o sistema avisa se o período for cadastrado antes disso e, enquanto elas não estiverem cadastradas, sugere começar no dia seguinte ao último dia letivo. Os prazos entre as avaliações são combinados com os docentes.
 - Ver o ano inteiro ou um mês, imprimir/salvar em PDF e exportar/importar em planilha.
 - Ao registrar uma alteração imprevista, abrir as mensagens prontas para avisar docentes, CAE, nutricionista, Gestão, CTP e turmas.
+- Editor visual: clicar nos dias (Shift+clique para intervalos, Ctrl+clique para dias soltos), escolher a categoria e acompanhar os contadores; cada gravação vira uma revisão que dá para consultar e restaurar.
 
 ### Fluxo: Montar o calendário do ano
 
@@ -139,15 +140,17 @@ flowchart LR
   classDef setor fill:#fffbeb,stroke:#d97706,color:#78350f
   classDef sistema fill:#f8fafc,stroke:#64748b,color:#1e293b
   classDef todos fill:#ffffff,stroke:#64748b,color:#1e293b
-  E0["<b>1. Etapas e semestres</b><br/><i>Coordenação</i><br/>datas de início e fim de N1–N4 e dos dois semestres<br/>Onde: Calendário › Etapas"]:::gestao
-  E1["<b>2. Eventos</b><br/><i>Coordenação</i><br/>feriados, recesso, reuniões, avaliações<br/>Onde: Calendário › Novo evento"]:::gestao
+  E0["<b>1. Editor visual</b><br/><i>Coordenação</i><br/>marcar feriados, recesso, sábados letivos e mais, direto nos dias, com contadores e histórico<br/>Onde: Calendário › Editor visual e histórico"]:::gestao
+  E1["<b>2. Etapas e semestres</b><br/><i>Coordenação</i><br/>datas de início e fim de N1–N4 e dos dois semestres<br/>Onde: Calendário › Etapas"]:::gestao
   E0 --> E1
-  E2["<b>3. Sábados letivos</b><br/><i>Coordenação</i><br/>data + dia cuja grade vale<br/>Onde: Grade › Sábados letivos"]:::gestao
+  E2["<b>3. Eventos</b><br/><i>Coordenação</i><br/>feriados, recesso, reuniões, avaliações<br/>Onde: Calendário › Novo evento"]:::gestao
   E1 --> E2
-  E3["<b>4. Contagem</b><br/><i>Sistema</i><br/>dias letivos por mês, etapa e ano; saldo da meta<br/>Onde: Calendário"]:::sistema
+  E3["<b>4. Sábados letivos</b><br/><i>Coordenação</i><br/>data + dia cuja grade vale<br/>Onde: Grade › Sábados letivos"]:::gestao
   E2 --> E3
-  E4["<b>5. Consulta e PDF</b><br/><i>Todos</i><br/>visão anual, mensal e impressão<br/>Onde: Calendário › Imprimir"]:::todos
+  E4["<b>5. Contagem</b><br/><i>Sistema</i><br/>dias letivos por mês, etapa e ano; saldo da meta<br/>Onde: Calendário"]:::sistema
   E3 --> E4
+  E5["<b>6. Consulta e PDF</b><br/><i>Todos</i><br/>visão anual, mensal e impressão<br/>Onde: Calendário › Imprimir"]:::todos
+  E4 --> E5
 ```
 
 *Cores: verde, Coordenação e gestão; azul, docência; âmbar, setores; cinza, o próprio sistema.*
