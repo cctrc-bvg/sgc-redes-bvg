@@ -97,13 +97,13 @@ function celulasDoDia(e: EntradaSemana, dataISO: string): readonly CelulaAgenda[
   return [...normais.filter((c) => !esp.turmas.has(c.turma)), ...esp.celulas];
 }
 
-/** Monta a semana do docente: segunda a sexta, mais o sábado quando é letivo ou tem mudança. */
+/** Monta a semana do docente: segunda a sexta, mais sábado e domingo quando são letivos ou têm mudança. */
 export function montarSemana(e: EntradaSemana): DiaDaAgenda[] {
   const inicio = e.inicio ?? inicioDaSemana(e.hojeISO);
-  const datas = [0, 1, 2, 3, 4, 5].map((n) => somarDias(inicio, n));
+  const datas = [0, 1, 2, 3, 4, 5, 6].map((n) => somarDias(inicio, n));
   const dias: DiaDaAgenda[] = [];
   for (const dataISO of datas) {
-    const sabado = diaDaSemana(dataISO) === 6;
+    const sabado = [0, 6].includes(diaDaSemana(dataISO)); // sábado ou domingo
     const mudancas = e.mudancas.filter((m) => m.dataISO === dataISO);
     if (sabado && !e.sabados.has(dataISO) && mudancas.length === 0) continue;
     const doDia = e.eventos.filter((ev) => ev.inicio <= dataISO && ev.fim >= dataISO);

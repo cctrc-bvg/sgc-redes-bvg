@@ -157,6 +157,29 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
 7. **Desempenho, se o log de consultas lentas apontar:** agrupar ou guardar em cache por 1 minuto as cerca de 25
    contagens da tela inicial da Coordenação. Se o pico crescer, duas réplicas do app atrás do Caddy.
 8. **Prisma 7/8** (o `latest` do npm era o 8.0.0-rc em 24/11): esperar o 8 estável; o `prisma.config.ts` já existe.
+8A. ~~**Editor visual do calendário acadêmico, com histórico (pedido de 26/11/2026):**~~ **Feito em 26/11/2026** (`/calendario/editor`, G33). Falta: criar o ano a partir do anterior e mostrar o impacto em diários e prazos antes de gravar. Pedido original: hoje o calendário se monta por
+   formulários e importação. Objetivo: montar e ajustar o ano marcando os dias direto no calendário, e poder voltar no
+   tempo. Requisitos do usuário:
+   - **Seleção como em passagem aérea:** clicar no 1º dia; **Shift+clique** marca o intervalo; **Ctrl+clique** alterna
+     (marca/desmarca) dias soltos. Vale para um mês, meses seguidos ou o ano inteiro na mesma tela.
+   - **Categorias** aplicadas à seleção: dia letivo, ponto facultativo, feriado, recesso/férias, avaliações finais,
+     suspensão etc. (as de `TipoEventoCalendario`). **Sábados e domingos já vêm como não letivos**, mas podem virar
+     **sábado letivo** e, em caso extraordinário, **domingo letivo** (hoje só existe sábado letivo, com o dia de grade
+     de referência; domingo exige generalizar `SabadoLetivo`).
+   - **Contadores ao lado, atualizados a cada ação:** dias letivos (total e por etapa/semestre), pontos facultativos,
+     feriados, sábados letivos, domingos letivos e as metas (ex.: 50 por etapa, G23).
+   - **Histórico versionado:** cada gravação gera uma revisão (quem, quando, motivo opcional, resumo do que mudou);
+     poder **avançar e voltar** entre revisões só para visualizar (somente leitura, com o contador daquela época) e
+     **restaurar** uma revisão antiga (cria uma nova revisão, nunca apaga). Calendário vigente continua sendo o das
+     tabelas atuais; a revisão é um instantâneo (eventos, etapas, semestres, sábados letivos).
+   - **Criar um novo calendário deve ser fácil:** partir do ano anterior ou de um modelo (fins de semana não letivos,
+     feriados nacionais do ano, etapas em branco) e ajustar no editor.
+   - **Cuidados:** mostrar o impacto antes de gravar (diários, prazos de reposição e etapas afetados; grade de
+     sábado/domingo); permissão só da Coordenação; trilha em `AuditLog`; acessível por teclado (setas movem o foco,
+     Espaço marca, Shift+setas estende, botões "marcar/desmarcar" como alternativa ao Ctrl) e usável no celular
+     (toque longo ou modo "marcar vários"); compatível com a importação atual.
+   - **Dependências:** rever `contarDiasLetivos`/`carregarAno` (domingo letivo), a regra G23 (avaliações finais) e o
+     modelo de dados das revisões (migração aditiva). Estimativa inicial: 5 a 8 dias de desenvolvimento.
 9. **Ampliar o E2E aos poucos:** levar ao Playwright só o que depende do navegador; os roteiros Python de
    `.handoff/e2e/` (sem JS, fora do git) cobrem mais regras.
 

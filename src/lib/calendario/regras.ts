@@ -160,10 +160,12 @@ export interface Contagem {
   perdidosImprevistos: string[];
   /** Sábados letivos contados. */
   sabados: string[];
+  /** Domingos letivos contados (situação extraordinária). */
+  domingos: string[];
 }
 
 /**
- * Conta os dias letivos entre início e fim: segunda a sexta e sábados letivos, menos os dias cobertos por
+ * Conta os dias letivos entre início e fim: segunda a sexta, sábados e domingos letivos, menos os dias cobertos por
  * eventos que suspendem aulas. Um sábado letivo dentro de suspensão também não conta.
  */
 export function contarDiasLetivos(p: {
@@ -181,11 +183,11 @@ export function contarDiasLetivos(p: {
     const ate = e.fim < p.fim ? e.fim : p.fim;
     for (const d of datasEntre(de, ate)) suspensos.set(d, (suspensos.get(d) ?? true) && e.imprevisto);
   }
-  const c: Contagem = { letivos: [], perdidosImprevistos: [], sabados: [] };
+  const c: Contagem = { letivos: [], perdidosImprevistos: [], sabados: [], domingos: [] };
   if (p.fim < p.inicio) return c;
   for (const d of datasEntre(p.inicio, p.fim)) {
     const dia = diaDaSemanaISO(d);
-    const seria = (dia >= 1 && dia <= 5) || (dia === 6 && p.sabadosLetivos.has(d));
+    const seria = (dia >= 1 && dia <= 5) || ((dia === 6 || dia === 0) && p.sabadosLetivos.has(d));
     if (!seria) continue;
     if (p.periodos?.length && !p.periodos.some((i) => i.inicio <= d && d <= i.fim)) continue;
     if (suspensos.has(d)) {
@@ -194,6 +196,7 @@ export function contarDiasLetivos(p: {
     }
     c.letivos.push(d);
     if (dia === 6) c.sabados.push(d);
+    if (dia === 0) c.domingos.push(d);
   }
   return c;
 }

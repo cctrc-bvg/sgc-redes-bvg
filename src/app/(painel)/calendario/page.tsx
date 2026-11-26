@@ -81,7 +81,10 @@ export default async function PaginaCalendario({ searchParams }: { searchParams:
       </div>
       {podeEditar && (
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link href={`/calendario/eventos/novo${mes ? `?inicio=${ano}-${String(mes).padStart(2, '0')}-01` : ''}`} className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
+          <Link href={`/calendario/editor?ano=${ano}`} className="inline-flex min-h-11 items-center rounded-md bg-if-verde-700 px-4 font-semibold text-white hover:bg-if-verde-800">
+            Editor visual e histórico
+          </Link>
+          <Link href={`/calendario/eventos/novo${mes ? `?inicio=${ano}-${String(mes).padStart(2, '0')}-01` : ''}`} className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">
             Novo evento
           </Link>
           <Link href={`/calendario/etapas?ano=${ano}`} className="inline-flex min-h-11 items-center rounded-md border border-slate-400 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-100">

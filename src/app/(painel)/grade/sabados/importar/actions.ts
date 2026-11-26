@@ -3,6 +3,7 @@
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
+import { garantirRevisoesIniciais, registrarRevisaoSeMudou } from '@/lib/calendario/revisoes';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { exigirPermissao } from '@/lib/auth/dal';
 import { dataDoBanco, dataParaBanco } from '@/lib/ausencias/regras';
@@ -31,6 +32,9 @@ export async function importarSabados(_estado: EstadoImportacao | undefined, for
     };
   }
   if (nada) return { concluido: true, sucesso: true, mensagem: 'Nada para gravar: o calendário já está igual à planilha.' };
+  const atualizarIds = new Set(plano.atualizar.map((a) => a.id));
+  const anos = new Set([...plano.criar.map((x) => Number(x.data.slice(0, 4))), ...existentes.filter((e) => atualizarIds.has(e.id)).map((e) => Number(e.data.slice(0, 4)))]);
+  await garantirRevisoesIniciais(anos);
   try {
     await prisma.$transaction([
       ...plano.criar.map((s) => prisma.sabadoLetivo.create({ data: { data: dataParaBanco(s.data), diaSemanaReferente: s.diaSemanaReferente, observacao: s.observacao } })),
@@ -42,6 +46,7 @@ export async function importarSabados(_estado: EstadoImportacao | undefined, for
     }
     throw e;
   }
+  for (const ano of anos) await registrarRevisaoSeMudou({ ano, autorId: usuario.id, origem: 'SABADO' });
   await registrarAuditoria({ userId: usuario.id, acao: 'IMPORTOU_SABADOS_LETIVOS', entidade: 'SabadoLetivo', entidadeId: 'importacao', detalhes: { criados: plano.criar.length, alterados: plano.atualizar.length } });
   revalidatePath('/grade/sabados');
   revalidatePath('/grade');

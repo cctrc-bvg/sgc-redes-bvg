@@ -1,5 +1,5 @@
 import 'server-only';
-import type { TipoEventoCalendario } from '@prisma/client';
+import type { Prisma, TipoEventoCalendario } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { dataDoBanco, dataParaBanco } from '@/lib/ausencias/regras';
 import { avisosAvaliacoesFinais, contarDiasLetivos, dentro, ETAPAS, intervaloDoAno, porMes, suspensaoNaData, type Intervalo } from './regras';
@@ -16,14 +16,14 @@ export interface EventoAno {
 }
 
 /** Tudo do ano letivo: etapas, semestres, eventos, sábados letivos e a contagem de dias letivos. */
-export async function carregarAno(ano: number) {
+export async function carregarAno(ano: number, db: Prisma.TransactionClient | typeof prisma = prisma) {
   const de = dataParaBanco(`${ano}-01-01`);
   const ate = dataParaBanco(`${ano}-12-31`);
   const [etapasBd, semestresBd, eventosBd, sabadosBd] = await Promise.all([
-    prisma.etapaLetiva.findMany({ where: { anoLetivo: ano }, orderBy: { numero: 'asc' } }),
-    prisma.periodoLetivo.findMany({ where: { anoLetivo: ano }, orderBy: { semestreLetivo: 'asc' } }),
-    prisma.eventoCalendario.findMany({ where: { inicio: { lte: ate }, fim: { gte: de } }, orderBy: [{ inicio: 'asc' }, { tipo: 'asc' }] }),
-    prisma.sabadoLetivo.findMany({ where: { data: { gte: de, lte: ate } }, orderBy: { data: 'asc' } }),
+    db.etapaLetiva.findMany({ where: { anoLetivo: ano }, orderBy: { numero: 'asc' } }),
+    db.periodoLetivo.findMany({ where: { anoLetivo: ano }, orderBy: { semestreLetivo: 'asc' } }),
+    db.eventoCalendario.findMany({ where: { inicio: { lte: ate }, fim: { gte: de } }, orderBy: [{ inicio: 'asc' }, { tipo: 'asc' }] }),
+    db.sabadoLetivo.findMany({ where: { data: { gte: de, lte: ate } }, orderBy: { data: 'asc' } }),
   ]);
   const intervalo = (x: { inicio: Date; fim: Date }): Intervalo => ({ inicio: dataDoBanco(x.inicio), fim: dataDoBanco(x.fim) });
   const etapas = ETAPAS.map((n) => {
@@ -48,7 +48,7 @@ export async function carregarAno(ano: number) {
   const periodos = (etapas.some(Boolean) ? etapas : semestres).filter((x): x is Intervalo => x !== null);
   const contagem = doAno
     ? contarDiasLetivos({ ...doAno, eventos, sabadosLetivos: new Set(sabados.map((s) => s.data)), periodos })
-    : { letivos: [], perdidosImprevistos: [], sabados: [] };
+    : { letivos: [], perdidosImprevistos: [], sabados: [], domingos: [] };
   return {
     ano,
     etapas,

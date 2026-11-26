@@ -17,8 +17,8 @@ export function FormularioSabado() {
   const [estado, acao, enviando] = useActionState<EstadoSabado | undefined, FormData>(cadastrarSabado, undefined);
   const v = estado?.sucesso ? undefined : estado?.valores;
   const [escolhida, setEscolhida] = useState(v?.data ?? '');
-  // Aviso na hora: só sábado vale (o servidor confere de novo).
-  const naoESabado = /^\d{4}-\d{2}-\d{2}$/.test(escolhida) && new Date(`${escolhida}T12:00:00Z`).getUTCDay() !== 6;
+  // Aviso na hora: só fim de semana vale (domingo, em situação extraordinária) (o servidor confere de novo).
+  const naoESabado = /^\d{4}-\d{2}-\d{2}$/.test(escolhida) && ![0, 6].includes(new Date(`${escolhida}T12:00:00Z`).getUTCDay());
   return (
     <form action={acao} className="space-y-5" noValidate>
       {estado?.mensagem && <Alerta tipo={estado.sucesso ? 'sucesso' : 'erro'}>{estado.mensagem}</Alerta>}
@@ -30,7 +30,7 @@ export function FormularioSabado() {
           required
           defaultValue={v?.data ?? ''}
           onChange={(e) => setEscolhida(e.target.value)}
-          erros={naoESabado ? ['Essa data não cai num sábado: escolha um sábado.'] : estado?.erros?.data}
+          erros={naoESabado ? ['Essa data não cai num sábado ou domingo: escolha um fim de semana.'] : estado?.erros?.data}
         />
         <Selecao
           id="diaSemanaReferente"

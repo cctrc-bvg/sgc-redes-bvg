@@ -62,6 +62,13 @@ describe('montarSemana', () => {
     expect(s[1].eventos).toEqual(['Reunião: pais']);
   });
 
+  it('domingo letivo entra na semana; domingo comum não', () => {
+    const sem = montarSemana({ ...base, sabados: new Map([['2026-11-29', 2]]) });
+    expect(sem.at(-1)).toMatchObject({ dataISO: '2026-11-29', gradeDe: 'terça-feira' });
+    expect(sem.at(-1)!.aulas).toHaveLength(1);
+    expect(montarSemana(base).map((d) => d.dataISO)).not.toContain('2026-11-29');
+  });
+
   it('sábado letivo entra com a grade do dia de referência; ausência registrada é marcada', () => {
     const s = montarSemana({ ...base, sabados: new Map([['2026-11-28', 3]]), ausencias: new Map([['2026-11-25', new Set(['M1'])]]) });
     const sabado = s[5];

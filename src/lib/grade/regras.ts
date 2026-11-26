@@ -114,33 +114,34 @@ export function janelasLivres(ocupadas: ReadonlySet<string>, blocos: readonly { 
 }
 
 /**
- * Dia da semana cuja grade vale numa data (G14). Segunda a sexta: o próprio dia. Sábado letivo: o dia
- * de referência cadastrado. Sábado comum ou domingo: null (sem aula).
+ * Dia da semana cuja grade vale numa data (G14). Segunda a sexta: o próprio dia. Sábado ou domingo
+ * letivo (este, só em situação extraordinária): o dia de referência cadastrado. Fim de semana comum: null (sem aula).
  */
 export function diaDaGradeNaData(dataISO: string, sabadosLetivos: ReadonlyMap<string, number>): number | null {
   validarDataISO(dataISO);
   const diaSemana = new Date(`${dataISO}T12:00:00Z`).getUTCDay(); // 0=domingo … 6=sábado
   if (diaSemana >= 1 && diaSemana <= 5) return diaSemana;
-  if (diaSemana === 6) return sabadosLetivos.get(dataISO) ?? null;
+  if (diaSemana === 6 || diaSemana === 0) return sabadosLetivos.get(dataISO) ?? null;
   return null;
 }
 
-/** Formulário de sábado letivo. */
+/** Formulário de sábado letivo (ou domingo letivo, em situação extraordinária). */
 export const SabadoLetivoSchema = z.object({
   data: z
     .string()
     .trim()
-    .min(1, { error: 'Informe a data do sábado letivo.' })
+    .min(1, { error: 'Informe a data do sábado ou domingo letivo.' })
     .refine(
       (v) => {
         try {
           validarDataISO(v);
-          return new Date(`${v}T12:00:00Z`).getUTCDay() === 6;
+          const dia = new Date(`${v}T12:00:00Z`).getUTCDay();
+          return dia === 6 || dia === 0;
         } catch {
           return false;
         }
       },
-      { error: 'Escolha uma data que caia num sábado.' },
+      { error: 'Escolha uma data que caia num sábado ou domingo.' },
     ),
   diaSemanaReferente: z.enum(['1', '2', '3', '4', '5'], { error: 'Escolha o dia da semana cuja grade vale neste sábado.' }).transform(Number),
   observacao: z.preprocess(
