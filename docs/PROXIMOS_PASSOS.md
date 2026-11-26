@@ -1,6 +1,6 @@
 # Próximos Passos — Retomada do Desenvolvimento
 
-> Atualizado em **25/11/2026**, com os PR #1, #2 e #3 mesclados; trabalho novo no branch `rod-prazos` (PR #4 aberto). Leia este arquivo inteiro antes de continuar: estado do projeto, o que depende do usuário, o backlog, as decisões e as armadilhas já encontradas.
+> Atualizado em **27/11/2026**, com os PR #1 a #12 mesclados e nenhum aberto. **Todo o backlog de código está feito; o que resta depende do usuário ou da TI (seção 3).** Leia este arquivo inteiro antes de continuar: estado do projeto, o que depende do usuário, o backlog, as decisões e as armadilhas já encontradas.
 > **Roadmap até o semestre 2027.1 (início em 11/01/2027): [ROADMAP_2027_1.md](ROADMAP_2027_1.md).**
 > Teste manual em Docker local, com roteiro: [TESTE_MANUAL.md](TESTE_MANUAL.md).
 
@@ -10,9 +10,9 @@
 
 ```bash
 cd ~/projetos/sgc-redes-bvg
-git status && git log --oneline -6          # branch rod-prazos (a partir de upstream/main)
+git fetch upstream && git status && git log --oneline -6   # trabalhar sempre em branch nova a partir de upstream/main
 gh pr list -R cctrc-bvg/sgc-redes-bvg       # PRs abertos no original
-./scripts/dev.sh testar                     # esperado: typecheck ok + 447 testes passando
+./scripts/dev.sh testar                     # esperado: typecheck ok + 515 testes passando
 ```
 
 Para ver o sistema com dados: `./scripts/dev.sh dev` num banco de desenvolvimento com
@@ -28,8 +28,8 @@ Fluxos de uso, com diagramas: [FLUXOS.md](FLUXOS.md). Requisitos e decisões: [F
   `PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64` e `TMPDIR=~/.cache/sgc-tmp`.
 - A página de acessibilidade da Coordenação leva cerca de 2,5 min; logo após subir o servidor, o login pode demorar:
   repita só aquela suíte antes de concluir que há erro.
-- Os scripts de produção (`scripts/atualizar.sh`, `scripts/ensaiar-migracao.sh`) só foram conferidos com `bash -n`:
-  esta máquina não tem Docker. O primeiro uso na VM deve ser acompanhado.
+- Os scripts de produção (`scripts/atualizar.sh`, `scripts/ensaiar-migracao.sh`) ainda não foram usados de ponta a ponta
+  (esta máquina tem Docker, usado só com `docker-compose.teste.yml`). O primeiro uso na VM deve ser acompanhado.
 - Não passe o Prettier em arquivos antigos: ele reformata o arquivo inteiro e polui o diff.
 - `.handoff/planilhas-exemplo/` tem nomes reais: nunca commitar nem copiar para testes.
 
@@ -41,11 +41,12 @@ Fluxos de uso, com diagramas: [FLUXOS.md](FLUXOS.md). Requisitos e decisões: [F
 - `origin` = fork `isaacmiranda/sgc-redes-bvg` (público, admin). `upstream` = `cctrc-bvg/sgc-redes-bvg` (original, só leitura).
 - **PR #1** (versão inicial) e **PR #2** (E2E, mensagens de PPI/PPE, guia de implantação e backup) foram **mesclados em
   24 e 25/11/2026**.
-- **PR #3** (`e2e-ampliado`): **mesclado em 25/11/2026** (commit `1645fcd`): tela inicial nova, docência acumulada ao
-  cargo, revisão dos fluxos, ausência informada pelo docente, avaliações finais, produção segura, FSD e estudo do
-  login Google. CI verde.
-- **Branch `rod-prazos`** (a partir de `upstream/main`): retomada, prazos do ROD (reposição, frequência) e a progressão
-  automática dos diários (RF08-A: regra, migração, telas, conferência). Tudo enviado ao PR #4; confira o CI.
+- **PR #3** (25/11/2026): tela inicial nova, docência acumulada ao cargo, ausência informada pelo docente, avaliações finais, produção segura.
+- **PR #4 a #12** (25 a 27/11/2026), todos mesclados: prazos do ROD e progressão automática dos diários (RF08-A);
+  reposição de aulas (G29); período especial com grade especial por turma (G30); mensagens periódicas e avisos de
+  fim de etapa/fechamento; estudo da integração SUAP/Q-Acadêmico (só estudo); **editor visual do calendário** com
+  histórico de revisões, domingo letivo, criar o ano a partir do anterior e prévia de impacto (G33); correção do IP
+  de origem e **revisão de segurança/LGPD**; **retenção de dados**; capturas do manual; logo SVG e e-mails dos setores.
 - **Peça confirmação antes de cada push** (commits novos num branch com PR aberto entram no PR).
 
 **Pronto (Fases 1 e 2 do FSD + extras):**
@@ -62,8 +63,9 @@ Fluxos de uso, com diagramas: [FLUXOS.md](FLUXOS.md). Requisitos e decisões: [F
 - Documentação: Ajuda no sistema (14 tópicos, diagramas coloridos por responsável, com "Onde:"), manual gerado,
   `FLUXOS.md`, `IMPLANTACAO.md` (dimensionamento medido), FSD com RNF01–RNF05 e decisões G15–G24.
 
-**Verificado em 25/11/2026:** 436 testes unitários, typecheck e build; E2E de 50 testes (48 na rodada completa e as
-duas falhas corrigidas e repetidas, mais os testes da Alimentação) num banco novo.
+**Verificado em 27/11/2026:** 515 testes unitários e typecheck; E2E por partes (editor do calendário, acessibilidade, páginas, calendário, importação) verdes. **A suíte E2E completa não foi rerodada depois dos PRs #7 a #12:** rode antes do congelamento (15 a 20 min, banco novo).
+
+**Ambiente Docker de teste:** recriado em 27/11/2026 (`docker compose -f docker-compose.yml -f docker-compose.teste.yml up --build -d`, depois `db:demo` na porta 5433). Foi construído antes do seed dos e-mails dos setores; recrie para pegar. Pode ser apagado e refeito.
 
 ---
 
@@ -97,21 +99,34 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
 
 ## 3. Pendências que dependem do usuário
 
-- [ ] **Decisões abertas:**
-  - ~~G25–G28~~ **aceitas em 25/11/2026** (FSD): progressão automática, "em dia" presumido, mensagens periódicas e grade
-    vigente para contar as aulas.
-  - **G20–G22:** login Google institucional (`docs/estudos/SSO_GOOGLE.md`): adiado pelo usuário.
-  - **Reposição de aulas, diário aberto e prazo da avaliação final** (oportunidades do ROD, na seção 4).
-- [ ] **Com a TI (G17–G19 já aceitos: "o que for solicitado será concedido"):**
-  - pedir a VM (4 vCPU, 8 GB, 80 GB SSD), o endereço https (`APP_URL`) e o certificado;
-  - destino do backup fora da VM;
-  - monitoramento externo de `/api/saude`;
-  - HA do Proxmox, se houver armazenamento compartilhado.
-- [ ] **Cadastrar em Comunicação** o e-mail de cada grupo/setor. **Feitos pelo seed em 27/11/2026:** CAE (`cae.boaviagem@`), CTP (`ctp.boaviagem@`), CCA (`cca.boaviagem@`) e Gestão (`de@boaviagem.ifce.edu.br`, `gabinete.boaviagem@`), com saudações. A CGP (`cgp.boaviagem@`) já está no texto das mensagens. **Faltam, e ficam fora do código por serem e-mails pessoais:** nutricionista e líderes de turma (a Coordenação cadastra em Comunicação)
-      (`cgp.boaviagem@ifce.edu.br`, já no texto das mensagens).
+**Para fazer (nesta ordem sugerida):**
+- [ ] **Testar o estado atual** (o usuário vai testar em 27/11/2026 ou depois): Docker de teste ou `./scripts/dev.sh dev`
+      com `db:demo`. Anotar o retorno e passar para a próxima sessão. Roteiro: `docs/TESTE_MANUAL.md`.
+- [ ] **Agendar a retenção de dados na produção** (prazos **aceitos em 27/11/2026**, ver
+      `docs/estudos/REVISAO_SEGURANCA_LGPD.md`): cron mensal de `scripts/aplicar-retencao.sh --confirmo` (linha pronta em
+      `docs/IMPLANTACAO.md`; teste antes sem `--confirmo`). Falta só a validação formal com a Direção e o encarregado de dados.
+- [ ] **Cadastrar em Comunicação** o e-mail da **nutricionista** e dos **líderes de turma** (pessoais: ficam fora do
+      código). Já cadastrados pelo seed: CAE, CTP, CCA e Gestão (DE + Gabinete); a CGP já está no texto das mensagens.
+- [ ] **Montar o calendário 2027** no editor (`/calendario/editor?ano=2027`, "Criar 2027 a partir de 2026") e conferir
+      etapas, semestres e recessos com o calendário oficial do campus.
+- [ ] **Testar o anexo da reposição** com um PDF, um JPG e um PNG de verdade (`/reposicoes`).
 - [ ] **Marcar "Também leciona"** em Usuários para quem acumula cargo e docência (Direção, CTP, AE), se houver.
-- [ ] Testar as planilhas de exemplo com dados reais (`.handoff/planilhas-exemplo/`, fora do git).
-- [x] Logo: SVG oficial recebido em 27/11/2026 e em uso (`public/marca/ifce-vertical.svg`, PEI impresso).
+- [ ] **Rodar a suíte E2E completa** num banco novo antes do congelamento (04/01/2027).
+
+**Com a TI (o pedido será feito depois pelo usuário; G17–G19 aceitos: "o que for solicitado será concedido"):**
+- VM (4 vCPU, 8 GB, 80 GB SSD), endereço https (`APP_URL`) e certificado;
+- proxy (Caddy ou Nginx) **sobrescrevendo** `X-Forwarded-For`, com `client_max_body_size 7m`;
+- destino do backup fora da VM e teste de restauração; monitoramento de `/api/saude`; HA do Proxmox, se houver;
+- as 7 perguntas de integração do estudo do SUAP (`docs/estudos/INTEGRACAO_SUAP_QACADEMICO.md`, seção 9).
+
+**Adiado pelo usuário (não fazer agora):**
+- Dados reais para medir desempenho e testar `situacoesAutomaticas` com volume; planilhas de exemplo com dados reais
+  (`.handoff/planilhas-exemplo/`, fora do git).
+- Integração com o SUAP/Q-Acadêmico (só o estudo foi feito; prioridade "Aulas dadas"; sem dados individuais de estudantes).
+- Login Google (G20–G22). Fase 3 do FSD congelada.
+- Arquivo de exemplo do sistema acadêmico, para importar diários por planilha (perdeu prioridade).
+
+**Resolvido:** G25–G28 (25/11); prazos de retenção (27/11); logo SVG oficial (27/11); e-mails de CAE, CTP, CCA e Gestão (27/11).
 
 ---
 
@@ -119,24 +134,9 @@ alimentação e grade. Segue como ideia: avisar quando um período especial pass
 
 ### P1 — próximos passos (em ordem)
 
-1. **PR #4 (`rod-prazos`):** aberto em 25/11/2026 (https://github.com/cctrc-bvg/sgc-redes-bvg/pull/4) com os prazos do ROD
-   e a progressão automática dos diários (commits enviados em 25/11/2026). Acompanhe o CI e a revisão; corrija em commits novos. Antes de dizer que um push entra no PR, confira
-   com `gh pr view 4 --json state` (o PR #3 estava mesclado quando isso falhou).
-2. **Mensagens periódicas (RF08-A, G27):** a progressão automática dos diários (`src/lib/diarios/automatico.ts`,
-   `servidor.ts`, `ministradasManual`, `/diarios/conferencia`) e o **resumo semanal dos docentes**
-   (`/comunicacao/periodicas`, `src/lib/comunicacao/periodicas*.ts`) estão prontos, com testes unitários, Ajuda e
-   `FLUXOS.md`. Falta:
-   - ~~avisos próprios de fim de etapa e de fechamento do período~~: feitos em `/comunicacao/periodicas` (seção "Avisos do período": 7 dias antes do fim da etapa até a entrega; 14 dias antes do fim do semestre; um por docente, com registro de envio). O prazo da etapa continua também no resumo semanal;
-   - **rodar o E2E** (escrito em `e2e/diarios.spec.ts`, `e2e/periodicas.spec.ts` e nas listas de páginas e
-     acessibilidade, mas ainda não executado) e testar `situacoesAutomaticas` com banco;
-   - **manual e capturas** (`npm run manual` já regenerado; capturas das telas novas feitas em 27/11/2026: editor do calendário, períodos especiais, reposições, mensagens periódicas e conferência dos diários).
-   **Reposição confirmada (G29, 25/11/2026):** feita em `/reposicoes` (informar, anexar formulário opcional, ciência,
-   registro direto, download restrito); E2E rodado em 25/11/2026 (`reposicoes.spec.ts`); falta testar o anexo (PDF, JPG, PNG) com arquivo real.
-   Atenção: `bodySizeLimit` das Server Actions subiu para 7 MB e o proxy precisa de `client_max_body_size 7m`.
-   **Períodos especiais (G30, 25/11/2026):** `/periodos` (jogos internos, encontro dos servidores, eventos externos): grade
-   especial por turma, presentes por dia, resumo de refeições. A grade especial já vale em **Minha grade**, na agenda da
-   tela inicial e nas aulas presumidas dos diários (dias passados; a projeção de aulas restantes ainda usa a grade normal). E2E de `periodos.spec.ts` passou em 25/11/2026.
-   Limites conhecidos: a aula de hoje não conta como dada; a reposição pendente do resumo lista a dispensa recente sem reposição informada (G29: o docente informa em `/reposicoes`, a Coordenação dá ciência); os avisos de etapa e de fechamento vão a todos os docentes com oferta no semestre (sem filtrar por diário já entregue).
+1. **Nada de código pendente.** O backlog desta lista foi entregue nos PR #4 a #12 (ver seção 2). Se o teste do usuário
+   trouxer ajustes, eles viram o novo item 1. Lembrete: branch nova a partir de `upstream/main`, pedir confirmação antes
+   de cada push e de abrir PR.
 1B. **Revisão de segurança e LGPD (27/11/2026):** feita em `docs/estudos/REVISAO_SEGURANCA_LGPD.md` (corrigido o IP de origem falsificável; `PROXY_SALTOS`). **Retenção (prazos aceitos em 27/11/2026) implementada:** `scripts/aplicar-retencao.sh` (simula; `--confirmo` aplica). Falta agendar no cron da VM de produção e validar os prazos com a Direção.
 2. **Implantação em produção** (depende da TI e do endereço): seguir `docs/IMPLANTACAO.md`.
    - Fazer o **primeiro uso acompanhado** de `./scripts/atualizar.sh` e `./scripts/ensaiar-migracao.sh`, que nunca
