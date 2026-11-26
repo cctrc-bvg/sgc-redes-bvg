@@ -5,6 +5,8 @@ import { ehDocente, temPermissao, type Permissao, type Titular } from '@/lib/aut
 import { NOME_STATUS, dataDoBanco, dataParaBanco, hojeEmFortaleza, somarDias } from '@/lib/ausencias/regras';
 import { mudancasDoProfessor } from '@/lib/ausencias/servidor';
 import { NOME_TIPO_EVENTO } from '@/lib/calendario/regras';
+import { gradeEspecialDoDocente } from '@/lib/periodos/servidor';
+import { diaDaGradeNaData } from '@/lib/grade/regras';
 import { blocosOrdenados, celulasDoProfessor } from '@/lib/grade/consultas';
 import { anoLetivoAtual } from '@/lib/ofertas/regras';
 import { carregarAno } from '@/lib/calendario/servidor';
@@ -231,6 +233,13 @@ export async function semanaDoDocente(professorId: string, hojeISO: string = hoj
       );
     }),
   );
+  const sabadosMap = new Map(sabados.map((s) => [dataDoBanco(s.data), s.diaSemanaReferente]));
+  const datasComGrade = [0, 1, 2, 3, 4, 5].flatMap((n) => {
+    const dataISO = somarDias(inicio, n);
+    const diaSemana = diaDaGradeNaData(dataISO, sabadosMap);
+    return diaSemana === null ? [] : [{ dataISO, diaSemana }];
+  });
+  const especiais = await gradeEspecialDoDocente(professorId, datasComGrade, bloco);
   const porData = new Map<string, Set<string>>();
   for (const a of ausencias) {
     const d = dataDoBanco(a.dataAula);
@@ -249,6 +258,7 @@ export async function semanaDoDocente(professorId: string, hojeISO: string = hoj
       suspende: e.suspendeAulas,
     })),
     celulas,
+    especiais,
     ausencias: porData,
     mudancas,
   });

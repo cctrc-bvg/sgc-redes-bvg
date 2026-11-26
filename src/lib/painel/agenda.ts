@@ -57,8 +57,19 @@ export interface DiaDaAgenda {
   /** Sábado letivo: qual grade vale. */
   gradeDe: string | null;
   eventos: string[];
+  /** Período especial em vigor no dia (a grade das turmas dele pode ser outra). */
+  periodoEspecial: string | null;
   aulas: AulaDoDia[];
   mudancas: MudancaAgenda[];
+}
+
+/** Grade especial vigente numa data (período especial): as turmas listadas deixam a grade normal e seguem estas células. */
+export interface EspecialDoDia {
+  turmas: ReadonlySet<string>;
+  /** Células do próprio docente nessas turmas, no dia da grade. */
+  celulas: readonly CelulaAgenda[];
+  /** Nome do período, para avisar o docente. */
+  periodo: string;
 }
 
 export interface EntradaSemana {
@@ -72,9 +83,19 @@ export interface EntradaSemana {
   /** Blocos com ausência registrada pelo docente, por data (códigos M1…T4). */
   ausencias: ReadonlyMap<string, ReadonlySet<string>>;
   mudancas: readonly MudancaAgenda[];
+  /** Grade especial por data (G14: só nas turmas que têm grade especial no período). */
+  especiais?: ReadonlyMap<string, EspecialDoDia>;
 }
 
 export const chavePeriodo = (iso: string) => `${iso.slice(0, 4)}.${Number(iso.slice(5, 7)) <= 6 ? 1 : 2}`;
+
+/** Células normais do semestre, trocando as das turmas com grade especial pela grade especial do dia. */
+function celulasDoDia(e: EntradaSemana, dataISO: string): readonly CelulaAgenda[] {
+  const normais = e.celulas.get(chavePeriodo(dataISO)) ?? [];
+  const esp = e.especiais?.get(dataISO);
+  if (!esp) return normais;
+  return [...normais.filter((c) => !esp.turmas.has(c.turma)), ...esp.celulas];
+}
 
 /** Monta a semana do docente: segunda a sexta, mais o sábado quando é letivo ou tem mudança. */
 export function montarSemana(e: EntradaSemana): DiaDaAgenda[] {
@@ -92,7 +113,7 @@ export function montarSemana(e: EntradaSemana): DiaDaAgenda[] {
     const aulas =
       grade === null
         ? []
-        : [...(e.celulas.get(chavePeriodo(dataISO)) ?? [])]
+        : [...celulasDoDia(e, dataISO)]
             .filter((c) => c.diaSemana === grade)
             .sort((a, b) => posicaoNoDia(a.bloco) - posicaoNoDia(b.bloco))
             .map((c) => ({ horario: descreverBloco(c.bloco), inicio: c.bloco.horaInicio, turma: c.turma, disciplina: c.disciplina, ausente: ausentes.has(codigoBloco(c.bloco)) }));
@@ -103,6 +124,7 @@ export function montarSemana(e: EntradaSemana): DiaDaAgenda[] {
       semAula: suspensao ? suspensao.titulo : grade === null ? 'Sem aula' : null,
       gradeDe: sabado && grade !== null ? NOME_DIA_EXTENSO[grade] : null,
       eventos: doDia.filter((ev) => ev !== suspensao).map((ev) => ev.titulo),
+      periodoEspecial: grade === null ? null : (e.especiais?.get(dataISO)?.periodo ?? null),
       aulas,
       mudancas,
     });

@@ -64,6 +64,7 @@ export function SemanaDoDocente({
               </p>
               {d.gradeDe && <p className="text-xs text-slate-600">Sábado letivo: grade de {d.gradeDe}</p>}
               {d.semAula && <p className="mt-1 text-sm text-slate-600">{d.semAula}</p>}
+              {d.periodoEspecial && <p className="mt-1 text-xs text-slate-600">Período especial: {d.periodoEspecial}. Turmas com grade especial seguem a grade temporária.</p>}
               {d.eventos.map((e) => (
                 <p key={e} className="mt-1 text-sm text-slate-700">
                   <Icone nome="calendario" className="mr-1 inline size-4 align-[-2px] text-slate-500" />
